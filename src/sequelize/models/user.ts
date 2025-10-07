@@ -1,5 +1,6 @@
-import sequelize from "../db";
+import sequelize from "../../db";
 import { Model, DataTypes } from "sequelize";
+import Products from "./products";
 
 class User extends Model {
   declare id: number;
@@ -8,7 +9,13 @@ class User extends Model {
   declare password: string;
 
   // Add association declarations if needed
-  // static associate(models: any) {}
+  static associate() {
+    // One user → many products
+    User.hasMany(Products, {
+      foreignKey: "product_owner_id",
+      as: "products",
+    });
+  }
 }
 
 User.init(

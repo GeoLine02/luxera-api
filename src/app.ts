@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import sequelize from "./db";
 import userRoutes from "./routes/user.routes";
+import productsRoutes from "./routes/products.routes";
 
 dotenv.config();
 
@@ -16,10 +17,7 @@ app.use(express.urlencoded({ extended: true })); // handles URL-encoded form dat
 
 // ✅ Routes
 app.use("/user", userRoutes);
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello from Express!");
-});
+app.use("/products", productsRoutes);
 
 // ✅ Database connection
 (async () => {
