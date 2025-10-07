@@ -1,6 +1,7 @@
 import sequelize from "../db";
 import bcrypt from "bcrypt";
-
+import jwt from "jsonwebtoken";
+import { Response } from "express";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
 import User from "../sequelize/models/user";
 
@@ -13,8 +14,6 @@ interface RegisterUserInput {
 export async function RegisterUserService(data: RegisterUserInput) {
   try {
     await sequelize.authenticate();
-
-    console.log("data", data);
 
     const existingUser = await User.findOne({ where: { email: data.email } });
     if (existingUser) {
@@ -79,5 +78,60 @@ export async function UserLoginService(data: LoginUserInput) {
   } catch (error) {
     console.error("Login error:", error);
     throw error;
+  }
+}
+
+export async function UserTokenRefreshService(
+  accessToken: string | undefined,
+  refrehToken: string | undefined
+) {
+  if (!accessToken) {
+    throw new Error("Access Token is required");
+  }
+
+  const isValidToken = jwt.verify(
+    accessToken,
+    process.env.ACCESS_TOKEN_SECRET!
+  );
+
+  if (!isValidToken && refrehToken) {
+    const decodedRefreshToken = jwt.decode(refrehToken) as {
+      id: number;
+      email: string;
+    };
+
+    const payload = {
+      id: decodedRefreshToken.id,
+      email: decodedRefreshToken.email,
+    };
+
+    const newAccessToken = generateAccessToken(payload);
+
+    return newAccessToken;
+  }
+
+  try {
+  } catch (error) {
+    console.log(error);
+    throw new Error("Unable to refesh token");
+  }
+}
+
+export async function UserByTokenService(token: string | undefined) {
+  try {
+    if (!token) {
+      throw new Error("Token is required");
+    }
+
+    const decodedToken = jwt.decode(token) as { id: number; email: string };
+    const userId = decodedToken?.id;
+
+    sequelize.authenticate();
+
+    const user = await User.findByPk(userId);
+
+    return user;
+  } catch (error) {
+    throw new Error("Unable to Fetch User by Token");
   }
 }
