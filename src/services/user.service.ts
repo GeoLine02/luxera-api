@@ -1,7 +1,8 @@
 import sequelize from "../db";
 import bcrypt from "bcrypt";
-import User from "../models/user";
+
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
+import User from "../sequelize/models/user";
 
 interface RegisterUserInput {
   fullName: string;
