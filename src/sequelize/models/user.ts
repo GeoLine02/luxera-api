@@ -1,6 +1,7 @@
 import sequelize from "../../db";
 import { Model, DataTypes } from "sequelize";
 import Products from "./products";
+import Shop from "./shop";
 
 class User extends Model {
   declare id: number;
@@ -14,6 +15,11 @@ class User extends Model {
     User.hasMany(Products, {
       foreignKey: "product_owner_id",
       as: "products",
+    });
+
+    User.hasOne(Shop, {
+      foreignKey: "owner_id",
+      as: "shop",
     });
   }
 }

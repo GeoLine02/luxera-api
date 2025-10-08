@@ -1,0 +1,36 @@
+// middlewares/authGuard.ts
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+
+interface JwtPayload {
+  userId: number;
+  email: string;
+}
+
+export const authGuard = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get token from headers
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    // Verify token
+    const secret = process.env.ACCESS_TOKEN_SECRET;
+    if (!secret) throw new Error("JWT_SECRET is not defined");
+
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+
+    // Attach user info to request for later use
+    (req as any).user = decoded;
+
+    next();
+  } catch (error) {
+    console.error(error);
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
+  }
+};

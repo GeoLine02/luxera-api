@@ -1,28 +1,17 @@
 // controllers/user/userRegister.controller.ts
 import { Request, Response } from "express";
-import { validationResult } from "express-validator";
+
 import {
   RegisterUserService,
   UserByTokenService,
   UserLoginService,
   UserTokenRefreshService,
 } from "../services/user.service";
-import sequelize from "sequelize";
 
 export async function UserRegisterController(req: Request, res: Response) {
   try {
-    // 1️⃣ Check validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    console.log("req: ", req.body);
-
-    // 2️⃣ Call the service to register the user
     const user = await RegisterUserService(req.body);
 
-    // 3️⃣ Respond with success
     return res.status(201).json({
       message: "User registered successfully",
       user,
