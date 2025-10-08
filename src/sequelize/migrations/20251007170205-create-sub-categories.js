@@ -2,46 +2,28 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Products", {
+    await queryInterface.createTable("SubCategories", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      product_name: {
+      subCategoryName: {
         type: Sequelize.STRING,
       },
-      product_price: {
-        type: Sequelize.INTEGER,
-      },
-      product_rating: {
-        type: Sequelize.INTEGER,
-      },
-      product_image: {
+      subCategoryImage: {
         type: Sequelize.STRING,
       },
-      product_status: {
-        type: Sequelize.STRING,
-      },
-      product_owner_id: {
+      categoryId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "Users",
-          key: "id",
+          model: "Categories", // name of Target model
+          key: "id", // key in Target model that we're referencing
         },
-        onDelete: "CASCADE",
         onUpdate: "CASCADE",
-      },
-      product_category_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "Categories",
-          key: "id",
-        },
         onDelete: "CASCADE",
-        onUpdate: "CASCADE",
       },
       createdAt: {
         allowNull: false,
@@ -54,6 +36,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Products");
+    await queryInterface.dropTable("SubCategories");
   },
 };
