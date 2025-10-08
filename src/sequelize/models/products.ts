@@ -1,6 +1,7 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
 import User from "./user";
+import Categories from "./categories";
 
 class Products extends Model {
   declare id: number;
@@ -16,6 +17,11 @@ class Products extends Model {
     Products.belongsTo(User, {
       foreignKey: "product_owner_id",
       as: "owner",
+    });
+
+    Products.belongsTo(Categories, {
+      foreignKey: "product_category_id",
+      as: "category",
     });
   }
 }
@@ -60,6 +66,12 @@ Products.init(
     product_category_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
   },
   {
