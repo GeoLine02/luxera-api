@@ -54,7 +54,8 @@ export async function FeaturedProductsService() {
   }
 }
 
-interface ProductCreationPayload {
+interface ProductPayload {
+  productId: number;
   productCategoryId: number;
   subCategoryId: number;
   productDescription: string;
@@ -65,10 +66,7 @@ interface ProductCreationPayload {
   userId: number;
 }
 
-export async function CreateProductService(
-  data: ProductCreationPayload,
-  req: Request
-) {
+export async function CreateProductService(data: ProductPayload, req: Request) {
   try {
     const {
       productCategoryId,
@@ -117,5 +115,70 @@ export async function CreateProductService(
   } catch (error) {
     console.log(error);
     throw new Error("Unable to create product");
+  }
+}
+
+export async function UpdateProductService(data: ProductPayload, req: Request) {
+  try {
+    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
+
+    const imageUrls = data.productImages.map(
+      (file) => `${baseUrl}${file.filename}`
+    );
+
+    const fieldsToUpdate = {
+      product_name: data.productName,
+      product_description: data.productDescription,
+      product_price: data.productPrice,
+      product_status: data.productStatus,
+      product_category_id: data.productCategoryId,
+      sub_category_id: data.subCategoryId,
+      product_image: `${baseUrl}${data.productImages[0].filename}`,
+      user_id: data.userId,
+    };
+
+    // Remove undefined fields
+    Object.keys(fieldsToUpdate).forEach((key) => {
+      if (fieldsToUpdate[key as keyof typeof fieldsToUpdate] === undefined) {
+        delete fieldsToUpdate[key as keyof typeof fieldsToUpdate];
+      }
+    });
+
+    // ✅ Update product info and return updated row
+    const [updatedCount, updatedRows] = await Products.update(fieldsToUpdate, {
+      where: { id: data.productId },
+      returning: true,
+    });
+
+    if (updatedCount === 0) {
+      throw new Error("Product not found");
+    }
+
+    // ✅ Replace old product images with new ones
+    if (imageUrls.length > 0) {
+      await ProductImages.destroy({ where: { productId: data.productId } });
+
+      await ProductImages.bulkCreate(
+        imageUrls.map((url) => ({
+          productId: data.productId,
+          image: url,
+        }))
+      );
+    }
+
+    // ✅ Return updated product with its new images
+    const updatedProduct = updatedRows[0];
+    const updatedImages = await ProductImages.findAll({
+      where: { productId: data.productId },
+    });
+
+    return {
+      message: "Product updated successfully",
+      product: updatedProduct,
+      images: updatedImages,
+    };
+  } catch (error) {
+    console.error(error);
+    throw new Error("Unable to update product");
   }
 }
