@@ -3,6 +3,7 @@ import {
   AllProductsController,
   CreateProductController,
   FeaturedProductsController,
+  UpdateProductController,
   VipProductsController,
 } from "../controller/products.controller";
 import { authGuard } from "../middleware/authGuard";
@@ -14,9 +15,15 @@ router.get("/vip", VipProductsController);
 router.get("/featured", FeaturedProductsController);
 router.post(
   "/create",
-  // authGuard,
+  authGuard,
   upload.array("images"),
   CreateProductController
+);
+router.put(
+  "/update",
+  authGuard,
+  upload.array("images"),
+  UpdateProductController
 );
 
 export default router;

@@ -3,6 +3,7 @@ import {
   AllProductsService,
   CreateProductService,
   FeaturedProductsService,
+  UpdateProductService,
   VipProductsService,
 } from "../services/product.service";
 
@@ -61,5 +62,25 @@ export async function CreateProductController(req: Request, res: Response) {
     return res.status(201).json(createdProduct);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
+  }
+}
+
+export async function UpdateProductController(req: Request, res: Response) {
+  try {
+    const body = req.body;
+    const files = req.files;
+
+    const data = {
+      ...body,
+      productImages: files,
+    };
+
+    const updatedProducts = await UpdateProductService(data, req);
+
+    return res.status(201).json(updatedProducts);
+  } catch (error: any) {
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 }
