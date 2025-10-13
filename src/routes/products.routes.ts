@@ -2,6 +2,7 @@ import express from "express";
 import {
   AllProductsController,
   CreateProductController,
+  DeleteProductController,
   FeaturedProductsController,
   UpdateProductController,
   VipProductsController,
@@ -25,5 +26,7 @@ router.put(
   upload.array("images"),
   UpdateProductController
 );
+
+router.delete("/delete", DeleteProductController);
 
 export default router;
