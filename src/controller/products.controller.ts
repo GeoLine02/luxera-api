@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   AllProductsService,
+  CreateProductService,
   FeaturedProductsService,
   VipProductsService,
 } from "../services/product.service";
@@ -41,5 +42,24 @@ export async function FeaturedProductsController(req: Request, res: Response) {
     return res.status(500).json({
       error: error.message,
     });
+  }
+}
+
+export async function CreateProductController(req: Request, res: Response) {
+  try {
+    const body = req.body;
+    const files = req.files as Express.Multer.File[];
+
+    console.log(files);
+    const data = {
+      ...body,
+      productImages: files,
+      userId: body.userId,
+    };
+
+    const createdProduct = await CreateProductService(data, req);
+    return res.status(201).json(createdProduct);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 }

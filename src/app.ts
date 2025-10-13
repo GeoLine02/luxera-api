@@ -6,6 +6,7 @@ import userRoutes from "./routes/user.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import shopRoutes from "./routes/shop.routes";
+import path from "path";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use("/user", userRoutes);
 app.use("/products", productsRoutes);
 app.use("/categories", categoriesRoutes);
 app.use("/shop", shopRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Database connection
 (async () => {
