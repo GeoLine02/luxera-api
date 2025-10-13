@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   AllProductsService,
   CreateProductService,
+  DeleteProductService,
   FeaturedProductsService,
   UpdateProductService,
   VipProductsService,
@@ -78,6 +79,20 @@ export async function UpdateProductController(req: Request, res: Response) {
     const updatedProducts = await UpdateProductService(data, req);
 
     return res.status(201).json(updatedProducts);
+  } catch (error: any) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+}
+
+export async function DeleteProductController(req: Request, res: Response) {
+  try {
+    const productId = req.query.productId as string;
+
+    const deletedProduct = await DeleteProductService(productId);
+
+    return res.status(204).json(deletedProduct);
   } catch (error: any) {
     return res.status(500).json({
       error: error.message,

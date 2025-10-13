@@ -182,3 +182,18 @@ export async function UpdateProductService(data: ProductPayload, req: Request) {
     throw new Error("Unable to update product");
   }
 }
+
+export async function DeleteProductService(productId: string) {
+  try {
+    const deletedProduct = await Products.destroy({ where: { id: productId } });
+
+    if (deletedProduct) {
+      return { deleted: true };
+    } else {
+      return { deleted: false };
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error("Unable to delete product");
+  }
+}
