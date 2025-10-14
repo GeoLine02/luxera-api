@@ -11,13 +11,16 @@ interface RegisterUserInput {
   password: string;
 }
 
-export async function RegisterUserService(data: RegisterUserInput) {
+export async function RegisterUserService(
+  data: RegisterUserInput,
+  res: Response
+) {
   try {
-    await sequelize.authenticate();
-
     const existingUser = await User.findOne({ where: { email: data.email } });
     if (existingUser) {
-      throw new Error("User with this email already exists");
+      return res
+        .status(400)
+        .json({ error: "User with this email already exists", status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -29,10 +32,15 @@ export async function RegisterUserService(data: RegisterUserInput) {
     });
 
     const { password, ...userWithoutPassword } = newUser.get({ plain: true });
-    return userWithoutPassword;
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: userWithoutPassword,
+    });
   } catch (error: any) {
     console.error("RegisterUserService error:", error);
-    throw new Error(error.message || "Failed to register user");
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to register user" });
   }
 }
 

@@ -10,18 +10,11 @@ import {
 
 export async function UserRegisterController(req: Request, res: Response) {
   try {
-    const user = await RegisterUserService(req.body);
+    const response = await RegisterUserService(req.body, res);
 
-    return res.status(201).json({
-      message: "User registered successfully",
-      user,
-    });
+    return response;
   } catch (error: any) {
     console.error(error);
-    return res.status(500).json({
-      message: "Something went wrong while registering the user",
-      error: error.message,
-    });
   }
 }
 
