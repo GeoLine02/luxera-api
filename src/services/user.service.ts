@@ -1,6 +1,6 @@
 import sequelize from "../db";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response } from "express";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
 import User from "../sequelize/models/user";
@@ -49,16 +49,15 @@ interface LoginUserInput {
   password: string;
 }
 
-export async function UserLoginService(data: LoginUserInput) {
+export async function UserLoginService(data: LoginUserInput, res: Response) {
   try {
-    await sequelize.authenticate();
-
     const { email, password } = data;
 
     const existingUser = await User.findOne({ where: { email } });
-
     if (!existingUser) {
-      throw new Error("User with this email does not exist");
+      return res.status(400).json({
+        error: "User with this email does not exist",
+      });
     }
 
     const isCorrectPassword = await bcrypt.compare(
@@ -67,7 +66,9 @@ export async function UserLoginService(data: LoginUserInput) {
     );
 
     if (!isCorrectPassword) {
-      throw new Error("Email or password is not correct");
+      return res.status(400).json({
+        error: "Email or password is not correct",
+      });
     }
 
     const payload = {
@@ -78,68 +79,78 @@ export async function UserLoginService(data: LoginUserInput) {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
-    return {
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000, // 15 min
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.status(203).json({
       message: "Login successful",
+      status: 203,
       accessToken,
       refreshToken,
-    };
+    });
   } catch (error) {
-    console.error("Login error:", error);
-    throw error;
+    console.log(error);
+    return res.status(500).json({
+      message: "Unable to login",
+    });
   }
 }
 
 export async function UserTokenRefreshService(
-  accessToken: string | undefined,
-  refrehToken: string | undefined
+  refreshToken: string | undefined,
+  res: Response
 ) {
-  if (!accessToken) {
-    throw new Error("Access Token is required");
-  }
-
-  const isValidToken = jwt.verify(
-    accessToken,
-    process.env.ACCESS_TOKEN_SECRET!
-  );
-
-  if (!isValidToken && refrehToken) {
-    const decodedRefreshToken = jwt.decode(refrehToken) as {
-      id: number;
-      email: string;
-    };
-
-    const payload = {
-      id: decodedRefreshToken.id,
-      email: decodedRefreshToken.email,
-    };
-
-    const newAccessToken = generateAccessToken(payload);
-
-    return newAccessToken;
-  }
-
   try {
-  } catch (error) {
-    console.log(error);
-    throw new Error("Unable to refesh token");
-  }
-}
+    if (!refreshToken) {
+      return res.status(401).json({ error: "No refresh token provided" });
+    }
+    let decoded: JwtPayload;
 
-export async function UserByTokenService(token: string | undefined) {
-  try {
-    if (!token) {
-      throw new Error("Token is required");
+    try {
+      const payload = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET!
+      );
+
+      if (typeof payload === "string") {
+        return res.status(403).json({ error: "Invalid token payload" });
+      }
+
+      decoded = payload as JwtPayload;
+    } catch (err) {
+      return res
+        .status(403)
+        .json({ error: "Invalid or expired refresh token" });
     }
 
-    const decodedToken = jwt.decode(token) as { id: number; email: string };
-    const userId = decodedToken?.id;
+    const accessToken = generateAccessToken({
+      id: decoded.id,
+      email: decoded.email,
+    });
 
-    sequelize.authenticate();
+    if (accessToken) {
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000, // 15 min
+      });
+    }
 
-    const user = await User.findByPk(userId);
-
-    return user;
-  } catch (error) {
-    throw new Error("Unable to Fetch User by Token");
+    return res.status(200).json({ accessToken });
+  } catch (error: any) {
+    console.error("Token refresh error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

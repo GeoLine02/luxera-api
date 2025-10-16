@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import sequelize from "./db";
@@ -7,6 +7,7 @@ import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import shopRoutes from "./routes/shop.routes";
 import path from "path";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -14,10 +15,16 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ✅ Middleware (must come before routes)
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // ✅ Frontend URL
+    credentials: true, // ✅ Allow cookies/authorization headers
+  })
+);
+
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data
-
+app.use(cookieParser());
 // ✅ Routes
 app.use("/user", userRoutes);
 app.use("/products", productsRoutes);

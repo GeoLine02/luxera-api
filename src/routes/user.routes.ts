@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  UserByTokenController,
+  userByTokenController,
   UserLoginController,
   UserRegisterController,
   UserTokenRefreshController,
@@ -15,7 +15,7 @@ router.post(
   UserRegisterController
 );
 router.post("/login", UserLoginController);
-router.get("/me", UserByTokenController);
+router.get("/me", userByTokenController);
 router.get("/refresh", UserTokenRefreshController);
 
 export default router;
