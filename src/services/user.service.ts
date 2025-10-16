@@ -154,3 +154,39 @@ export async function UserTokenRefreshService(
     return res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function UserByTokenService(
+  accessToken: string | undefined,
+  res: Response
+) {
+  try {
+    if (!accessToken) {
+      return res.status(400).json({
+        message: "Access token required",
+      });
+    }
+
+    const isTokenValid = jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET!
+    );
+
+    if (!isTokenValid) {
+      return res.status(401).json({
+        message: "Unauthorized user",
+      });
+    }
+
+    const decodedToken = jwt.decode(accessToken) as JwtPayload;
+
+    const user = await User.findOne({
+      where: { id: decodedToken?.id },
+    });
+
+    return res.status(200).json(user);
+  } catch (error: any) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+}

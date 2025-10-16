@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import {
   RegisterUserService,
+  UserByTokenService,
   UserLoginService,
   UserTokenRefreshService,
 } from "../services/user.service";
@@ -37,4 +38,14 @@ export async function UserTokenRefreshController(req: Request, res: Response) {
   }
 }
 
-export async function userByTokenController() {}
+export async function userByTokenController(req: Request, res: Response) {
+  try {
+    const accessToken = req.cookies.accessToken;
+
+    const response = await UserByTokenService(accessToken, res);
+
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+}
