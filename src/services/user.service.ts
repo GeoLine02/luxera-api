@@ -60,6 +60,8 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
       });
     }
 
+    console.log(process.env.NODE_ENV);
+
     const isCorrectPassword = await bcrypt.compare(
       password,
       existingUser.password
@@ -82,14 +84,14 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 15 * 60 * 1000, // 15 min
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -113,45 +115,42 @@ export async function UserTokenRefreshService(
 ) {
   try {
     if (!refreshToken) {
-      return res.status(401).json({ error: "No refresh token provided" });
-    }
-    let decoded: JwtPayload;
-
-    try {
-      const payload = jwt.verify(
-        refreshToken,
-        process.env.REFRESH_TOKEN_SECRET!
-      );
-
-      if (typeof payload === "string") {
-        return res.status(403).json({ error: "Invalid token payload" });
-      }
-
-      decoded = payload as JwtPayload;
-    } catch (err) {
-      return res
-        .status(403)
-        .json({ error: "Invalid or expired refresh token" });
+      return res.json(null);
     }
 
-    const accessToken = generateAccessToken({
-      id: decoded.id,
-      email: decoded.email,
+    // Verify refresh token
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as any;
+
+    // Find user
+    const user = await User.findOne({ where: { id: decoded.id } });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid refresh token" });
+    }
+
+    // Generate new access token
+    const payload = { id: user.id, email: user.email };
+
+    const newAccessToken = generateAccessToken(payload);
+
+    // Set access token in cookie
+    const isProd = process.env.NODE_ENV === "production";
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
     });
 
-    if (accessToken) {
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 15 * 60 * 1000, // 15 min
-      });
-    }
-
-    return res.status(200).json({ accessToken });
+    return res
+      .status(200)
+      .json({ message: "Access token refreshed", accessToken: newAccessToken });
   } catch (error: any) {
-    console.error("Token refresh error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.log(error);
+    return res.status(401).json({ error: "Invalid refresh token" });
   }
 }
 
@@ -161,32 +160,29 @@ export async function UserByTokenService(
 ) {
   try {
     if (!accessToken) {
-      return res.status(400).json({
-        message: "Access token required",
-      });
+      return res.status(401).json({ message: "Access token required" });
     }
 
-    const isTokenValid = jwt.verify(
-      accessToken,
-      process.env.ACCESS_TOKEN_SECRET!
-    );
-
-    if (!isTokenValid) {
-      return res.status(401).json({
-        message: "Unauthorized user",
-      });
+    let decodedToken: JwtPayload;
+    try {
+      // verify token
+      decodedToken = jwt.verify(
+        accessToken,
+        process.env.ACCESS_TOKEN_SECRET!
+      ) as JwtPayload;
+    } catch (err: any) {
+      return res.status(401).json({ message: "Unauthorized or expired token" });
     }
 
-    const decodedToken = jwt.decode(accessToken) as JwtPayload;
+    const user = await User.findOne({ where: { id: decodedToken.id } });
 
-    const user = await User.findOne({
-      where: { id: decodedToken?.id },
-    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     return res.status(200).json(user);
   } catch (error: any) {
-    return res.status(500).json({
-      error: error.message,
-    });
+    console.error(error);
+    return res.status(500).json({ error: error.message });
   }
 }

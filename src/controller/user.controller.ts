@@ -28,7 +28,9 @@ export async function UserLoginController(req: Request, res: Response) {
 
 export async function UserTokenRefreshController(req: Request, res: Response) {
   try {
-    const refreshToken = req.cookies?.refreshToken;
+    const authHeaders = req.headers?.authorization;
+
+    const refreshToken = authHeaders?.split(" ")?.[1];
 
     const response = await UserTokenRefreshService(refreshToken, res);
 
@@ -40,8 +42,8 @@ export async function UserTokenRefreshController(req: Request, res: Response) {
 
 export async function userByTokenController(req: Request, res: Response) {
   try {
-    const accessToken = req.cookies.accessToken;
-
+    const authHeaders = req.headers?.authorization;
+    const accessToken = authHeaders?.split(" ")?.[1];
     const response = await UserByTokenService(accessToken, res);
 
     return response;
