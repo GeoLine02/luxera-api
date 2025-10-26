@@ -152,36 +152,50 @@ export async function UserTokenRefreshService(
   }
 }
 
-export async function UserByTokenService(
-  accessToken: string | undefined,
-  res: Response
-) {
+export async function UserByTokenService(accessToken: string, res: Response) {
   try {
-    if (!accessToken) {
-      return res.status(401).json({ message: "Access token required" });
-    }
-
     let decodedToken: JwtPayload;
+
     try {
-      // verify token
+      // Verify token
       decodedToken = jwt.verify(
         accessToken,
         process.env.ACCESS_TOKEN_SECRET!
       ) as JwtPayload;
-    } catch (err) {
-      console.log(err);
-      return res.status(401).json({ message: "Unauthorized or expired token" });
+    } catch (err: any) {
+      console.error("Token verification failed:", err.message);
+
+      // Differentiate between expired and invalid tokens
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({
+          message: "Access token expired",
+          code: "TOKEN_EXPIRED",
+        });
+      }
+
+      return res.status(401).json({
+        message: "Invalid access token",
+        code: "INVALID_TOKEN",
+      });
     }
 
-    const user = await User.findOne({ where: { id: decodedToken.id } });
+    // Fetch user from database
+    const user = await User.findOne({
+      where: { id: decodedToken.id },
+      attributes: { exclude: ["password"] }, // Don't send password to frontend
+    });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Return user data
     return res.status(200).json(user);
   } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({ error: error.message });
+    console.error("Error in UserByTokenService:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 }
