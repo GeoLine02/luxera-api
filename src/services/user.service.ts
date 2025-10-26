@@ -60,8 +60,6 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
       });
     }
 
-    console.log(process.env.NODE_ENV);
-
     const isCorrectPassword = await bcrypt.compare(
       password,
       existingUser.password
