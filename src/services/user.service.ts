@@ -170,7 +170,8 @@ export async function UserByTokenService(
         accessToken,
         process.env.ACCESS_TOKEN_SECRET!
       ) as JwtPayload;
-    } catch (err: any) {
+    } catch (err) {
+      console.log(err);
       return res.status(401).json({ message: "Unauthorized or expired token" });
     }
 
