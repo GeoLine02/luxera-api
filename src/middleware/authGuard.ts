@@ -9,21 +9,19 @@ interface JwtPayload {
 
 export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get token from headers
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Get token from cookies
+    const accessToken = req.cookies?.accessToken;
+    if (!accessToken) {
       return res
         .status(401)
         .json({ message: "Unauthorized: No token provided" });
     }
 
-    const token = authHeader.split(" ")[1];
-
     // Verify token
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("JWT_SECRET is not defined");
 
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = jwt.verify(accessToken, secret) as JwtPayload;
 
     // Attach user info to request for later use
     (req as any).user = decoded;
