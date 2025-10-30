@@ -10,14 +10,14 @@ class User extends Model {
   declare password: string;
 
   // Add association declarations if needed
-  static associate() {
+  static associate(models:any) {
     // One user → many products
-    User.hasMany(Products, {
+    User.hasMany(models.Products, {
       foreignKey: "product_owner_id",
-      as: "products",
+      as: "ownedProducts",
     });
-
-    User.hasOne(Shop, {
+    
+    User.hasOne(models.Shop, {
       foreignKey: "owner_id",
       as: "shop",
     });

@@ -1,8 +1,13 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
 import User from "./user";
+
+import SubCategories from "./subcategories";
+import ProductImages from "./productimages";
+
 import Categories from "./categories";
 import productvariants from "./productvariants";
+
 
 class Products extends Model {
   declare id: number;
@@ -11,24 +16,34 @@ class Products extends Model {
   declare product_rating: number;
   declare product_image: string;
   declare product_owner_id: number;
-  declare product_category_id: number;
+  declare product_subcategory_id: number;
+  declare product_status: string;
 
-  static associate() {
+  static associate(models:any) {
     // Each product → belongs to one user
-    Products.belongsTo(User, {
+    Products.belongsTo(models.User, {
       foreignKey: "product_owner_id",
       as: "owner",
     });
 
-    Products.belongsTo(Categories, {
-      foreignKey: "product_category_id",
-      as: "category",
+    
+    // Each product → belongs to one subcategory
+    Products.belongsTo(models.SubCategories, {
+      foreignKey: "product_subcategory_id",
+      as: "subCategory",
     });
 
-    Products.hasMany(productvariants, {
+    Products.hasMany(models.ProductImages,{
+      foreignKey:"product_image_id",
+      as:"images",
+    })
+
+
+    Products.hasMany(models.productvariants, {
       foreignKey: "product_id",
       as: "Variants",
     });
+
   }
 }
 
@@ -65,19 +80,21 @@ Products.init(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
-    product_status: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    product_category_id: {
+ 
+
+    product_subcategory_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "Users",
+        model: "SubCategories",
         key: "id",
       },
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
+    },
+    product_status: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {

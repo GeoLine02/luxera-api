@@ -8,6 +8,7 @@ import categoriesRoutes from "./routes/categories.routes";
 import shopRoutes from "./routes/shop.routes";
 import path from "path";
 import cookieParser from "cookie-parser";
+import { initAssociations } from "./sequelize/models/associate";
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 (async () => {
   try {
     await sequelize.authenticate();
+    initAssociations()
     console.log("Database connected successfully!");
   } catch (error) {
     console.error("Unable to connect to the database:", error);
