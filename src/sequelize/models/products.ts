@@ -39,9 +39,9 @@ class Products extends Model {
     })
 
 
-    Products.hasMany(models.productvariants, {
+    Products.hasMany(models.ProductVariants, {
       foreignKey: "product_id",
-      as: "Variants",
+      as: "variants",
     });
 
   }

@@ -4,18 +4,20 @@ import SubCategories from "./subcategories";
 import Categories from "./categories";
 import ProductImages from "./productimages";
 import Shop from "./shop";
+import ProductVariants from "./productvariants";
 
 // DON'T call associate() here!
 export function initAssociations() {
   // Pass all models to each associate function
-  const models = { User, Products, SubCategories, Categories,ProductImages,Shop };
+  const models = { User, Products, SubCategories, Categories,ProductImages,Shop ,ProductVariants};
   
   User.associate?.(models);
   Products.associate?.(models);
   SubCategories.associate?.(models);
   Categories.associate?.(models);
 ProductImages.associate?.(models);
-    Shop.associate?.(models);
+Shop.associate?.(models);
+ProductVariants.associate?.(models);
 
 
 }
