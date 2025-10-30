@@ -5,6 +5,7 @@ import Categories from "../sequelize/models/categories";
 import SubCategories from "../sequelize/models/subcategories";
 import ProductImages from "../sequelize/models/productimages";
 import { Request } from "express";
+import ProductVariants from "../sequelize/models/productvariants";
 
 export async function AllProductsService() {
   try {
@@ -63,6 +64,7 @@ interface ProductPayload {
   productStatus: string;
   productName: string;
   productPrice: number;
+  productVariants: string[];
   userId: number;
 }
 
@@ -76,6 +78,8 @@ export async function CreateProductService(data: ProductPayload, req: Request) {
       productName,
       productPrice,
       productStatus,
+      productVariants,
+      productId,
       userId,
     } = data;
 
@@ -109,6 +113,15 @@ export async function CreateProductService(data: ProductPayload, req: Request) {
       }));
 
       await ProductImages.bulkCreate(imageRecords);
+    }
+
+    const variants = productVariants.map((variant: string) => ({
+      product_variant: variant,
+      product_id: productId,
+    }));
+
+    if (createdProduct) {
+      await ProductVariants.bulkCreate(variants);
     }
 
     return createdProduct;
