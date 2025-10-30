@@ -1,8 +1,13 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
 import User from "./user";
+
 import SubCategories from "./subcategories";
 import ProductImages from "./productimages";
+
+import Categories from "./categories";
+import productvariants from "./productvariants";
+
 
 class Products extends Model {
   declare id: number;
@@ -27,10 +32,18 @@ class Products extends Model {
       foreignKey: "product_subcategory_id",
       as: "subCategory",
     });
+
     Products.hasMany(models.ProductImages,{
       foreignKey:"product_image_id",
       as:"images",
     })
+
+
+    Products.hasMany(models.productvariants, {
+      foreignKey: "product_id",
+      as: "Variants",
+    });
+
   }
 }
 
