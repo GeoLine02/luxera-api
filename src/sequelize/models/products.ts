@@ -2,6 +2,7 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
 import User from "./user";
 import Categories from "./categories";
+import productvariants from "./productvariants";
 
 class Products extends Model {
   declare id: number;
@@ -22,6 +23,11 @@ class Products extends Model {
     Products.belongsTo(Categories, {
       foreignKey: "product_category_id",
       as: "category",
+    });
+
+    Products.hasMany(productvariants, {
+      foreignKey: "product_id",
+      as: "Variants",
     });
   }
 }
