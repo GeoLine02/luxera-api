@@ -8,11 +8,12 @@ class Categories extends Model {
   declare categoryName: string;
   declare categoryImage: string;
 
-  static associate() {
-    Categories.hasMany(Products, {
-      foreignKey: "product_category_id",
-      as: "products",
-    });
+  static associate(models:any) {
+
+    Categories.hasMany(models.SubCategories, {
+  foreignKey: "categoryId",
+  as: "subCategories",
+});
   }
 }
 
@@ -30,9 +31,6 @@ Categories.init(
   }
 );
 
-Categories.hasMany(SubCategories, {
-  foreignKey: "categoryId",
-  as: "subCategories",
-});
+
 
 export default Categories;

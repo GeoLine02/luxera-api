@@ -1,8 +1,6 @@
 import { Op } from "sequelize";
 import sequelize from "../db";
-import Products from "../sequelize/models/products";
-import Categories from "../sequelize/models/categories";
-import SubCategories from "../sequelize/models/subcategories";
+import {Categories,Products,SubCategories} from "../sequelize/models/associate"
 import ProductImages from "../sequelize/models/productimages";
 import { Request } from "express";
 
@@ -195,5 +193,49 @@ export async function DeleteProductService(productId: string) {
   } catch (error) {
     console.log(error);
     throw new Error("Unable to delete product");
+  }
+}
+export async function SearchProductsService(query:string){
+  try {
+   sequelize.authenticate();
+const searchResults = await Products.findAll({
+  where: {
+    [Op.or]: [
+      {
+        product_name: { [Op.iLike]: `%${query}%` }
+      },
+      {
+        '$subCategory.subCategoryName$': { [Op.iLike]: `%${query}%` }
+      },
+    { '$subCategory.category.categoryName$': { [Op.iLike]: `%${query}%` }
+    }
+    
+    ]
+  },
+  include: [
+    {
+      model: SubCategories,
+      as: "subCategory",
+      attributes: ["id", "subCategoryName"],
+include:[
+  {
+     model:Categories,
+        as:"category",
+        attributes:["id","categoryName"]
+  }
+       
+      
+],
+    
+    }
+      
+  ],
+});
+
+console.log("Search Results:", searchResults);
+return searchResults
+  } catch (error) {
+    console.log(error);
+    throw new Error("Unable to search products");
   }
 }

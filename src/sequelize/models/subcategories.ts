@@ -1,6 +1,5 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
-import Categories from "./categories";
 
 class SubCategories extends Model {
   declare id: number;
@@ -8,10 +7,15 @@ class SubCategories extends Model {
   declare subCategoryImage: string;
   declare categoryId: number;
 
-  static associate() {
-    SubCategories.belongsTo(Categories, {
+  static associate(models: any) {  // ← Accept models parameter
+    SubCategories.belongsTo(models.Categories, {
       foreignKey: "categoryId",
       as: "category",
+    });
+    
+    SubCategories.hasMany(models.Products, {
+      foreignKey: "product_subcategory_id",
+      as: "subCategoryProducts",
     });
   }
 }

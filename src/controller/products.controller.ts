@@ -4,6 +4,7 @@ import {
   CreateProductService,
   DeleteProductService,
   FeaturedProductsService,
+  SearchProductsService,
   UpdateProductService,
   VipProductsService,
 } from "../services/product.service";
@@ -97,5 +98,18 @@ export async function DeleteProductController(req: Request, res: Response) {
     return res.status(500).json({
       error: error.message,
     });
+  }
+}
+export async function SearchProductsController(req: Request, res: Response) {
+  try {
+    const query = req.query.q as string
+    
+ 
+    const searchResults = await SearchProductsService(query);
+    console.log(searchResults);
+    return res.status(200).json(searchResults);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }

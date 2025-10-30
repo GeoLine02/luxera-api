@@ -19,8 +19,8 @@ class ProductImages
   declare image: string;
   declare productId: number;
 
-  static associate() {
-    ProductImages.belongsTo(Products, {
+  static associate(models:any) {
+    ProductImages.belongsTo(models.Products, {
       foreignKey: "productId",
       as: "product",
     });
