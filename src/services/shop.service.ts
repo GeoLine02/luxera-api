@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
 import User from "../sequelize/models/user";
 import jwt from "jsonwebtoken";
+import { Response } from "express";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
@@ -95,6 +96,48 @@ export async function GetShopByTokenService(token: string | undefined) {
   } catch (error) {
     console.log(error);
     throw new Error("Unable to get shop");
+  }
+}
+
+export async function RefreshAccessToken(
+  refreshToken: string | undefined,
+  res: Response
+) {
+  try {
+    if (!refreshToken) {
+      return res.json(null);
+    }
+
+    const decodedToken = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as { id: number };
+
+    if (!decodedToken) return res.status(401).json({ error: "Expired token" });
+
+    const user = await User.findOne({ where: { id: decodedToken.id } });
+
+    if (!user) {
+      return res.status(400).json({ error: "User does not exits" });
+    }
+
+    const payload = { id: user.id, email: user.email };
+
+    const newAccessToken = generateAccessToken(payload);
+
+    const isProd = process.env.NODE_ENV === "production";
+    res.cookie("shopAccessToken", newAccessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
+
+    return newAccessToken;
+  } catch (error) {
+    console.log(error);
+    return res.status(401).json({ error: "Unauthorized seller" });
   }
 }
 

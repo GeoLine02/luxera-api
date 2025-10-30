@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  RefreshAccessToken,
   RegisterShopService,
   ShopDeleteService,
   ShopLoginService,
@@ -62,6 +63,26 @@ export async function ShopLoginController(req: Request, res: Response) {
     return res.status(500).json({
       error: error.message,
     });
+  }
+}
+
+export async function RefreshShopAccessTokenController(
+  req: Request,
+  res: Response
+) {
+  try {
+    const authHeaders = req.headers?.authorization;
+    const shopRefreshToken = authHeaders?.split(" ")?.[1];
+    const refreshedToken = await RefreshAccessToken(shopRefreshToken, res);
+
+    if (refreshedToken) {
+      res.status(200).json({
+        message: "Access token refreshed",
+        shopAccessToken: refreshedToken,
+      });
+    }
+  } catch (err) {
+    console.log(err);
   }
 }
 

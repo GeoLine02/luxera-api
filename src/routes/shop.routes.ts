@@ -1,6 +1,7 @@
 import express from "express";
 import {
   GetShopByTokenController,
+  RefreshShopAccessTokenController,
   ShopDeleteController,
   ShopLoginController,
   ShopRegisterController,
@@ -20,9 +21,8 @@ router.post(
   validateRequest(registerShopSchema),
   ShopRegisterController
 );
-
 router.post("/login", validateRequest(loginShopSchema), ShopLoginController);
-
+router.get("/refresh", RefreshShopAccessTokenController);
 router.get("/", GetShopByTokenController);
 router.delete("/", ShopDeleteController);
 
