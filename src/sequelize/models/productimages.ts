@@ -21,8 +21,8 @@ class ProductImages
   declare productId: number;
   declare variant_id: number;
 
-  static associate() {
-    ProductImages.belongsTo(Products, {
+  static associate(models:any) {
+    ProductImages.belongsTo(models.Products, {
       foreignKey: "productId",
       as: "product",
     });

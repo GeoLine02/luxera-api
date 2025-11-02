@@ -14,9 +14,9 @@ class ProductVariants extends Model {
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
-  static associate() {
+  static associate(models:any) {
     // Each variant belongs to one product
-    ProductVariants.belongsTo(Products, {
+    ProductVariants.belongsTo(models.Products, {
       foreignKey: "product_id",
       as: "Product",
     });

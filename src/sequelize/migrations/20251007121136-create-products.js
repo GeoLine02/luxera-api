@@ -34,10 +34,10 @@ module.exports = {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
-      product_category_id: {
+      product_subcategory_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: "Categories",
+          model: "SubCategories",
           key: "id",
         },
         onDelete: "CASCADE",

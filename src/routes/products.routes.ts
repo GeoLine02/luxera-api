@@ -6,6 +6,7 @@ import {
   FeaturedProductsController,
   // UpdateProductController,
   VipProductsController,
+  SearchProductsController,
 } from "../controller/products.controller";
 import { authGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
@@ -26,7 +27,7 @@ router.post("/create", authGuard, upload.any(), CreateProductController);
 //   upload.array("images"),
 //   // UpdateProductController
 // );
-
+router.get("/search", SearchProductsController);
 router.delete("/delete", DeleteProductController);
 
 export default router;
