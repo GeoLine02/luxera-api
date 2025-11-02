@@ -6,7 +6,10 @@ import Products from "./products";
 
 class ProductVariants extends Model {
   declare id: number;
-  declare product_variant: string;
+  declare variantName: string;
+  declare variantPrice: number;
+  declare variantQuantity: number;
+  declare variantDiscount: number;
   declare product_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -27,9 +30,24 @@ ProductVariants.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    product_variant: {
+    variantName: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    variantPrice: {
+      type: DataTypes.DECIMAL,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    variantQuantity: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+    },
+    variantDiscount: {
+      type: DataTypes.DECIMAL,
+      allowNull: false,
+      defaultValue: 0,
     },
     product_id: {
       type: DataTypes.INTEGER,
