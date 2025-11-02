@@ -6,12 +6,13 @@ import {
   ShopLoginController,
   ShopRegisterController,
 } from "../controller/shop.controller";
-import { validateRequest } from "../middleware/validateRequest";
+
 import {
   loginShopSchema,
   registerShopSchema,
 } from "../validators/shopValidators";
 import { authGuard } from "../middleware/authGuard";
+import { validateRequest } from "../middleware/validateRequest";
 
 const router = express.Router();
 

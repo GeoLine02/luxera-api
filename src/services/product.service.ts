@@ -55,146 +55,197 @@ export async function FeaturedProductsService() {
   }
 }
 
+interface VariantsMetadata {
+  index: number;
+  variantName: string;
+  variantPrice: number;
+  variantQuantity: number;
+  variantDiscount: number;
+  product_id: number;
+}
+
 interface ProductPayload {
-  productId: number;
   productCategoryId: number;
   subCategoryId: number;
   productDescription: string;
-  productImages: Express.Multer.File[];
-  productStatus: string;
+  productPreviewImages: Express.Multer.File[];
+  productQuantity: number;
+  productDiscount: number;
   productName: string;
   productPrice: number;
-  productVariants: string[];
+  variantsMetadata: VariantsMetadata[];
   userId: number;
 }
 
-export async function CreateProductService(data: ProductPayload, req: Request) {
+export async function CreateProductService(
+  data: ProductPayload,
+  req: Request,
+  variantImagesMap: Record<string, Express.Multer.File[]> = {}
+) {
   try {
     const {
+      productName,
+      productDescription,
       productCategoryId,
       subCategoryId,
-      productDescription,
-      productImages,
-      productName,
       productPrice,
-      productStatus,
-      productVariants,
-      productId,
+      productQuantity,
+      productPreviewImages,
+      productDiscount,
+      variantsMetadata,
       userId,
     } = data;
 
-    const productCategory = await Categories.findByPk(productCategoryId);
+    // Validate category & subcategory
+    const category = await Categories.findByPk(productCategoryId);
     const subCategory = await SubCategories.findOne({
-      where: { id: subCategoryId, categoryId: productCategory?.id },
+      where: { id: subCategoryId, categoryId: productCategoryId },
     });
 
-    if (!productCategory || !subCategory) {
+    if (!category || !subCategory) {
       throw new Error("Invalid category or subcategory");
     }
 
+    // Base URL for images
     const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
 
-    // ✅ Step 1: Create the product
+    // 1️⃣ Create the main product
     const createdProduct = await Products.create({
       product_name: productName,
-      product_price: productPrice,
-      product_category_id: productCategory.id,
-      product_owner_id: userId,
       product_description: productDescription,
-      product_status: productStatus,
-      product_image: `${baseUrl}${productImages[0].filename}`,
+      product_price: productPrice || 0,
+      product_quantity: productQuantity || 0,
+      product_discount: productDiscount || 0,
+      product_rating: 0,
+      product_status: "active",
+      product_category_id: category.id,
+      product_owner_id: userId,
+      product_image: `${baseUrl}${productPreviewImages[0].filename}`,
     });
 
-    // ✅ Step 2: Create image records
-    if (createdProduct && productImages && productImages.length > 0) {
-      const imageRecords = productImages.map((file) => ({
-        image: `${baseUrl}${file.filename}`,
-        productId: createdProduct.id,
-      }));
-
-      await ProductImages.bulkCreate(imageRecords);
+    if (!createdProduct) {
+      throw new Error("Failed to create product");
     }
 
-    const variants = productVariants.map((variant: string) => ({
-      product_variant: variant,
-      product_id: productId,
+    const images = productPreviewImages.map((image, index) => ({
+      image: `${baseUrl}${image.filename}`,
+      productId: createdProduct.id,
+      variant_id: index + 1,
     }));
 
-    if (createdProduct) {
-      await ProductVariants.bulkCreate(variants);
+    await ProductImages.bulkCreate(images);
+
+    if (variantsMetadata && variantsMetadata.length > 0) {
+      const variantsToCreate = variantsMetadata.map((variant) => ({
+        variantName: variant.variantName,
+        variantPrice: variant.variantPrice,
+        variantQuantity: variant.variantQuantity,
+        variantDiscount: variant.variantDiscount,
+        product_id: createdProduct.id,
+      }));
+
+      const createdVariants = await ProductVariants.bulkCreate(
+        variantsToCreate,
+        {
+          returning: true, // Important: Get the created variants with their IDs
+        }
+      );
+
+      // 4️⃣ Insert variant images into ProductImages table
+      const allVariantImages: any[] = [];
+
+      createdVariants.forEach((createdVariant, index) => {
+        const variantMeta = variantsMetadata[index];
+        const variantImages = variantImagesMap[variantMeta.index] || [];
+
+        if (variantImages.length > 0) {
+          variantImages.forEach((image) => {
+            allVariantImages.push({
+              image: `${baseUrl}${image.filename}`,
+              productId: createdProduct.id,
+              variant_id: createdVariant.id, // Use the actual variant ID from database
+            });
+          });
+        }
+      });
+
+      if (allVariantImages.length > 0) {
+        await ProductImages.bulkCreate(allVariantImages);
+        console.log(`Inserted ${allVariantImages.length} variant images`);
+      }
     }
 
     return createdProduct;
   } catch (error) {
-    console.log(error);
+    console.error("CreateProductService error:", error);
     throw new Error("Unable to create product");
   }
 }
 
-export async function UpdateProductService(data: ProductPayload, req: Request) {
-  try {
-    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
+// export async function UpdateProductService(data: ProductPayload, req: Request) {
+//   try {
+//     const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
 
-    const imageUrls = data.productImages.map(
-      (file) => `${baseUrl}${file.filename}`
-    );
+//     const imageUrls = data.productImages.map(
+//       (file) => `${baseUrl}${file.filename}`
+//     );
 
-    const fieldsToUpdate = {
-      product_name: data.productName,
-      product_description: data.productDescription,
-      product_price: data.productPrice,
-      product_status: data.productStatus,
-      product_category_id: data.productCategoryId,
-      sub_category_id: data.subCategoryId,
-      product_image: `${baseUrl}${data.productImages[0].filename}`,
-      user_id: data.userId,
-    };
+//     const fieldsToUpdate = {
+//       product_name: data.productName,
+//       product_description: data.productDescription,
+//       product_price: data.productPrice,
+//       product_status: data.productStatus,
+//       product_category_id: data.productCategoryId,
+//       sub_category_id: data.subCategoryId,
+//       product_image: `${baseUrl}${data.productImages[0].filename}`,
+//       user_id: data.userId,
+//     };
 
-    // Remove undefined fields
-    Object.keys(fieldsToUpdate).forEach((key) => {
-      if (fieldsToUpdate[key as keyof typeof fieldsToUpdate] === undefined) {
-        delete fieldsToUpdate[key as keyof typeof fieldsToUpdate];
-      }
-    });
+//     // Remove undefined fields
+//     Object.keys(fieldsToUpdate).forEach((key) => {
+//       if (fieldsToUpdate[key as keyof typeof fieldsToUpdate] === undefined) {
+//         delete fieldsToUpdate[key as keyof typeof fieldsToUpdate];
+//       }
+//     });
 
-    // ✅ Update product info and return updated row
-    const [updatedCount, updatedRows] = await Products.update(fieldsToUpdate, {
-      where: { id: data.productId },
-      returning: true,
-    });
+//     // ✅ Update product info and return updated row
+//     const [updatedCount, updatedRows] = await Products.update(fieldsToUpdate, {
+//       where: { id: data.productId },
+//       returning: true,
+//     });
 
-    if (updatedCount === 0) {
-      throw new Error("Product not found");
-    }
+//     if (updatedCount === 0) {
+//       throw new Error("Product not found");
+//     }
 
-    // ✅ Replace old product images with new ones
-    if (imageUrls.length > 0) {
-      await ProductImages.destroy({ where: { productId: data.productId } });
+//     // ✅ Replace old product images with new ones
+//     if (imageUrls.length > 0) {
+//       await ProductImages.destroy({ where: { productId: data.productId } });
 
-      await ProductImages.bulkCreate(
-        imageUrls.map((url) => ({
-          productId: data.productId,
-          image: url,
-        }))
-      );
-    }
+//       await ProductImages.bulkCreate(
+//         imageUrls.map((url) => ({
+//           productId: data.productId,
+//           image: url,
+//         }))
+//       );
+//     }
 
-    // ✅ Return updated product with its new images
-    const updatedProduct = updatedRows[0];
-    const updatedImages = await ProductImages.findAll({
-      where: { productId: data.productId },
-    });
+//     // ✅ Return updated product with its new images
+//     const updatedProduct = updatedRows[0];
+//     const updatedImages = await ProductImages.findAll({
+//       where: { productId: data.productId },
+//     });
 
-    return {
-      message: "Product updated successfully",
-      product: updatedProduct,
-      images: updatedImages,
-    };
-  } catch (error) {
-    console.error(error);
-    throw new Error("Unable to update product");
-  }
-}
+//     return {
+//       message: "Product updated successfully",
+//       product: updatedProduct,
+//       images: updatedImages,
+//     };
+//   } catch (error) {
+//     console.error(error);
+//     throw new Error("Unable to update product");
+//   }
+// }
 
 export async function DeleteProductService(productId: string) {
   try {
