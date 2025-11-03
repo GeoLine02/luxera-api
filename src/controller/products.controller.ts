@@ -4,6 +4,7 @@ import {
   CreateProductService,
   DeleteProductService,
   FeaturedProductsService,
+  SearchProductsService,
   // UpdateProductService,
   VipProductsService,
 } from "../services/product.service";

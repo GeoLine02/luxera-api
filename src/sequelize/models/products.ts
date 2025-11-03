@@ -8,7 +8,6 @@ import ProductImages from "./productimages";
 import Categories from "./categories";
 import productvariants from "./productvariants";
 
-
 class Products extends Model {
   declare id: number;
   declare product_name: string;
@@ -19,31 +18,28 @@ class Products extends Model {
   declare product_subcategory_id: number;
   declare product_status: string;
 
-  static associate(models:any) {
+  static associate(models: any) {
     // Each product → belongs to one user
     Products.belongsTo(models.User, {
       foreignKey: "product_owner_id",
       as: "owner",
     });
 
-    
     // Each product → belongs to one subcategory
     Products.belongsTo(models.SubCategories, {
       foreignKey: "product_subcategory_id",
       as: "subCategory",
     });
 
-    Products.hasMany(models.ProductImages,{
-      foreignKey:"product_image_id",
-      as:"images",
-    })
-
+    Products.hasMany(models.ProductImages, {
+      foreignKey: "productId",
+      as: "images",
+    });
 
     Products.hasMany(models.ProductVariants, {
       foreignKey: "product_id",
       as: "variants",
     });
-
   }
 }
 
@@ -80,7 +76,6 @@ Products.init(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
- 
 
     product_subcategory_id: {
       type: DataTypes.INTEGER,
