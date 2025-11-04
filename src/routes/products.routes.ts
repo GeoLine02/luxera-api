@@ -8,7 +8,7 @@ import {
   VipProductsController,
   SearchProductsController,
 } from "../controller/products.controller";
-import { authGuard } from "../middleware/authGuard";
+import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
 import { validateRequest } from "../middleware/validateRequest";
 import {
@@ -20,7 +20,13 @@ const router = express.Router();
 router.get("/", AllProductsController);
 router.get("/vip", VipProductsController);
 router.get("/featured", FeaturedProductsController);
-router.post("/create", authGuard, upload.any(), CreateProductController);
+router.post(
+  "/create",
+  authGuard,
+  shopAuthGuard,
+  upload.any(),
+  CreateProductController
+);
 // router.put(
 //   "/update",
 //   authGuard,

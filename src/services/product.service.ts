@@ -85,6 +85,7 @@ export async function CreateProductService(
   variantImagesMap: Record<string, Express.Multer.File[]> = {}
 ) {
   try {
+    const shop = req.shop;
     const {
       productName,
       productDescription,
@@ -123,6 +124,7 @@ export async function CreateProductService(
       product_subcategory_id: subCategory.id,
       product_owner_id: userId,
       product_image: `${baseUrl}${productPreviewImages[0].filename}`,
+      shop_id: shop!.id,
     });
 
     if (!createdProduct) {

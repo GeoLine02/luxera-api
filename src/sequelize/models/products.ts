@@ -40,6 +40,11 @@ class Products extends Model {
       foreignKey: "product_id",
       as: "variants",
     });
+
+    Products.belongsTo(models.Shop, {
+      foreignKey: "shop_id",
+      as: "shop",
+    });
   }
 }
 
@@ -65,6 +70,16 @@ Products.init(
     product_image: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    shop_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Shops",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     product_owner_id: {
       type: DataTypes.INTEGER,

@@ -9,21 +9,27 @@ import ProductVariants from "./productvariants";
 // DON'T call associate() here!
 export function initAssociations() {
   // Pass all models to each associate function
-  const models = { User, Products, SubCategories, Categories,ProductImages,Shop ,ProductVariants};
-  
+  const models = {
+    User,
+    Products,
+    SubCategories,
+    Categories,
+    ProductImages,
+    Shop,
+    ProductVariants,
+  };
+
   User.associate?.(models);
   Products.associate?.(models);
   SubCategories.associate?.(models);
   Categories.associate?.(models);
-ProductImages.associate?.(models);
-Shop.associate?.(models);
-ProductVariants.associate?.(models);
-
-
+  ProductImages.associate?.(models);
+  Shop.associate?.(models);
+  ProductVariants.associate?.(models);
 }
 
 // DON'T call it immediately - remove this line!
 // initAssociations();
 
 // Export models
-export { User, Products, SubCategories, Categories };
+export { User, Products, SubCategories, Categories, Shop };

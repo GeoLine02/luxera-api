@@ -8,8 +8,15 @@ class Shop extends Model {
   declare password: string;
   declare owner_id: number;
 
-  static associate(models:any) {
+  static associate(models: any) {
     Shop.belongsTo(models.User, { foreignKey: "owner_id", as: "owner" });
+
+    Shop.hasMany(models.Products, {
+      foreignKey: "shop_id",
+      as: "products",
+      onDelete: "CASCADE",
+      hooks: true,
+    });
   }
 }
 

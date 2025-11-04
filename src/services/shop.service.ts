@@ -146,12 +146,22 @@ interface ShopDeleteFieldsType {
   userId: number;
 }
 
-export async function ShopDeleteService(data: ShopDeleteFieldsType) {
+export async function ShopDeleteService(
+  data: ShopDeleteFieldsType,
+  res: Response
+) {
   try {
-    if (!data.password || !data.password.length)
-      throw new Error("Password is required");
+    if (!data.userId) {
+      return res.status(400).json({
+        message: "user id is required",
+      });
+    }
 
-    sequelize.authenticate();
+    if (!data.password || !data.password.length) {
+      res.status(400).json({
+        message: "Passowrd is required",
+      });
+    }
 
     const existingUser = await User.findOne({
       where: {
@@ -159,30 +169,58 @@ export async function ShopDeleteService(data: ShopDeleteFieldsType) {
       },
     });
 
-    if (!existingUser) throw new Error("shop does not exist");
+    if (!existingUser) {
+      res.status(400).json({
+        message: "User does not exist",
+      });
+    }
 
     const isCorrectpassword = bcrypt.compare(
       data.password,
-      existingUser.password
+      existingUser?.password as string
     );
 
-    if (!isCorrectpassword) throw new Error("Incorrect password");
+    if (!isCorrectpassword) {
+      return res.status(400).json({
+        message: "Incorrect password",
+      });
+    }
 
     const existingShop = await Shop.findOne({
       where: {
-        owner_id: existingUser.id,
+        owner_id: existingUser?.id,
       },
     });
 
-    if (!existingShop) throw new Error("Shop does not exist");
+    if (!existingShop) {
+      return res.status(400).json({
+        message: "Shop does not exist",
+      });
+    }
 
     const deletedShop = await Shop.destroy({
       where: {
-        owner_id: existingShop.owner_id,
+        id: existingShop.id,
       },
     });
+    if (deletedShop) {
+      res.clearCookie("shopAccessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+      res.clearCookie("shopRefreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
 
-    return deletedShop;
+      return res.status(200).json({
+        message: "Shop deleted successfuly",
+      });
+    }
   } catch (error) {
     console.log(error);
     throw new Error("Unable to delete shop");
