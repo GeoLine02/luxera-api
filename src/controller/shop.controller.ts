@@ -102,13 +102,13 @@ export async function GetShopByTokenController(req: Request, res: Response) {
 export async function ShopDeleteController(req: Request, res: Response) {
   try {
     const query = req.query;
-
+    console.log(query);
     const data = {
       password: query.password as string,
       userId: Number(query.userId) as number,
     };
 
-    const deletedShop = await ShopDeleteService(data);
+    await ShopDeleteService(data, res);
   } catch (error: any) {
     return res.status(500).json({
       error: error.message,
