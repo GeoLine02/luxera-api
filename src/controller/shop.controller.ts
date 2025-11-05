@@ -108,7 +108,8 @@ export async function ShopDeleteController(req: Request, res: Response) {
       userId: Number(query.userId) as number,
     };
 
-    await ShopDeleteService(data, res);
+    const deletedShop = await ShopDeleteService(data, res);
+    return deletedShop;
   } catch (error: any) {
     return res.status(500).json({
       error: error.message,
