@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
 import User from "../sequelize/models/user";
 import jwt from "jsonwebtoken";
-import { Response } from "express";
+import { Response, Request } from "express";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
@@ -53,8 +53,6 @@ interface ShopLoginFieldsType {
 
 export async function ShopLoginService(data: ShopLoginFieldsType) {
   try {
-    sequelize.authenticate();
-
     const existingUser = await User.findOne({
       where: {
         email: data.email,
@@ -70,8 +68,16 @@ export async function ShopLoginService(data: ShopLoginFieldsType) {
 
     if (!isCorrectpassword) throw new Error("Email or passwrod is incorrect");
 
-    const shopAccessToken = generateAccessToken({ id: existingUser.id });
-    const shopRefreshToken = generateRefreshToken({ id: existingUser.id });
+    const shop = await Shop.findOne({
+      where: { owner_id: existingUser.id },
+    });
+
+    if (!shop) {
+      throw new Error("Shop does not exist");
+    }
+
+    const shopAccessToken = generateAccessToken({ id: shop.id });
+    const shopRefreshToken = generateRefreshToken({ id: shop.id });
 
     return { shopAccessToken, shopRefreshToken };
   } catch (error) {
@@ -99,45 +105,32 @@ export async function GetShopByTokenService(token: string | undefined) {
   }
 }
 
-export async function RefreshAccessToken(
-  refreshToken: string | undefined,
-  res: Response
-) {
+export async function RefreshAccessToken(refreshToken?: string) {
   try {
-    if (!refreshToken) {
-      return res.json(null);
-    }
+    if (!refreshToken) return null;
 
     const decodedToken = jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET!
     ) as { id: number };
 
-    if (!decodedToken) return res.status(401).json({ error: "Expired token" });
+    if (!decodedToken) return null;
 
     const user = await User.findOne({ where: { id: decodedToken.id } });
+    if (!user) return null;
 
-    if (!user) {
-      return res.status(400).json({ error: "User does not exits" });
-    }
-
-    const payload = { id: user.id, email: user.email };
-
-    const newAccessToken = generateAccessToken(payload);
-
-    const isProd = process.env.NODE_ENV === "production";
-    res.cookie("shopAccessToken", newAccessToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "none" : "lax",
-      maxAge: 15 * 60 * 1000,
-      path: "/",
+    const shop = await Shop.findOne({
+      where: { owner_id: user.id },
     });
 
+    if (!shop) throw new Error("shop does not exist");
+
+    const payload = { id: shop.id };
+    const newAccessToken = generateAccessToken(payload);
     return newAccessToken;
   } catch (error) {
     console.log(error);
-    return res.status(401).json({ error: "Unauthorized seller" });
+    return null;
   }
 }
 

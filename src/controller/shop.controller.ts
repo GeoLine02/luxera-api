@@ -72,17 +72,23 @@ export async function RefreshShopAccessTokenController(
 ) {
   try {
     const authHeaders = req.headers?.authorization;
-    const shopRefreshToken = authHeaders?.split(" ")?.[1];
-    const refreshedToken = await RefreshAccessToken(shopRefreshToken, res);
+    const refreshToken = authHeaders?.split(" ")?.[1];
 
-    if (refreshedToken) {
-      res.status(200).json({
-        message: "Access token refreshed",
-        shopAccessToken: refreshedToken,
-      });
+    const refreshedToken = await RefreshAccessToken(refreshToken);
+
+    if (!refreshedToken) {
+      return res
+        .status(401)
+        .json({ error: "Expired or missing refresh token" });
     }
+
+    return res.status(200).json({
+      message: "Access token refreshed",
+      shopAccessToken: refreshedToken,
+    });
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
