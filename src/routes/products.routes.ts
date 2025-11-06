@@ -7,6 +7,7 @@ import {
   // UpdateProductController,
   VipProductsController,
   SearchProductsController,
+  GetProductByIdController,
 } from "../controller/products.controller";
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
@@ -35,5 +36,6 @@ router.post(
 // );
 router.get("/search", SearchProductsController);
 router.delete("/delete", DeleteProductController);
+router.get("/:id", GetProductByIdController);
 
 export default router;

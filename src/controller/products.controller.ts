@@ -4,6 +4,7 @@ import {
   CreateProductService,
   DeleteProductService,
   FeaturedProductsService,
+  GetProductByIdService,
   SearchProductsService,
   // UpdateProductService,
   VipProductsService,
@@ -20,6 +21,18 @@ export async function AllProductsController(req: Request, res: Response) {
       message: "Something went wrong while fetching products",
       error: error.message,
     });
+  }
+}
+
+export async function GetProductByIdController(req: Request, res: Response) {
+  try {
+    const productId = req.params.id;
+
+    const product = await GetProductByIdService(Number(productId), res);
+    console.log(product);
+    return product;
+  } catch (error) {
+    console.log(error);
   }
 }
 
