@@ -16,6 +16,7 @@ module.exports = {
           product_status: "basic",
           createdAt: new Date(),
           updatedAt: new Date(),
+   shop_id:1
         },
         {
           product_name: "Product 2",
@@ -27,6 +28,7 @@ module.exports = {
           product_status: "vip",
           createdAt: new Date(),
           updatedAt: new Date(),
+   shop_id:1
         },
         {
           product_name: "Product 3",
@@ -38,6 +40,7 @@ module.exports = {
           product_status: "basic",
           createdAt: new Date(),
           updatedAt: new Date(),
+ shop_id:1
         },
       ],
       {}

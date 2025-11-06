@@ -21,9 +21,12 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("JWT_SECRET is not defined");
 
-    jwt.verify(accessToken, secret) as JwtPayload;
-
-    next();
+    const decoded =  jwt.verify(accessToken, secret) as JwtPayload;
+    if(decoded){
+      req.user = decoded
+      next();
+    }
+    
   } catch (error) {
     console.error(error);
     return res.status(401).json({ message: "Unauthorized: Invalid token" });
@@ -44,6 +47,7 @@ export const shopAuthGuard = async (
     const decoded = jwt.verify(shopAccessToken, secret) as JwtPayload;
 
     if (decoded) {
+      
       req.shop = decoded;
 
       console.log(req.shop);

@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.addColumn("ProductImages", "variant_id", {
       type: Sequelize.INTEGER,
-      AllowNull: false,
+      AllowNull: true,
     });
   },
 

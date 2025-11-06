@@ -6,7 +6,7 @@ interface ProductImageAttributes {
   id: number;
   image: string;
   productId: number;
-  variant_id: number;
+  variant_id: number | null;
 }
 
 interface ProductImageCreationAttributes
@@ -19,7 +19,7 @@ class ProductImages
   declare id: number;
   declare image: string;
   declare productId: number;
-  declare variant_id: number;
+  declare variant_id: number | null;
 
   static associate(models:any) {
     ProductImages.belongsTo(models.Products, {
@@ -51,7 +51,7 @@ ProductImages.init(
     },
     variant_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: "Products",
         key: "id",
