@@ -49,7 +49,9 @@ export const shopAuthGuard = async (
     if (decoded) {
       
       req.shop = decoded;
-      
+
+      console.log(req.shop);
+
       next();
     }
   } catch (error) {
