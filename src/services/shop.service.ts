@@ -108,7 +108,6 @@ export async function GetShopByTokenService(token: string | undefined) {
 export async function RefreshAccessToken(refreshToken?: string) {
   try {
     if (!refreshToken) return null;
-
     const decodedToken = jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET!
@@ -116,11 +115,8 @@ export async function RefreshAccessToken(refreshToken?: string) {
 
     if (!decodedToken) return null;
 
-    const user = await User.findOne({ where: { id: decodedToken.id } });
-    if (!user) return null;
-
     const shop = await Shop.findOne({
-      where: { owner_id: user.id },
+      where: { id: decodedToken.id },
     });
 
     if (!shop) throw new Error("shop does not exist");

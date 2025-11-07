@@ -116,12 +116,12 @@ export async function UserTokenRefreshService(
       return res.json(null);
     }
 
+    console.log(refreshToken);
     // Verify refresh token
     const decoded = jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET!
     ) as any;
-
     // Find user
     const user = await User.findOne({ where: { id: decoded.id } });
     if (!user) {
