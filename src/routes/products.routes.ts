@@ -7,7 +7,7 @@ import {
   // UpdateProductController,
   VipProductsController,
   SearchProductsController,
-  GetProductByIdController,
+  UpdateProductController,
 } from "../controller/products.controller";
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
@@ -26,14 +26,16 @@ router.post(
   authGuard,
   shopAuthGuard,
   upload.any(),
+  validateRequest(ProductCreationSchema),
   CreateProductController
 );
-// router.put(
-//   "/update",
-//   authGuard,
-//   upload.array("images"),
-//   // UpdateProductController
-// );
+router.put(
+  "/update",
+  authGuard,
+  upload.any(),
+  validateRequest(ProductCreationSchema),
+  UpdateProductController
+);
 router.get("/search", SearchProductsController);
 router.delete("/delete", DeleteProductController);
 router.get("/:id", GetProductByIdController);
