@@ -4,15 +4,14 @@ import {
   CreateProductService,
   DeleteProductService,
   FeaturedProductsService,
+  GetProductByIdService,
   SearchProductsService,
   UpdateProductService,
   // UpdateProductService,
   VipProductsService,
 } from "../services/product.service";
-import zod from "zod"
 import { ProductUpdatePayload } from "../types/products";
-import { ProductCreationSchema } from "../validators/productValidators";
-import { parse } from "path";
+
 export async function AllProductsController(req: Request, res: Response) {
   try {
     const products = await AllProductsService();
@@ -24,6 +23,18 @@ export async function AllProductsController(req: Request, res: Response) {
       message: "Something went wrong while fetching products",
       error: error.message,
     });
+  }
+}
+
+export async function GetProductByIdController(req: Request, res: Response) {
+  try {
+    const productId = req.params.id;
+
+    const product = await GetProductByIdService(Number(productId), res);
+    console.log(product);
+    return product;
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -79,16 +90,13 @@ export async function CreateProductController(req: Request, res: Response) {
       }
     });
 
-
-  
     const createdProduct = await CreateProductService(
       {
-...body,
+        ...body,
         productPreviewImages,
         variantsMetadata,
       },
- 
-      
+
       req,
       variantImagesMap
     );
@@ -124,17 +132,18 @@ export async function UpdateProductController(req: Request, res: Response) {
         variantImagesMap[variantIndex].push(file);
       }
     });
-   
+
     const data = {
       ...body,
       productPreviewImages: files,
       variantsMetadata: variantMetadata,
-      
     } as ProductUpdatePayload;
-    
-  
 
-    const updatedProducts = await UpdateProductService(data, req,variantImagesMap);
+    const updatedProducts = await UpdateProductService(
+      data,
+      req,
+      variantImagesMap
+    );
 
     return res.status(201).json(updatedProducts);
   } catch (error: any) {

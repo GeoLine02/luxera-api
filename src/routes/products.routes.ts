@@ -8,6 +8,7 @@ import {
   VipProductsController,
   SearchProductsController,
   UpdateProductController,
+  GetProductByIdController,
 } from "../controller/products.controller";
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
@@ -23,8 +24,8 @@ router.get("/vip", VipProductsController);
 router.get("/featured", FeaturedProductsController);
 router.post(
   "/create",
-authGuard,
-shopAuthGuard,
+  authGuard,
+  shopAuthGuard,
   upload.any(),
   validateRequest(ProductCreationSchema),
   CreateProductController
@@ -38,5 +39,6 @@ router.put(
 );
 router.get("/search", SearchProductsController);
 router.delete("/delete", DeleteProductController);
+router.get("/:id", GetProductByIdController);
 
 export default router;

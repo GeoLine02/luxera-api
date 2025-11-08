@@ -4,12 +4,12 @@ import {
   Categories,
   Products,
   SubCategories,
+  User,
 } from "../sequelize/models/associate";
 import ProductImages from "../sequelize/models/productimages";
-import { Request } from "express";
+import { Request, Response } from "express";
 import ProductVariants from "../sequelize/models/productvariants";
 import { ProductPayload, ProductUpdatePayload } from "../types/products";
-
 
 export async function AllProductsService() {
   try {
@@ -21,6 +21,38 @@ export async function AllProductsService() {
   } catch (error) {
     console.log(error);
     throw new Error("Unable to fetch products");
+  }
+}
+
+export async function GetProductByIdService(productId: number, res: Response) {
+  try {
+    if (!productId) {
+      return res.status(400).json({
+        message: "product id is required",
+      });
+    }
+
+    const product = await Products.findOne({
+      where: { id: productId },
+      include: [
+        { model: ProductImages, as: "images" },
+        { model: ProductVariants, as: "variants" },
+        {
+          model: User,
+          as: "owner",
+          attributes: { exclude: ["password", "createdAt", "updatedAt"] },
+        },
+      ],
+    });
+
+    if (!product)
+      return res
+        .status(400)
+        .json({ message: `Product with id ${productId} doesn't exist` });
+
+    return res.status(200).json(product);
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -59,9 +91,6 @@ export async function FeaturedProductsService() {
   }
 }
 
-
-
-
 export async function CreateProductService(
   data: ProductPayload,
   req: Request,
@@ -69,7 +98,7 @@ export async function CreateProductService(
 ) {
   try {
     const shop = req.shop;
-    
+
     const {
       productName,
       productDescription,
@@ -95,7 +124,7 @@ export async function CreateProductService(
 
     // Base URL for images
     const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
- console.log(productPreviewImages)
+    console.log(productPreviewImages);
     // 1️⃣ Create the main product
     const createdProduct = await Products.create({
       product_name: productName,
@@ -114,7 +143,7 @@ export async function CreateProductService(
     if (!createdProduct) {
       throw new Error("Failed to create product");
     }
-  
+
     const images = productPreviewImages.map((image) => ({
       image: `${baseUrl}${image.filename}`,
       productId: createdProduct.id,
@@ -161,7 +190,6 @@ export async function CreateProductService(
       }
     }
 
-
     return createdProduct;
   } catch (error) {
     console.error("CreateProductService error:", error);
@@ -170,8 +198,8 @@ export async function CreateProductService(
 }
 
 export async function UpdateProductService(
-  data: ProductUpdatePayload, 
-  req: Request,  
+  data: ProductUpdatePayload,
+  req: Request,
   variantImagesMap: Record<string, Express.Multer.File[]> = {}
 ) {
   try {
@@ -211,68 +239,61 @@ export async function UpdateProductService(
 
     // ✅ Replace product preview images (not variant images)
     if (productPreviewImageUrls.length > 0) {
-
-      await ProductImages.destroy({ 
-        where: { 
+      await ProductImages.destroy({
+        where: {
           productId: data.productId,
-        } 
-      })
-     const imagesToInsert = productPreviewImageUrls.map((url)=>({
-      image: url,
-      productId: data.productId,
-     }))
+        },
+      });
+      const imagesToInsert = productPreviewImageUrls.map((url) => ({
+        image: url,
+        productId: data.productId,
+      }));
       // Insert new preview images
-      await ProductImages.bulkCreate(
-        imagesToInsert,
-      );
+      await ProductImages.bulkCreate(imagesToInsert);
     }
 
-   const variantsMetadata = data.variantsMetadata
-   if(variantsMetadata && variantsMetadata.length > 0){
-    
-    // Delete all existing variants for this product
+    const variantsMetadata = data.variantsMetadata;
+    if (variantsMetadata && variantsMetadata.length > 0) {
+      // Delete all existing variants for this product
 
-    await ProductVariants.destroy({
-      where: {
+      await ProductVariants.destroy({
+        where: {
+          product_id: data.productId,
+        },
+      });
+    }
+
+    // And recreate all variants
+    const newVariants = await ProductVariants.bulkCreate(
+      variantsMetadata.map((variant) => ({
+        variantName: variant.variantName,
+        variantPrice: variant.variantPrice,
+        variantQuantity: variant.variantQuantity,
+        variantDiscount: variant.variantDiscount,
         product_id: data.productId,
-      },
-    })
-   }
+      })),
+      { returning: true }
+    );
+    // Now lets handle variant Images. variant images and productImages are same relations
+    if (Object.keys(variantImagesMap).length > 0) {
+      // Recreate variant images. First build variantImages
+      const allVariantImages: any[] = [];
+      newVariants.forEach((newVariant, index) => {
+        const variantMeta = variantsMetadata[index];
+        const variantImages = variantImagesMap[variantMeta.index] || [];
 
-   // And recreate all variants 
-  const newVariants = await ProductVariants.bulkCreate(
-    variantsMetadata.map((variant) => ({
-      variantName: variant.variantName,
-      variantPrice: variant.variantPrice,
-      variantQuantity: variant.variantQuantity,
-      variantDiscount: variant.variantDiscount,
-      product_id: data.productId
-    })),
-    { returning: true }
-  );
-  // Now lets handle variant Images. variant images and productImages are same relations
-  if(Object.keys(variantImagesMap).length>0){
-
-// Recreate variant images. First build variantImages
-const allVariantImages:any[] = []
- newVariants.forEach((newVariant, index) => {
-      const variantMeta = variantsMetadata[index];
-      const variantImages = variantImagesMap[variantMeta.index] || [];
-
-      variantImages.forEach((image) => {
-        allVariantImages.push({
-          image: `${baseUrl}${image.filename}`,
-          productId: data.productId,
-          variant_id: newVariant.id
+        variantImages.forEach((image) => {
+          allVariantImages.push({
+            image: `${baseUrl}${image.filename}`,
+            productId: data.productId,
+            variant_id: newVariant.id,
+          });
         });
       });
-    });
       if (allVariantImages.length > 0) {
-      await ProductImages.bulkCreate(allVariantImages);
+        await ProductImages.bulkCreate(allVariantImages);
+      }
     }
-
-  }
-
 
     // ✅ Return updated product with all images
     const updatedProduct = updatedRows[0];
@@ -285,7 +306,6 @@ const allVariantImages:any[] = []
       product: updatedProduct,
       images: updatedImages,
     };
-
   } catch (error) {
     console.error(error);
     throw new Error("Unable to update product");
