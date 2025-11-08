@@ -8,6 +8,7 @@ import {
   VipProductsController,
   SearchProductsController,
   UpdateProductController,
+  GetProductByIdController,
 } from "../controller/products.controller";
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";

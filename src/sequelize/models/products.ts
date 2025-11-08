@@ -12,6 +12,7 @@ class Products extends Model {
   declare id: number;
   declare product_name: string;
   declare product_price: number;
+  declare product_description: string | null;
   declare product_rating: number;
   declare product_image: string;
   declare product_owner_id: number;
@@ -62,6 +63,10 @@ Products.init(
     product_price: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    product_description: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     product_rating: {
       type: DataTypes.INTEGER,
