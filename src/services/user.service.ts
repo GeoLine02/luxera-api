@@ -24,12 +24,27 @@ export async function RegisterUserService(
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    const newUser = await User.create({
+    const email = data.email.toLocaleLowerCase()
+    const [newUser,created] = await User.findOrCreate({
+       where: { email: email},
+       defaults:{
       full_name: data.fullName,
-      email: data.email,
+      email: email,
       password: hashedPassword,
+       }
+    
     });
+
+    if(!created){
+      console.error("Register Failed: User with this email already exists")
+     return res.status(400).json({
+      error: {
+        message: "User with this email already exists",
+        status: 400,
+        
+      },
+     })
+    }
 
     const { password, ...userWithoutPassword } = newUser.get({ plain: true });
     return res.status(201).json({
@@ -40,7 +55,10 @@ export async function RegisterUserService(
     console.error("RegisterUserService error:", error);
     return res
       .status(500)
-      .json({ error: error.message || "Failed to register user" });
+      .json({ error: {
+        message: "Failed to create User",
+        status: 500,
+      } });
   }
 }
 

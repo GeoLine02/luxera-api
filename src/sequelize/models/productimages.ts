@@ -26,6 +26,10 @@ class ProductImages
       foreignKey: "productId",
       as: "product",
     });
+    ProductImages.belongsTo(models.ProductVariants, {
+      foreignKey: "variant_id",
+      as: "variant",
+    })
   }
 }
 

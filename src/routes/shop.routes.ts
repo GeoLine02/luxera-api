@@ -19,6 +19,7 @@ const router = express.Router();
 router.post(
   "/register",
   authGuard,
+  
   validateRequest(registerShopSchema),
   ShopRegisterController
 );
