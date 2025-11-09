@@ -1,12 +1,5 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
-import User from "./user";
-
-import SubCategories from "./subcategories";
-import ProductImages from "./productimages";
-
-import Categories from "./categories";
-import productvariants from "./productvariants";
 
 class Products extends Model {
   declare id: number;

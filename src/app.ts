@@ -6,6 +6,7 @@ import userRoutes from "./routes/user.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import shopRoutes from "./routes/shop.routes";
+import sellerRoutes from "./seller/routes/seller.routes";
 import path from "path";
 import cookieParser from "cookie-parser";
 import { initAssociations } from "./sequelize/models/associate";
@@ -30,6 +31,7 @@ app.use(cookieParser());
 app.use("/user", userRoutes);
 app.use("/products", productsRoutes);
 app.use("/categories", categoriesRoutes);
+app.use("/seller",sellerRoutes)
 app.use("/shop", shopRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
