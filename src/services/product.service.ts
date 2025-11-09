@@ -4,10 +4,11 @@ import {
   Categories,
   Products,
   SubCategories,
+  User,
 } from "../sequelize/models/associate";
-
-
-
+import ProductImages from "../sequelize/models/productimages";
+import ProductVariants from "../sequelize/models/productvariants";
+import { Response } from "express";
 export async function AllProductsService() {
   try {
     sequelize.authenticate();
@@ -18,6 +19,38 @@ export async function AllProductsService() {
   } catch (error) {
     console.log(error);
     throw new Error("Unable to fetch products");
+  }
+}
+
+export async function GetProductByIdService(productId: number, res: Response) {
+  try {
+    if (!productId) {
+      return res.status(400).json({
+        message: "product id is required",
+      });
+    }
+
+    const product = await Products.findOne({
+      where: { id: productId },
+      include: [
+        { model: ProductImages, as: "images" },
+        { model: ProductVariants, as: "variants" },
+        {
+          model: User,
+          as: "owner",
+          attributes: { exclude: ["password", "createdAt", "updatedAt"] },
+        },
+      ],
+    });
+
+    if (!product)
+      return res
+        .status(400)
+        .json({ message: `Product with id ${productId} doesn't exist` });
+
+    return res.status(200).json(product);
+  } catch (error) {
+    console.log(error);
   }
 }
 

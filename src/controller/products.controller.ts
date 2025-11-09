@@ -3,14 +3,12 @@ import {
   AllProductsService,
 
   FeaturedProductsService,
+  GetProductByIdService,
   SearchProductsService,
 
-  // UpdateProductService,
+
   VipProductsService,
 } from "../services/product.service";
-import zod from "zod"
-import { ProductUpdatePayload } from "../types/products";
-
 export async function AllProductsController(req: Request, res: Response) {
   try {
     const products = await AllProductsService();
@@ -51,6 +49,7 @@ export async function FeaturedProductsController(req: Request, res: Response) {
 }
 
 
+
 export async function SearchProductsController(req: Request, res: Response) {
   try {
     const query = req.query.q as string;
@@ -63,3 +62,15 @@ export async function SearchProductsController(req: Request, res: Response) {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+export async function GetProductByIdController(req: Request, res: Response) {
+  try {
+    const productId = req.params.id;
+
+    const product = await GetProductByIdService(Number(productId), res);
+    console.log(product);
+    return product;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
