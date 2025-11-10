@@ -6,10 +6,8 @@ export const validateRequest =
   (schema: ZodType<any>) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-    console.log("incoming request body: ",req.body)
-    console.log("incoming files: ",req.files)
      schema.parse(req.body); // validate request body
-    
+
       next();
       
     } catch (err) {
@@ -18,7 +16,7 @@ export const validateRequest =
           field: issue.path.join("."), // supports nested paths
           message: issue.message,
         }));
-        console.log(err)
+        console.error("Validation",err)
         return res.status(400).json({ errors: formattedErrors });
       }
       next(err); // pass other errors to global error handler

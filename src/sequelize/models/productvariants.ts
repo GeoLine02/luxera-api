@@ -20,6 +20,10 @@ class ProductVariants extends Model {
       foreignKey: "product_id",
       as: "Product",
     });
+    ProductVariants.hasMany(models.ProductImages, {
+      foreignKey:"variant_id",
+      as:"images"
+    })
   }
 }
 
