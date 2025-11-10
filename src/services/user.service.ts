@@ -24,26 +24,24 @@ export async function RegisterUserService(
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const email = data.email.toLocaleLowerCase()
-    const [newUser,created] = await User.findOrCreate({
-       where: { email: email},
-       defaults:{
-      full_name: data.fullName,
-      email: email,
-      password: hashedPassword,
-       }
-    
+    const email = data.email.toLocaleLowerCase();
+    const [newUser, created] = await User.findOrCreate({
+      where: { email: email },
+      defaults: {
+        full_name: data.fullName,
+        email: email,
+        password: hashedPassword,
+      },
     });
 
-    if(!created){
-      console.error("Register Failed: User with this email already exists")
-     return res.status(400).json({
-      error: {
-        message: "User with this email already exists",
-        status: 400,
-        
-      },
-     })
+    if (!created) {
+      console.error("Register Failed: User with this email already exists");
+      return res.status(400).json({
+        error: {
+          message: "User with this email already exists",
+          status: 400,
+        },
+      });
     }
 
     const { password, ...userWithoutPassword } = newUser.get({ plain: true });
@@ -53,12 +51,12 @@ export async function RegisterUserService(
     });
   } catch (error: any) {
     console.error("RegisterUserService error:", error);
-    return res
-      .status(500)
-      .json({ error: {
+    return res.status(500).json({
+      error: {
         message: "Failed to create User",
         status: 500,
-      } });
+      },
+    });
   }
 }
 
@@ -71,7 +69,10 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
   try {
     const { email, password } = data;
 
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({
+      where: { email: email.toLowerCase() },
+    });
+    console.log(email);
     if (!existingUser) {
       return res.status(400).json({
         error: "User with this email does not exist",
