@@ -15,7 +15,7 @@ const sequelize = isProduction
           rejectUnauthorized: false, // Render requires this
         },
       },
-      logging: false, // disable SQL logs in production
+      logging: console.log, // disable SQL logs in production
     })
   : new Sequelize(
       process.env.DB_NAME_DEVELOPMENT!,
