@@ -3,9 +3,6 @@ import {
   GetAllCategoriesController,
   GetAllSubCategoriesController,
 } from "../controller/categories.controller";
-import { authGuard } from "../middleware/authGuard";
-import upload from "../middleware/upload";
-import { CreateProductController } from "../controller/products.controller";
 
 const router = express.Router();
 
