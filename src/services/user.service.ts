@@ -72,7 +72,6 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     const existingUser = await User.findOne({
       where: { email: email.toLowerCase() },
     });
-    console.log(email);
     if (!existingUser) {
       return res.status(400).json({
         error: "User with this email does not exist",
@@ -101,14 +100,14 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 15 * 60 * 1000, // 15 min
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
