@@ -23,6 +23,11 @@ app.use(
   })
 );
 
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error(err.stack);
+  res.status(500).send(err.message);
+});
+
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data
 app.use(cookieParser());
