@@ -1,4 +1,4 @@
-interface ProductPayload {
+interface CreateProductPayload {
   productCategoryId: number;
   subCategoryId: number;
   productDescription: string;
@@ -9,8 +9,10 @@ interface ProductPayload {
   productPrice: number;
   variantsMetadata: VariantsMetadata[];
   userId: number;
-
+  variantImagesMap?: Record<string, Express.Multer.File[]>;
+  
 }
+
 interface VariantsMetadata {
   index: number;
   variantName: string;
@@ -20,9 +22,10 @@ interface VariantsMetadata {
   product_id: number;
 }
 
-interface ProductUpdatePayload extends ProductPayload {
-    productStatus: number;
+interface ProductUpdatePayload extends CreateProductPayload {
+    productStatus: string;
     productId:number;
 }
 
-export { ProductPayload, VariantsMetadata ,ProductUpdatePayload};
+
+export { CreateProductPayload, VariantsMetadata ,ProductUpdatePayload};

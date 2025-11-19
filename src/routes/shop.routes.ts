@@ -19,11 +19,10 @@ const router = express.Router();
 router.post(
   "/register",
   authGuard,
-  
   validateRequest(registerShopSchema),
   ShopRegisterController
 );
-router.post("/login", validateRequest(loginShopSchema), ShopLoginController);
+router.post("/login", authGuard, validateRequest(loginShopSchema), ShopLoginController);
 router.get("/refresh", RefreshShopAccessTokenController);
 router.get("/", GetShopByTokenController);
 router.delete("/", ShopDeleteController);

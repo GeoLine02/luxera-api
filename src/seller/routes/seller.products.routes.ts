@@ -8,7 +8,7 @@ import { CreateProductController, DeleteProductController, getSellerProductsCont
 const router = express.Router();
 router.get("/",
   authGuard,
-shopAuthGuard,
+  shopAuthGuard,
   getSellerProductsController)
 router.post(
   "/create",
@@ -28,6 +28,11 @@ router.put(
   UpdateProductController
 );
 
-router.delete("/delete", DeleteProductController);
+
+router.delete("/", 
+    authGuard,
+  shopAuthGuard,
+  DeleteProductController);
+
 
 export default router;

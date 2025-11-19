@@ -10,7 +10,7 @@ export async function ShopRegisterController(req: Request, res: Response) {
   try {
     const body = req.body;
 
-    const registeredShop = await RegisterShopService(body);
+    const registeredShop = await RegisterShopService(body,res);
 
     if (registeredShop) {
       res.cookie("shopAccessToken", registeredShop.shopAccessToken, {
@@ -27,12 +27,17 @@ export async function ShopRegisterController(req: Request, res: Response) {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-      return res.status(201).json(registeredShop);
+      return res.status(201).json({
+        success: true,
+        message: "Shop registered successfully",
+        data: registeredShop,
+      });
     }
   } catch (error: any) {
     console.log(error);
     return res.status(500).json({
-      error: error.message,
+      success: false,
+      message: error.message,
     });
   }
 }
@@ -57,11 +62,17 @@ export async function ShopLoginController(req: Request, res: Response) {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-      return res.status(203).json(loggedInShop);
+
+      return res.status(203).json({
+        success: true,
+        message: "Shop logged in successfully",
+        data: loggedInShop,
+      });
     }
   } catch (error: any) {
     return res.status(500).json({
-      error: error.message,
+      success: false,
+      message: error.message,
     });
   }
 }
@@ -77,18 +88,23 @@ export async function RefreshShopAccessTokenController(
     const refreshedToken = await RefreshAccessToken(refreshToken);
 
     if (!refreshedToken) {
-      return res
-        .status(401)
-        .json({ error: "Expired or missing refresh token" });
+      return res.status(401).json({
+        success: false,
+        message: "Expired or missing refresh token",
+      });
     }
 
     return res.status(200).json({
-      message: "Access token refreshed",
-      shopAccessToken: refreshedToken,
+      success: true,
+      message: "Access token refreshed successfully",
+      data: { shopAccessToken: refreshedToken },
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 }
 
@@ -98,9 +114,11 @@ export async function GetShopByTokenController(req: Request, res: Response) {
 
     const tokens = headers?.split(" ");
     console.log(tokens);
+    
   } catch (error: any) {
     return res.status(500).json({
-      error: error.message,
+      success: false,
+      message: error.message,
     });
   }
 }
@@ -118,7 +136,8 @@ export async function ShopDeleteController(req: Request, res: Response) {
     return deletedShop;
   } catch (error: any) {
     return res.status(500).json({
-      error: error.message,
+      success: false,
+      message: error.message,
     });
   }
 }

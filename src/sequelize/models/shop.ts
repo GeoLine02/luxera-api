@@ -1,6 +1,7 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
 import User from "./user";
+import { TypeModels } from "./associate";
 
 class Shop extends Model {
   declare id: number;
@@ -8,7 +9,7 @@ class Shop extends Model {
   declare password: string;
   declare owner_id: number;
 
-  static associate(models: any) {
+  static associate(models: TypeModels) {
     Shop.belongsTo(models.User, { foreignKey: "owner_id", as: "owner" });
 
     Shop.hasMany(models.Products, {

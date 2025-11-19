@@ -1,8 +1,12 @@
 import { z } from "zod";
-
+const PRODUCT_STATUSES = ["basic", "vip", "active"] 
 // ✅ Reusable variant schema with proper validation
 const ProductVariantSchema = z.object({
-  id: z.number().int().positive().optional(), // For updates
+  id: z.string().transform(Number).pipe(
+    z.number()
+      .int("Variant ID must be an integer")
+      .positive("Variant ID must be a positive number")
+  ).optional(),  
   index: z.string().optional(), // For matching with uploaded images
   variantName: z
     .string()
@@ -89,6 +93,7 @@ const ProductCreationSchema = z.object({
         .max(100, "Product discount must not exceed 100")
         .finite("Product discount must be a valid number")
     ),
+
   userId: z
     .string()
     .transform(Number)
@@ -111,10 +116,8 @@ const UpdateProductSchema = z.object({
         .int("Product ID must be an integer")
         .positive("Product ID must be a positive number")
     ),
-  productStatus: z
-    .string()
-    .min(1, "Product status is required")
-    .max(50, "Product status must not exceed 50 characters"),
+    
+productStatus: z.enum(PRODUCT_STATUSES, { message: "Product status must be one of: " + PRODUCT_STATUSES.join(", ") }),
   productName: z
     .string()
     .min(1, "Product name is required")

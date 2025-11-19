@@ -14,7 +14,6 @@ export async function AllProductsService() {
     sequelize.authenticate();
 
     const products = await Products.findAll();
-
     return products;
   } catch (error) {
     console.log(error);
@@ -26,10 +25,12 @@ export async function GetProductByIdService(productId: number, res: Response) {
   try {
     if (!productId) {
       return res.status(400).json({
-        message: "product id is required",
+        success: false,
+        message: "Invalid product ID",
       });
     }
 
+ 
     const product = await Products.findOne({
       where: { id: productId },
       include: [
@@ -43,14 +44,21 @@ export async function GetProductByIdService(productId: number, res: Response) {
       ],
     });
 
-    if (!product)
-      return res
-        .status(400)
-        .json({ message: `Product with id ${productId} doesn't exist` });
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: `Product with ID ${productId} not found`,
+      });
+    }
 
-    return res.status(200).json(product);
+    return res.status(200).json({
+      success: true,
+      message: "Product fetched successfully",
+      data: product,
+    });
   } catch (error) {
     console.log(error);
+    throw new Error("Unable to fetch product by ID");
   }
 }
 
@@ -98,10 +106,10 @@ export async function SearchProductsService(query: string) {
             product_name: { [Op.iLike]: `%${query}%` },
           },
           {
-            "$subCategory.subCategoryName$": { [Op.iLike]: `%${query}%` },
+            "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
           },
           {
-            "$subCategory.category.categoryName$": { [Op.iLike]: `%${query}%` },
+            "$subCategory.category.category_name$": { [Op.iLike]: `%${query}%` },
           },
         ],
       },
@@ -109,12 +117,12 @@ export async function SearchProductsService(query: string) {
         {
           model: SubCategories,
           as: "subCategory",
-          attributes: ["id", "subCategoryName"],
+          attributes: ["id", "sub_category_name"],
           include: [
             {
               model: Categories,
               as: "category",
-              attributes: ["id", "categoryName"],
+              attributes: ["id", "category_name"],
             },
           ],
         },

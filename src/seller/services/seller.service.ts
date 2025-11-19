@@ -1,14 +1,13 @@
-import { Op } from "sequelize";
-import sequelize from "../../db";
+
 import Categories from "../../sequelize/models/categories";
 import ProductImages from "../../sequelize/models/productimages";
 import Products from "../../sequelize/models/products";
 import ProductVariants from "../../sequelize/models/productvariants";
 import SubCategories from "../../sequelize/models/subcategories";
-import { ProductPayload, ProductUpdatePayload } from "../../types/products";
+import {  CreateProductPayload, ProductUpdatePayload } from "../../types/products";
 import { Request } from "express";
 export async function CreateProductService(
-  data: ProductPayload,
+  data: CreateProductPayload,
   req: Request,
   variantImagesMap: Record<string, Express.Multer.File[]> = {}
 ) {
@@ -62,7 +61,7 @@ export async function CreateProductService(
   
     const images = productPreviewImages.map((image) => ({
       image: `${baseUrl}${image.filename}`,
-      productId: createdProduct.id,
+      product_id: createdProduct.id,
     }));
     await ProductImages.bulkCreate(images);
 
@@ -93,7 +92,7 @@ export async function CreateProductService(
           variantImages.forEach((image) => {
             allVariantImages.push({
               image: `${baseUrl}${image.filename}`,
-              productId: createdProduct.id,
+              product_id: createdProduct.id,
               variant_id: createdVariant.id, // Use the actual variant ID from database
             });
           });
@@ -159,12 +158,12 @@ export async function UpdateProductService(
 
       await ProductImages.destroy({ 
         where: { 
-          productId: data.productId,
+          product_id: data.productId,
         } 
       })
      const imagesToInsert = productPreviewImageUrls.map((url)=>({
       image: url,
-      productId: data.productId,
+      product_id: data.productId,
      }))
       // Insert new preview images
       await ProductImages.bulkCreate(
@@ -222,7 +221,7 @@ const allVariantImages:any[] = []
     // ✅ Return updated product with all images
     const updatedProduct = updatedRows[0];
     const updatedImages = await ProductImages.findAll({
-      where: { productId: data.productId },
+      where: { product_id: data.productId },
     });
 
     return {

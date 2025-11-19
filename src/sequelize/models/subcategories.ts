@@ -1,15 +1,24 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
+import { TypeModels } from "./associate";
+import { InferAttributes } from "sequelize";
+interface SubCategoryAttributes {
+  id: number;
+  sub_category_name: string;
+  sub_category_image: string;
+  category_id: number;
 
-class SubCategories extends Model {
+}
+
+class SubCategories extends Model implements SubCategoryAttributes {
   declare id: number;
-  declare subCategoryName: string;
-  declare subCategoryImage: string;
-  declare categoryId: number;
-
-  static associate(models: any) {  // ← Accept models parameter
+  declare sub_category_name: string;
+  declare sub_category_image: string;
+  declare category_id: number;
+ 
+  static associate(models: TypeModels) {  // ← Accept models parameter
     SubCategories.belongsTo(models.Categories, {
-      foreignKey: "categoryId",
+      foreignKey: "category_id",
       as: "category",
     });
     
@@ -23,9 +32,9 @@ class SubCategories extends Model {
 SubCategories.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    subCategoryName: { type: DataTypes.STRING, allowNull: false },
-    subCategoryImage: { type: DataTypes.STRING, allowNull: true },
-    categoryId: {
+    sub_category_name: { type: DataTypes.STRING, allowNull: false },
+    sub_category_image: { type: DataTypes.STRING, allowNull: true },
+    category_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: "Categories", key: "id" },

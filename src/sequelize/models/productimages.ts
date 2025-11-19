@@ -1,11 +1,12 @@
 import { Model, DataTypes, Optional } from "sequelize";
 import Products from "./products";
 import sequelize from "../../db";
+import { TypeModels } from "./associate";
 
 interface ProductImageAttributes {
   id: number;
   image: string;
-  productId: number;
+  product_id: number;
   variant_id: number | null;
 }
 
@@ -18,12 +19,12 @@ class ProductImages
 {
   declare id: number;
   declare image: string;
-  declare productId: number;
+  declare product_id: number;
   declare variant_id: number | null;
 
-  static associate(models:any) {
+  static associate(models:TypeModels) {
     ProductImages.belongsTo(models.Products, {
-      foreignKey: "productId",
+      foreignKey: "product_id",
       as: "product",
     });
     ProductImages.belongsTo(models.ProductVariants, {
@@ -44,7 +45,7 @@ ProductImages.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    productId: {
+    product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -68,6 +69,7 @@ ProductImages.init(
     modelName: "ProductImages",
     tableName: "ProductImages",
     timestamps: true,
+   
   }
 );
 

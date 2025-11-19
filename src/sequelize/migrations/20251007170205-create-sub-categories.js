@@ -9,10 +9,10 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      subCategoryName: {
+      sub_category_name: {
         type: Sequelize.STRING,
       },
-      subCategoryImage: {
+      sub_category_image: {
         type: Sequelize.STRING,
       },
       createdAt: {

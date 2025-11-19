@@ -1,24 +1,26 @@
 
 import { Request, Response } from "express";
 import { CreateProductService, DeleteProductService, GetSellerProductsService, UpdateProductService } from "../services/seller.products.service";
-import { ProductUpdatePayload } from "../../types/products";
+import { CreateProductPayload, ProductUpdatePayload } from "../../types/products";
+import { success } from "zod";
 export async function getSellerProductsController(req: Request, res: Response) {
     try{
    const sellertProducts = await GetSellerProductsService(req);
-    res.status(200).json({message:"Successfully fetched seller products",data:sellertProducts})
-    }catch(error){
+    return res.status(200).json({success:true,message:"Seller products fetched successfully",data:sellertProducts})
+    }catch(error:any){
         console.log(error);
         return res.status(500).json({
             success:false,
-            message:"GetSelerProductsController error"})
+            message:error.message})
     }
- 
-    
+
 }
 export async function CreateProductController(req: Request, res: Response) {
   try {
     const body = req.body;
+    
     const files = req.files as Express.Multer.File[];
+    console.log("Files received in controller:", files);
     // Extract product preview images
     const productPreviewImages = files.filter(
       (file) => file.fieldname === "productPreviewImages"
@@ -41,30 +43,36 @@ export async function CreateProductController(req: Request, res: Response) {
         variantImagesMap[variantIndex].push(file);
       }
     });
+  const parsedBody = {
+productCategoryId: Number( body.productCategoryId),
+subCategoryId: Number(body.subCategoryId),
+productDescription: body.productDescription,
+productQuantity: Number( body.productQuantity),
+productDiscount: Number( body.productDiscount),
+productName: body.productName,
+productPrice: Number( body.productPrice),
+variantsMetadata: variantsMetadata,
+productPreviewImages: productPreviewImages,
+userId:Number( body.userId),
+variantImagesMap: variantImagesMap
+  } as CreateProductPayload;
 
-
-  
     const createdProduct = await CreateProductService(
-      {
-...body,
-        productPreviewImages,
-        variantsMetadata,
-      },
- 
-      
+    parsedBody  ,
       req,
-      variantImagesMap
+      res
     );
 
     return res.status(201).json({
       success: true,
-      product: createdProduct,
+      message: "Product created successfully",
+      data: createdProduct,
     });
   } catch (error: any) {
     console.error("CreateProductController error:", error);
     return res.status(500).json({
       success: false,
-      error: error.message,
+      message: error.message,
     });
   }
 }
@@ -88,36 +96,52 @@ export async function UpdateProductController(req: Request, res: Response) {
       }
     });
    
-    const data = {
-      ...body,
-      productPreviewImages: files,
-      variantsMetadata: variantMetadata,
+    const parsedData = {
       
+      productCategoryId: Number(body.productCategoryId),
+      subCategoryId: Number(body.subCategoryId),
+      productDescription: body.productDescription,
+      productQuantity: Number(body.productQuantity),
+      productDiscount: Number(body.productDiscount),
+      productName: body.productName,
+      productPrice: Number(body.productPrice),
+      userId: Number(body.userId),
+      productId: Number(body.productId),
+      productStatus: body.productStatus,
+      productPreviewImages: files,
+     variantsMetadata: variantMetadata,
+      variantImagesMap:variantImagesMap
     } as ProductUpdatePayload;
     
-  
+    const updatedProducts = await UpdateProductService(parsedData, req,res);
 
-    const updatedProducts = await UpdateProductService(data, req,variantImagesMap);
-
-    return res.status(201).json(updatedProducts);
+    return res.status(201).json({
+      success: true,
+      message: "Product updated successfully",
+      data: updatedProducts,
+    });
   } catch (error: any) {
     return res.status(500).json({
-      error: error.message,
+      success: false,
+      message: error.message,
     });
   }
 }
 
 export async function DeleteProductController(req: Request, res: Response) {
   try {
-    const productId = req.query.productId as string;
+    const productId = req.query.q as string;
 
-    const deletedProduct = await DeleteProductService(productId);
-
-    return res.status(204).json(deletedProduct);
+    const deletedProduct = await DeleteProductService(productId,res);
+    return res.status(204).json({
+      success:true,
+      message:"Product deleted successfully",
+      data:deletedProduct
+    });
   } catch (error: any) {
     return res.status(500).json({
-      error: error.message,
-      
+      success: false,
+      message: error.message
     });
   }
 }

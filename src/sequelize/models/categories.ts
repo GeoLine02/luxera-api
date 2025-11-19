@@ -1,16 +1,23 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
-import Products from "./products";
-import SubCategories from "./subcategories";
+import { TypeModels } from "./associate";
 
-class Categories extends Model {
+interface CategoryAttributes {
+  id: number;
+  category_name: string;
+  category_image: string;
+}
+
+class Categories extends Model implements CategoryAttributes {
+
   declare id: number;
-  declare categoryName: string;
-  declare categoryImage: string;
+  declare category_name: string;
+  declare category_image: string;
 
-  static associate(models: any) {
+  
+  static associate(models: TypeModels) {
     Categories.hasMany(models.SubCategories, {
-      foreignKey: "categoryId",
+      foreignKey: "category_id",
       as: "subCategories",
     });
   }
@@ -19,8 +26,8 @@ class Categories extends Model {
 Categories.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    categoryName: { type: DataTypes.STRING, allowNull: false, unique: true },
-    categoryImage: { type: DataTypes.STRING, allowNull: true },
+    category_name: { type: DataTypes.STRING, allowNull: false, unique: true },
+    category_image: { type: DataTypes.STRING, allowNull: true },
   },
   {
     sequelize,
