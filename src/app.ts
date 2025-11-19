@@ -6,7 +6,7 @@ import userRoutes from "./routes/user.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import shopRoutes from "./routes/shop.routes";
-import sellerRoutes from "./seller/routes/seller.routes";
+
 import cartRoutes from "./routes/cart.routes";
 import path from "path";
 import cookieParser from "cookie-parser";
@@ -26,6 +26,11 @@ app.use(
   })
 );
 
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error(err.stack);
+  res.status(500).send(err.message);
+});
+
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data
 app.use(cookieParser());
@@ -34,7 +39,6 @@ app.use(cookieParser());
 app.use("/user", userRoutes);
 app.use("/products", productsRoutes);
 app.use("/categories", categoriesRoutes);
-app.use("/seller",sellerRoutes)
 app.use("/shop", shopRoutes);
 app.use("/cart",cartRoutes)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -45,7 +49,7 @@ app.use("/api-docs", swaggerRouter);
 (async () => {
   try {
     await sequelize.authenticate();
-    initAssociations()
+    initAssociations();
     console.log("Database connected successfully!");
   } catch (error) {
     console.error("Unable to connect to the database:", error);

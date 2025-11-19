@@ -33,6 +33,14 @@ export async function RegisterUserService(
         email: email,
         password: hashedPassword,
       },
+    const email = data.email.toLocaleLowerCase();
+    const [newUser, created] = await User.findOrCreate({
+      where: { email: email },
+      defaults: {
+        full_name: data.fullName,
+        email: email,
+        password: hashedPassword,
+      },
     });
 
     if (!created) {
@@ -92,7 +100,9 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
   try {
     const { email, password } = data;
 
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({
+      where: { email: email.toLowerCase() },
+    });
     if (!existingUser) {
       return res.status(400).json({
         success: false,
@@ -123,14 +133,14 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 15 * 60 * 1000, // 15 min
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 

@@ -1,28 +1,18 @@
 import express from "express";
-import {
-  AllProductsController,
-  FeaturedProductsController,
-  VipProductsController,
-  SearchProductsController,
-  GetProductByIdController,
-} from "../controller/products.controller";
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
 import { validateRequest } from "../middleware/validateRequest";
+import { ProductCreationSchema } from "../validators/productValidators";
 import {
   CreateProductController,
-  UpdateProductController,
   DeleteProductController,
+  getSellerProductsController,
+  UpdateProductController,
 } from "../seller/controller/seller.products.controller";
-import { ProductCreationSchema } from "../validators/productValidators";
 
 const router = express.Router();
 
-router.get("/", AllProductsController);
-router.get("/vip", VipProductsController);
-router.get("/featured", FeaturedProductsController);
-router.get("/search", SearchProductsController);
-router.get("/:id", GetProductByIdController);
+router.get("/", authGuard, shopAuthGuard, getSellerProductsController);
 router.post(
   "/create",
   authGuard,
