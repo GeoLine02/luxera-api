@@ -16,6 +16,7 @@ export async function RegisterUserService(
   res: Response
 ) {
   try {
+    sequelize.authenticate()
     const existingUser = await User.findOne({ where: { email: data.email } });
     if (existingUser) {
       return res.status(400).json({
@@ -32,17 +33,8 @@ export async function RegisterUserService(
         full_name: data.fullName,
         email: email,
         password: hashedPassword,
-      },
-    const email = data.email.toLocaleLowerCase();
-    const [newUser, created] = await User.findOrCreate({
-      where: { email: email },
-      defaults: {
-        full_name: data.fullName,
-        email: email,
-        password: hashedPassword,
-      },
-    });
-
+      }})
+  
     if (!created) {
       console.error(
         "Register Failed: User with this email already exists"
