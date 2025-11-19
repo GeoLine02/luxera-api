@@ -11,7 +11,7 @@ interface ShopRegisterFieldsType {
   userId: string;
 }
 
-export async function RegisterShopService(data: ShopRegisterFieldsType) {
+export async function RegisterShopService(data: ShopRegisterFieldsType,res:Response) {
   try {
     sequelize.authenticate();
 
@@ -24,7 +24,7 @@ export async function RegisterShopService(data: ShopRegisterFieldsType) {
     });
 
     if (existedShop) {
-      throw new Error("shop with this name already exists");
+    throw new Error("Shop with this name already exists");
     }
 
     const registeredShop = await Shop.create({
@@ -40,9 +40,9 @@ export async function RegisterShopService(data: ShopRegisterFieldsType) {
       shopAccessToken,
       shopRefreshToken,
     };
-  } catch (error) {
+  } catch (error:any) {
     console.log(error);
-    throw new Error("Unable to register shop");
+    throw new  Error(error.message);
   }
 }
 
@@ -142,13 +142,15 @@ export async function ShopDeleteService(
   try {
     if (!data.userId) {
       return res.status(400).json({
-        message: "user id is required",
+        success: false,
+        message: "User id is required",
       });
     }
 
     if (!data.password || !data.password.length) {
-      res.status(400).json({
-        message: "Passowrd is required",
+      return res.status(400).json({
+        success: false,
+        message: "Password is required",
       });
     }
 
@@ -159,7 +161,8 @@ export async function ShopDeleteService(
     });
 
     if (!existingUser) {
-      res.status(400).json({
+      return res.status(400).json({
+        success: false,
         message: "User does not exist",
       });
     }
@@ -171,6 +174,7 @@ export async function ShopDeleteService(
 
     if (!isCorrectpassword) {
       return res.status(400).json({
+        success: false,
         message: "Incorrect password",
       });
     }
@@ -183,6 +187,7 @@ export async function ShopDeleteService(
 
     if (!existingShop) {
       return res.status(400).json({
+        success: false,
         message: "Shop does not exist",
       });
     }
@@ -207,11 +212,16 @@ export async function ShopDeleteService(
       });
 
       return res.status(200).json({
-        message: "Shop deleted successfuly",
+        success: true,
+        message: "Shop deleted successfully",
+        data: deletedShop,
       });
     }
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to delete shop");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to delete shop",
+    });
   }
 }

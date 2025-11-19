@@ -14,6 +14,7 @@ router.post(
   validateRequest(registerUserSchema),
   UserRegisterController
 );
+
 router.post("/login", UserLoginController);
 router.get("/me", userByTokenController);
 router.get("/refresh", UserTokenRefreshController);

@@ -16,11 +16,13 @@ export async function RegisterUserService(
   res: Response
 ) {
   try {
+    sequelize.authenticate()
     const existingUser = await User.findOne({ where: { email: data.email } });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "User with this email already exists", status: 400 });
+      return res.status(400).json({
+        success: false,
+        message: "User with this email already exists",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -31,31 +33,52 @@ export async function RegisterUserService(
         full_name: data.fullName,
         email: email,
         password: hashedPassword,
-      },
-    });
-
+      }})
+  
     if (!created) {
-      console.error("Register Failed: User with this email already exists");
+      console.error(
+        "Register Failed: User with this email already exists"
+      );
       return res.status(400).json({
-        error: {
-          message: "User with this email already exists",
-          status: 400,
-        },
+        success: false,
+        message: "User with this email already exists",
       });
     }
 
     const { password, ...userWithoutPassword } = newUser.get({ plain: true });
+    const payload = {
+      id: newUser.id,
+      email: newUser.email,
+    };
+     const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000, // 15 min
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
     return res.status(201).json({
+      success: true,
       message: "User registered successfully",
-      user: userWithoutPassword,
+      data: {
+        user: userWithoutPassword,
+        accessToken,
+        refreshToken,
+      }
     });
   } catch (error: any) {
     console.error("RegisterUserService error:", error);
     return res.status(500).json({
-      error: {
-        message: "Failed to create User",
-        status: 500,
-      },
+      success: false,
+      message: "Failed to create user",
     });
   }
 }
@@ -74,7 +97,8 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     });
     if (!existingUser) {
       return res.status(400).json({
-        error: "User with this email does not exist",
+        success: false,
+        message: "User with this email does not exist",
       });
     }
 
@@ -85,7 +109,8 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
 
     if (!isCorrectPassword) {
       return res.status(400).json({
-        error: "Email or password is not correct",
+        success: false,
+        message: "Email or password is not correct",
       });
     }
 
@@ -112,14 +137,17 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     });
 
     return res.status(203).json({
+      success: true,
       message: "Login successful",
-      status: 203,
-      accessToken,
-      refreshToken,
+      data: {
+        accessToken,
+        refreshToken,
+      },
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
+      success: false,
       message: "Unable to login",
     });
   }
@@ -131,19 +159,25 @@ export async function UserTokenRefreshService(
 ) {
   try {
     if (!refreshToken) {
-      return res.json(null);
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token required",
+      });
     }
 
-    console.log(refreshToken);
     // Verify refresh token
     const decoded = jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET!
     ) as any;
+
     // Find user
     const user = await User.findOne({ where: { id: decoded.id } });
     if (!user) {
-      return res.status(401).json({ error: "Invalid refresh token" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
     }
 
     // Generate new access token
@@ -161,12 +195,17 @@ export async function UserTokenRefreshService(
       path: "/",
     });
 
-    return res
-      .status(200)
-      .json({ message: "Access token refreshed", accessToken: newAccessToken });
+    return res.status(200).json({
+      success: true,
+      message: "Access token refreshed",
+      data: { accessToken: newAccessToken },
+    });
   } catch (error: any) {
     console.log(error);
-    return res.status(401).json({ error: "Invalid refresh token" });
+    return res.status(401).json({
+      success: false,
+      message: "Invalid refresh token",
+    });
   }
 }
 
@@ -186,6 +225,7 @@ export async function UserByTokenService(accessToken: string, res: Response) {
       // Differentiate between expired and invalid tokens
       if (err.name === "TokenExpiredError") {
         return res.status(401).json({
+          success: false,
           message: "Access token expired",
           code: "TOKEN_EXPIRED",
         });
@@ -204,16 +244,25 @@ export async function UserByTokenService(accessToken: string, res: Response) {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     // Return user data
-    return res.status(200).json(user);
+    return res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      data: user,
+    });
   } catch (error: any) {
     console.error("Error in UserByTokenService:", error);
     return res.status(500).json({
-      message: "Internal server error",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      success: false,
+
+      message: process.env.NODE_ENV === "development" ? error.message : "Internal server error",
+    
     });
   }
 }

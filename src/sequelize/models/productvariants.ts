@@ -3,18 +3,19 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../db";
 import Products from "./products";
+import { TypeModels } from "./associate";
 
 class ProductVariants extends Model {
   declare id: number;
-  declare variantName: string;
-  declare variantPrice: number;
-  declare variantQuantity: number;
-  declare variantDiscount: number;
+  declare variant_name: string;
+  declare variant_price: number;
+  declare variant_quantity: number;
+  declare variant_discount: number;
   declare product_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
-  static associate(models:any) {
+  static associate(models:TypeModels) {
     // Each variant belongs to one product
     ProductVariants.belongsTo(models.Products, {
       foreignKey: "product_id",
@@ -23,6 +24,10 @@ class ProductVariants extends Model {
     ProductVariants.hasMany(models.ProductImages, {
       foreignKey:"variant_id",
       as:"images"
+    })
+    ProductVariants.hasMany(models.Carts,{
+      foreignKey:"product_variant_id",
+      as:"cartItems"
     })
   }
 }
@@ -34,21 +39,21 @@ ProductVariants.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    variantName: {
+    variant_name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    variantPrice: {
+    variant_price: {
       type: DataTypes.DECIMAL,
       allowNull: false,
       defaultValue: 0,
     },
-    variantQuantity: {
+    variant_quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
     },
-    variantDiscount: {
+    variant_discount: {
       type: DataTypes.DECIMAL,
       allowNull: false,
       defaultValue: 0,

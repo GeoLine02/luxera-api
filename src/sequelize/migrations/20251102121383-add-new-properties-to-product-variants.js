@@ -4,19 +4,19 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     // Add new columns to ProductVariants
-    await queryInterface.addColumn("ProductVariants", "variantPrice", {
+    await queryInterface.addColumn("ProductVariants", "variant_price", {
       type: Sequelize.DECIMAL,
       allowNull: false,
       defaultValue: 0,
     });
 
-    await queryInterface.addColumn("ProductVariants", "variantQuantity", {
+    await queryInterface.addColumn("ProductVariants", "variant_quantity", {
       type: Sequelize.INTEGER,
       allowNull: false,
       defaultValue: 1,
     });
 
-    await queryInterface.addColumn("ProductVariants", "variantDiscount", {
+    await queryInterface.addColumn("ProductVariants", "variant_discount", {
       type: Sequelize.DECIMAL,
       allowNull: false,
       defaultValue: 0,
@@ -25,19 +25,19 @@ module.exports = {
     await queryInterface.renameColumn(
       "ProductVariants",
       "product_variant",
-      "variantName"
+      "variant_name"
     );
   },
 
   async down(queryInterface, Sequelize) {
     // Revert changes
-    await queryInterface.removeColumn("ProductVariants", "variantPrice");
-    await queryInterface.removeColumn("ProductVariants", "variantQuantity");
-    await queryInterface.removeColumn("ProductVariants", "variantDiscount");
+    await queryInterface.removeColumn("ProductVariants", "variant_price");
+    await queryInterface.removeColumn("ProductVariants", "variant_quantity");
+    await queryInterface.removeColumn("ProductVariants", "variant_discount");
 
     await queryInterface.renameColumn(
       "ProductVariants",
-      "variantName",
+      "variant_name",
       "product_variant"
     );
   },

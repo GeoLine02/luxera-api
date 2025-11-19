@@ -9,11 +9,11 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      categoryName: {
+      category_name: {
         type: Sequelize.STRING,
         unique: true,
       },
-      categoryImage: {
+      category_image: {
         type: Sequelize.STRING,
       },
       createdAt: {
@@ -26,6 +26,7 @@ module.exports = {
       },
     });
   },
+  
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable("Categories");
   },

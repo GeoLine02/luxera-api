@@ -6,12 +6,14 @@ import ProductImages from "../../sequelize/models/productimages";
 import Products from "../../sequelize/models/products";
 import ProductVariants from "../../sequelize/models/productvariants";
 import SubCategories from "../../sequelize/models/subcategories";
-import { ProductPayload, ProductUpdatePayload } from "../../types/products";
-import { Request } from "express";
+import { CreateProductPayload,  ProductUpdatePayload } from "../../types/products";
+import { Request,Response } from "express";
+import { th } from "zod/v4/locales";
 export async function CreateProductService(
-  data: ProductPayload,
+  data:CreateProductPayload,
   req: Request,
-  variantImagesMap: Record<string, Express.Multer.File[]> = {}
+  res:Response
+
 ) {
   try {
     const shop = req.shop;
@@ -26,17 +28,23 @@ export async function CreateProductService(
       productPreviewImages,
       productDiscount,
       variantsMetadata,
+      variantImagesMap = {},
+      
       userId,
     } = data;
 
     // Validate category & subcategory
     const category = await Categories.findByPk(productCategoryId);
+    
     const subCategory = await SubCategories.findOne({
-      where: { id: subCategoryId, categoryId: productCategoryId },
+      where: { id: subCategoryId, category_id: productCategoryId },
     });
 
     if (!category || !subCategory) {
-      throw new Error("Invalid category or subcategory");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category or subcategory",
+      });
     }
 
     // Base URL for images
@@ -55,24 +63,22 @@ export async function CreateProductService(
       product_owner_id: userId,
       product_image: `${baseUrl}${productPreviewImages[0].filename}`,
       shop_id: shop!.id,
+    
     });
 
-    if (!createdProduct) {
-      throw new Error("Failed to create product");
-    }
-  
+
     const images = productPreviewImages.map((image) => ({
       image: `${baseUrl}${image.filename}`,
-      productId: createdProduct.id,
+      product_id: createdProduct.id,
     }));
     await ProductImages.bulkCreate(images);
 
     if (variantsMetadata && variantsMetadata.length > 0) {
       const variantsToCreate = variantsMetadata.map((variant) => ({
-        variantName: variant.variantName,
-        variantPrice: variant.variantPrice,
-        variantQuantity: variant.variantQuantity,
-        variantDiscount: variant.variantDiscount,
+        variant_name: variant.variantName,
+        variant_price: variant.variantPrice,
+        variant_quantity: variant.variantQuantity,
+        variant_discount: variant.variantDiscount,
         product_id: createdProduct.id,
       }));
 
@@ -94,7 +100,7 @@ export async function CreateProductService(
           variantImages.forEach((image) => {
             allVariantImages.push({
               image: `${baseUrl}${image.filename}`,
-              productId: createdProduct.id,
+              product_id: createdVariant.product_id,
               variant_id: createdVariant.id, // Use the actual variant ID from database
             });
           });
@@ -105,10 +111,26 @@ export async function CreateProductService(
         await ProductImages.bulkCreate(allVariantImages);
         console.log(`Inserted ${allVariantImages.length} variant images`);
       }
+       return {
+      product: createdProduct,
+      images,
+      variants: {
+        data:createdVariants,
+        allVariantImages,
+      },
+
+    };
     }
+  return {
+    product: createdProduct,
+    images,
+    variants: {
+      data: [],
+      allVariantImages: [],
+    },
+  };
 
-
-    return createdProduct;
+   
   } catch (error) {
     console.error("CreateProductService error:", error);
     throw new Error("Unable to create product");
@@ -117,8 +139,9 @@ export async function CreateProductService(
 
 export async function UpdateProductService(
   data: ProductUpdatePayload, 
-  req: Request,  
-  variantImagesMap: Record<string, Express.Multer.File[]> = {}
+  req: Request,
+  res:Response  
+  
 ) {
   try {
     const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
@@ -126,16 +149,30 @@ export async function UpdateProductService(
     const productPreviewImageUrls = data.productPreviewImages.map(
       (file) => `${baseUrl}${file.filename}`
     );
+    const {
+productCategoryId,
+subCategoryId,
+productDescription,
+productPrice,
+productStatus,
+productName,
+productId,
+productPreviewImages,
+userId,
+variantsMetadata,
+variantImagesMap = {},
+    } = data
 
     const fieldsToUpdate = {
-      product_name: data.productName,
-      product_description: data.productDescription,
-      product_price: data.productPrice,
-      product_status: data.productStatus,
-      product_category_id: data.productCategoryId,
-      sub_category_id: data.subCategoryId,
-      product_image: `${baseUrl}${data.productPreviewImages[0].filename}`,
-      user_id: data.userId,
+      product_name: productName,
+      product_description: productDescription,
+      product_price: productPrice,
+      product_status: productStatus,
+      product_category_id: productCategoryId,
+      sub_category_id: subCategoryId,
+      product_image: `${baseUrl}${productPreviewImages[0].filename}`,
+      user_id: userId,
+      
     };
 
     // Remove undefined fields
@@ -147,12 +184,15 @@ export async function UpdateProductService(
 
     // ✅ Update product info
     const [updatedCount, updatedRows] = await Products.update(fieldsToUpdate, {
-      where: { id: data.productId },
+      where: { id:productId },
       returning: true,
     });
 
     if (updatedCount === 0) {
-      throw new Error("Product not found");
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
     }
 
     // ✅ Replace product preview images (not variant images)
@@ -160,12 +200,12 @@ export async function UpdateProductService(
 
       await ProductImages.destroy({ 
         where: { 
-          productId: data.productId,
+          product_id: productId,
         } 
       })
      const imagesToInsert = productPreviewImageUrls.map((url)=>({
       image: url,
-      productId: data.productId,
+      product_id: productId,
      }))
       // Insert new preview images
       await ProductImages.bulkCreate(
@@ -173,26 +213,29 @@ export async function UpdateProductService(
       );
     }
 
-   const variantsMetadata = data.variantsMetadata
+ // ✅ Return updated product with all images
+    const updatedProduct = updatedRows[0];
+    const updatedImages = await ProductImages.findAll({
+      where: { product_id: productId },
+    });
+
    if(variantsMetadata && variantsMetadata.length > 0){
     
     // Delete all existing variants for this product
 
     await ProductVariants.destroy({
       where: {
-        product_id: data.productId,
+        product_id: productId,
       },
     })
-   }
-
-   // And recreate all variants 
+      // And recreate all variants 
   const newVariants = await ProductVariants.bulkCreate(
     variantsMetadata.map((variant) => ({
-      variantName: variant.variantName,
-      variantPrice: variant.variantPrice,
-      variantQuantity: variant.variantQuantity,
-      variantDiscount: variant.variantDiscount,
-      product_id: data.productId
+      variant_name: variant.variantName,
+        variant_price: variant.variantPrice,
+        variant_quantity: variant.variantQuantity,
+        variant_discount: variant.variantDiscount,
+        product_id: productId
     })),
     { returning: true }
   );
@@ -208,7 +251,7 @@ const allVariantImages:any[] = []
       variantImages.forEach((image) => {
         allVariantImages.push({
           image: `${baseUrl}${image.filename}`,
-          productId: data.productId,
+          product_id: productId,
           variant_id: newVariant.id
         });
       });
@@ -216,20 +259,24 @@ const allVariantImages:any[] = []
       if (allVariantImages.length > 0) {
       await ProductImages.bulkCreate(allVariantImages);
     }
-
-  }
-
-
-    // ✅ Return updated product with all images
-    const updatedProduct = updatedRows[0];
-    const updatedImages = await ProductImages.findAll({
-      where: { productId: data.productId },
-    });
-
-    return {
-      message: "Product updated successfully",
+return {
       product: updatedProduct,
       images: updatedImages,
+      variants:{
+        data:newVariants,
+        allVariantImages
+      }
+    };
+  }
+   }
+
+    return {
+      product: updatedProduct,
+      images: updatedImages,
+      variants:{
+        data:[],
+        allVariantImages:[]
+      }
     };
 
   } catch (error) {
@@ -238,15 +285,16 @@ const allVariantImages:any[] = []
   }
 }
 
-export async function DeleteProductService(productId: string) {
+export async function DeleteProductService(productId: string,res:Response) {
   try {
     const deletedProduct = await Products.destroy({ where: { id: productId } });
-
-    if (deletedProduct) {
-      return { deleted: true };
-    } else {
-      return { deleted: false };
+    if (!deletedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
     }
+    return deletedProduct;
   } catch (error) {
     console.log(error);
     throw new Error("Unable to delete product");
@@ -261,6 +309,7 @@ export async function GetSellerProductsService(req:Request){
     where: {
         shop_id: shop!.id
     },
+
     attributes: ['id', 'product_name', 'product_price', 'product_status', 'product_image'],
     include: [
         {
@@ -270,28 +319,28 @@ export async function GetSellerProductsService(req:Request){
             where: {
                 variant_id: null
             },
-            required: false
+           
         },
         {
             model: ProductVariants,
             as: "variants",
-            attributes: ["id", "variantName", "variantPrice", "variantQuantity", "variantDiscount"],
+            attributes: ["id", "variant_name", "variant_price", "variant_quantity", "variant_discount"],
             required: false,
-            include: [  // Nested include
+            include: [  
                 {
                     model: ProductImages,
-                    as: "images",  // or whatever you named the association
+                    required:false,
+                    as: "images",  
                     attributes: ["id", "image"]
                 }
             ]
         }
     ]
-});
-
-        
-        return sellerProducts
+});     
+return sellerProducts
+  
     }catch(error){
-    console.log(error);
+    console.log("GetSellerProductsService error:", error);
     throw new Error("Unable to fetch seller products");
     }
 }
