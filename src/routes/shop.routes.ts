@@ -11,7 +11,7 @@ import {
   loginShopSchema,
   registerShopSchema,
 } from "../validators/shopValidators";
-import { authGuard } from "../middleware/authGuard";
+import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import { validateRequest } from "../middleware/validateRequest";
 
 const router = express.Router();
@@ -24,7 +24,7 @@ router.post(
 );
 router.post("/login", authGuard, validateRequest(loginShopSchema), ShopLoginController);
 router.get("/refresh", RefreshShopAccessTokenController);
-router.get("/", GetShopByTokenController);
-router.delete("/", ShopDeleteController);
+router.get("/",authGuard,shopAuthGuard,  GetShopByTokenController);
+router.delete("/",authGuard,shopAuthGuard, ShopDeleteController);
 
 export default router;

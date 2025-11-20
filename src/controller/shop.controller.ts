@@ -5,6 +5,7 @@ import {
   ShopDeleteService,
   ShopLoginService,
 } from "../services/shop.service";
+import Shop from "../sequelize/models/shop";
 
 export async function ShopRegisterController(req: Request, res: Response) {
   try {
@@ -110,11 +111,16 @@ export async function RefreshShopAccessTokenController(
 
 export async function GetShopByTokenController(req: Request, res: Response) {
   try {
-    const headers = req.headers.authorization;
-
-    const tokens = headers?.split(" ");
-    console.log(tokens);
-    
+    const shopId = req.shop!.id
+    console.log("shop id", shopId)
+   const shopData = await Shop.findByPk(shopId,{
+     attributes:{exclude:["password"]}  //exclude password
+   })
+   return res.status(200).json({
+    success:true,
+    message:"Shop fetched successfully",
+    data:shopData
+   })
   } catch (error: any) {
     return res.status(500).json({
       success: false,
