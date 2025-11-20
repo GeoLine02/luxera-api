@@ -1,10 +1,11 @@
-import { JwtPayload } from "jsonwebtoken";
+
+import { ShopJwtPayload, UserJwtPayload } from "../middleware/authGuard";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: JwtPayload;
-      shop?: JwtPayload;
+      user?: UserJwtPayload;
+      shop?: ShopJwtPayload;
     }
   }
 }

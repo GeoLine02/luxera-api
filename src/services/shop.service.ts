@@ -182,6 +182,7 @@ export async function ShopDeleteService(
     const existingShop = await Shop.findOne({
       where: {
         owner_id: existingUser?.id,
+        
       },
     });
 
@@ -192,12 +193,12 @@ export async function ShopDeleteService(
       });
     }
 
-    const deletedShop = await Shop.destroy({
+    const deletedShopId = await Shop.destroy({
       where: {
         id: existingShop.id,
       },
     });
-    if (deletedShop) {
+    if (deletedShopId) {
       res.clearCookie("shopAccessToken", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -211,10 +212,10 @@ export async function ShopDeleteService(
         path: "/",
       });
 
-      return res.status(200).json({
+      return res.status(204).json({
         success: true,
         message: "Shop deleted successfully",
-        data: deletedShop,
+        data: null,
       });
     }
   } catch (error) {

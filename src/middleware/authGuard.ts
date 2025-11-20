@@ -4,10 +4,15 @@ import jwt from "jsonwebtoken";
 
 
 
-interface JwtPayload {
+export interface UserJwtPayload extends jwt.JwtPayload {
   userId: number;
   email: string;
 }
+ 
+export interface ShopJwtPayload extends jwt.JwtPayload {
+ id:number,
+}
+
 
 export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -23,7 +28,8 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("JWT_SECRET is not defined");
 
-    const decoded = jwt.verify(accessToken, secret) as JwtPayload;
+    const decoded = jwt.verify(accessToken, secret) as UserJwtPayload;
+    
     if (decoded) {
       req.user = decoded;
       next();
@@ -49,12 +55,13 @@ export const shopAuthGuard = async (
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("JWT_SECRET is not defined");
     console.log(shopAccessToken);
-    const decoded = jwt.verify(shopAccessToken, secret) as JwtPayload;
+    const decoded = jwt.verify(shopAccessToken, secret) as ShopJwtPayload;
     if (decoded) {
       req.shop = decoded;
       console.log(req.shop);
       next();
     }
+    
   } catch (error) {
     console.log(error);
     return res.status(401).json({success:false, message: "Unauthorized: Invalid Shop token" });
