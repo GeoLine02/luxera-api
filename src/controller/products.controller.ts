@@ -10,14 +10,28 @@ import {
   VipProductsService,
 } from "../services/product.service";
 import { success } from "zod";
+import Products from "../sequelize/models/products";
 export async function AllProductsController(req: Request, res: Response) {
+const page = Number(req.query.page)
+const pageSize = Number(req.query.pageSize)
+console.log(page,pageSize)
+if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid query parameters"
+  });
+}
   try {
-    const products = await AllProductsService();
-
+    const products = await AllProductsService(Number(page),Number(pageSize));
+     const totalCount = await Products.count()
+     const hasMore = totalCount > page * pageSize + products.length
     return res.status(200).json({
       success: true,
       message: "Products fetched successfully",
       data: products,
+      page:page,
+      pageSize:pageSize,
+      hasMore:hasMore   
     });
   } catch (error: any) {
     console.log(error);

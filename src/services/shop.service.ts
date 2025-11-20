@@ -42,7 +42,7 @@ export async function RegisterShopService(data: ShopRegisterFieldsType,res:Respo
     };
   } catch (error:any) {
     console.log(error);
-    throw new  Error(error.message);
+    throw new Error(error.message);
   }
 }
 

@@ -13,7 +13,7 @@
  *           default: 1
  *         description: Page number
  *       - in: query
- *         name: limit
+ *         name: pageSize
  *         schema:
  *           type: integer
  *           default: 10
@@ -25,7 +25,7 @@
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
  *                 - type: object
  *                   properties:
  *                     data:
