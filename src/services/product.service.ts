@@ -9,11 +9,18 @@ import {
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
 import { Response } from "express";
-export async function AllProductsService() {
+export async function AllProductsService(page:number,pageSize:number) {
   try {
     sequelize.authenticate();
+    const offset = page * pageSize;
+    const limit = pageSize
+    const products = await Products.findAll({
+      order: [["id", "ASC"]],
+      offset: offset,
+      limit: limit,
+    
+    });
 
-    const products = await Products.findAll();
     return products;
   } catch (error) {
     console.log(error);

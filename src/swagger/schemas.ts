@@ -65,6 +65,13 @@
  *           type: array
  *           items:
  *             type: object
+ *         page:
+ *           type: integer
+ *         pageSize:
+ *           type: integer
+ *         hasMore:
+ *           type: boolean
+ 
  *     CartItem:
  *       type: object
  *       properties:
@@ -110,9 +117,20 @@
  *         product_image:
  *           type: string
  *           example: "image-url.jpg"
- *         category_id:
- *           type: integer
- *           example: 1
+ *         product_subcategory_id:
+ *           type: number
+ *           
+ *         product_status:
+ *           type: string
+ *           enum: [active, vip,featured]
+ *         product_discount:
+ *           type: number
+ *         product_quantity:
+ *           type: number
+ *         product_rating:
+ *           type: number
+ *         shop_id:
+ *           type: number
  *     User:
  *       type: object
  *       properties:
