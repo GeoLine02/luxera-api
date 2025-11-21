@@ -50,7 +50,7 @@ export async function RegisterUserService(
       id: newUser.id,
       email: newUser.email,
     };
-     const accessToken = generateAccessToken(payload);
+    const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
     res.cookie("accessToken", accessToken, {
@@ -64,6 +64,7 @@ export async function RegisterUserService(
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      
     });
     return res.status(201).json({
       success: true,
