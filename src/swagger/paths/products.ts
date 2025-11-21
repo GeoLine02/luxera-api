@@ -54,7 +54,7 @@
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
  *                 - type: object
  *                   properties:
  *                     data:
@@ -83,7 +83,7 @@
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
  *                 - type: object
  *                   properties:
  *                     data:
