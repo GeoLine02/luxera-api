@@ -13,9 +13,10 @@ const options = {
     },
   },
   // Use glob patterns to find all swagger files
+
   apis: [
-    path.join(__dirname, "schemas.ts"),
-    path.join(__dirname, "paths", "*.ts"),
+    path.join(__dirname, "schemas.*"),
+    path.join(__dirname, "paths", "*.*"),
   ],
 };
 
