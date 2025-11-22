@@ -69,7 +69,7 @@ export async function GetProductByIdService(productId: number, res: Response) {
   }
 }
 
-export async function VipProductsService() {
+export async function VipProductsService(page:number,pageSize:number) {
   try {
     sequelize.authenticate();
 
@@ -77,6 +77,9 @@ export async function VipProductsService() {
       where: {
         product_status: "vip",
       },
+      order: [["id", "ASC"]],
+      offset: page * pageSize,
+      limit: pageSize,
     });
 
     return vipProducts;
@@ -86,7 +89,7 @@ export async function VipProductsService() {
   }
 }
 
-export async function FeaturedProductsService() {
+export async function FeaturedProductsService(page:number,pageSize:number) {
   try {
     sequelize.authenticate();
     const featuredProducts = await Products.findAll({
@@ -95,6 +98,9 @@ export async function FeaturedProductsService() {
           [Op.gt]: 100,
         },
       },
+      offset: page * pageSize,
+      limit: pageSize,
+      order: [["id", "ASC"]],
     });
 
     return featuredProducts;

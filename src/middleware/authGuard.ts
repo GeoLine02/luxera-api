@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 
 
 export interface UserJwtPayload extends jwt.JwtPayload {
-  userId: number;
+  id: number;
   email: string;
 }
  
@@ -29,11 +29,12 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     if (!secret) throw new Error("JWT_SECRET is not defined");
 
     const decoded = jwt.verify(accessToken, secret) as UserJwtPayload;
-    
+   
     if (decoded) {
       req.user = decoded;
       next();
     }
+    
   } catch (error) {
     console.error(error);
     return res.status(401).json({

@@ -5,16 +5,19 @@ import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
 import User from "../sequelize/models/user";
 import jwt from "jsonwebtoken";
 import { Response, Request } from "express";
+import { th } from "zod/v4/locales";
+import createError from "../utils/error";
+import { create } from "domain";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
-  userId: string;
+
 }
 
-export async function RegisterShopService(data: ShopRegisterFieldsType,res:Response) {
+export async function RegisterShopService(data: ShopRegisterFieldsType,req:Request, res:Response) {
   try {
     sequelize.authenticate();
-
+  
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const existedShop = await Shop.findOne({
@@ -24,65 +27,75 @@ export async function RegisterShopService(data: ShopRegisterFieldsType,res:Respo
     });
 
     if (existedShop) {
-    throw new Error("Shop with this name already exists");
+    throw createError(`Shop "${data.shopName}" already exists`,400);
     }
-
+  const userId = req.user?.id
+// check if user already has a shop
+  const userShop = await Shop.findOne({
+    where: {
+      owner_id: userId,
+    },
+  });
+  if (userShop) {
+    throw createError("User already has a shop",400);
+  } 
     const registeredShop = await Shop.create({
       shop_name: data.shopName,
       password: hashedPassword,
-      owner_id: data.userId,
+      owner_id: userId,
     });
 
     const shopAccessToken = generateAccessToken({ id: registeredShop.id });
     const shopRefreshToken = generateRefreshToken({ id: registeredShop.id });
-
     return {
       shopAccessToken,
       shopRefreshToken,
     };
   } catch (error:any) {
-    console.log(error);
-    throw new Error(error.message);
+     const err = new Error(error.message);
+  if (error.status) {
+    (err as any).status = error.status;
+  }
+  throw err;
+    
   }
 }
 
 interface ShopLoginFieldsType {
-  email: string;
   password: string;
 }
 
-export async function ShopLoginService(data: ShopLoginFieldsType) {
+export async function ShopLoginService(password:string,req:Request) {
   try {
-    const existingUser = await User.findOne({
+
+   const userId = req.user!.id
+   
+   const shop = await Shop.findOne({
       where: {
-        email: data.email,
+        owner_id: userId,
       },
     });
-
-    if (!existingUser) throw new Error("User with this email does not exists");
-
-    const isCorrectpassword = bcrypt.compare(
-      data.password,
-      existingUser.password
-    );
-
-    if (!isCorrectpassword) throw new Error("Email or passwrod is incorrect");
-
-    const shop = await Shop.findOne({
-      where: { owner_id: existingUser.id },
-    });
-
     if (!shop) {
-      throw new Error("Shop does not exist");
+      throw createError("Shop for this user does not exist",404)
     }
-
+   const isCorrectPassword = await bcrypt.compare(
+      password,
+      shop.password as string
+    );
+  
+    if (!isCorrectPassword) {
+      throw createError("Incorrect password",400)
+    }
     const shopAccessToken = generateAccessToken({ id: shop.id });
     const shopRefreshToken = generateRefreshToken({ id: shop.id });
 
     return { shopAccessToken, shopRefreshToken };
-  } catch (error) {
-    console.log(error);
-    throw new Error("Unable to Login to shop");
+  } catch (error : any) {
+     const err = new Error(error.message);
+  if (error.status) {
+    (err as any).status = error.status;
+  }
+  throw err;
   }
 }
 
@@ -132,20 +145,15 @@ export async function RefreshAccessToken(refreshToken?: string) {
 
 interface ShopDeleteFieldsType {
   password: string;
-  userId: number;
 }
 
 export async function ShopDeleteService(
   data: ShopDeleteFieldsType,
+  req:Request,
   res: Response
 ) {
   try {
-    if (!data.userId) {
-      return res.status(400).json({
-        success: false,
-        message: "User id is required",
-      });
-    }
+    const userId = req.user?.id
 
     if (!data.password || !data.password.length) {
       return res.status(400).json({
@@ -154,42 +162,28 @@ export async function ShopDeleteService(
       });
     }
 
-    const existingUser = await User.findOne({
+    const existingShop = await Shop.findOne({
       where: {
-        id: data.userId,
+        owner_id: userId,
       },
     });
 
-    if (!existingUser) {
+   if (!existingShop) {
       return res.status(400).json({
         success: false,
-        message: "User does not exist",
+        message: "Shop does not exist",
       });
     }
 
     const isCorrectpassword = bcrypt.compare(
       data.password,
-      existingUser?.password as string
+      existingShop?.password as string
     );
 
     if (!isCorrectpassword) {
       return res.status(400).json({
         success: false,
         message: "Incorrect password",
-      });
-    }
-
-    const existingShop = await Shop.findOne({
-      where: {
-        owner_id: existingUser?.id,
-        
-      },
-    });
-
-    if (!existingShop) {
-      return res.status(400).json({
-        success: false,
-        message: "Shop does not exist",
       });
     }
 

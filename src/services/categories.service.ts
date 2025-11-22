@@ -20,6 +20,7 @@ export async function GetAllCategoriesService() {
   }
 }
 
+
 export async function GetAllSubCategoriesService() {
   try {
     sequelize.authenticate();

@@ -22,7 +22,7 @@ router.post(
   validateRequest(registerShopSchema),
   ShopRegisterController
 );
-router.post("/login", authGuard, validateRequest(loginShopSchema), ShopLoginController);
+router.post("/login", authGuard, ShopLoginController);
 router.get("/refresh", RefreshShopAccessTokenController);
 router.get("/",authGuard,shopAuthGuard,  GetShopByTokenController);
 router.delete("/",authGuard,shopAuthGuard, ShopDeleteController);

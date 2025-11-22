@@ -5,6 +5,8 @@
  *     summary: Register a new shop
  *     tags:
  *       - Shop
+ *     security:
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -56,22 +58,15 @@
  *     summary: Shop login
  *     tags:
  *       - Shop
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *                 format: password
+ *     security:
+ *       - CookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: password
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: plain password query string
  *     responses:
  *       '200':
  *         description: Shop logged in successfully. Shop refresh token in httpOnly cookie

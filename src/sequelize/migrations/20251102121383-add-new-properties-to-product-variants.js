@@ -4,11 +4,16 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     // Add new columns to ProductVariants
-    await queryInterface.addColumn("ProductVariants", "variant_price", {
+    await queryInterface.addColumn("ProductVariants", "variantPrice", {
       type: Sequelize.DECIMAL,
       allowNull: false,
       defaultValue: 0,
     });
+    await queryInterface.renameColumn(
+      "ProductVariants",
+      "variantPrice",
+      "variant_price"
+    );
 
     await queryInterface.addColumn("ProductVariants", "variant_quantity", {
       type: Sequelize.INTEGER,

@@ -22,7 +22,7 @@ if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
   });
 }
   try {
-    const products = await AllProductsService(Number(page),Number(pageSize));
+    const products = await AllProductsService(page,pageSize);
      const totalCount = await Products.count()
      const hasMore = totalCount > page * pageSize + products.length
     return res.status(200).json({
@@ -43,13 +43,25 @@ if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
 }
 
 export async function VipProductsController(req: Request, res: Response) {
+  const page = Number(req.query.page)
+const pageSize = Number(req.query.pageSize)
+if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid query parameters"
+  });
+}
   try {
-    const vipProducts = await VipProductsService();
-
+    const vipProducts = await VipProductsService(page,pageSize);
+    const totalCount = await Products.count()
+    const hasMore = totalCount > page * pageSize + vipProducts.length
     return res.status(200).json({
       success: true,
       message: "VIP products fetched successfully",
       data: vipProducts,
+      hasMore:hasMore,
+      page:page,
+      pageSize:pageSize
     });
   } catch (error: any) {
     console.log(error);
@@ -61,13 +73,26 @@ export async function VipProductsController(req: Request, res: Response) {
 }
 
 export async function FeaturedProductsController(req: Request, res: Response) {
+    const page = Number(req.query.page)
+const pageSize = Number(req.query.pageSize)
+if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid query parameters"
+  });
+}
   try {
-    const feturedProducts = await FeaturedProductsService();
 
+    const featuredProducts = await FeaturedProductsService(page,pageSize);
+    const totalCount = await Products.count()
+    const hasMore = totalCount > page * pageSize + featuredProducts.length
     return res.status(200).json({
       success: true,
       message: "Featured products fetched successfully",
-      data: feturedProducts,
+      data: featuredProducts,
+      hasMore,
+      page,
+      pageSize
     });
   } catch (error: any) {
     return res.status(500).json({
