@@ -17,7 +17,7 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
-       await queryInterface.removeColumn("ProductVariants", "variant_quantity");
-      await queryInterface.removeColumn("ProductVariants", "variant_discount");
+      await queryInterface.removeColumn("ProductVariants", "variantQuantity");
+      await queryInterface.removeColumn("ProductVariants", "variantDiscount");
   }
 };
