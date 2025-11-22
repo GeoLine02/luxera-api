@@ -61,9 +61,6 @@ export async function RegisterShopService(data: ShopRegisterFieldsType,req:Reque
   }
 }
 
-interface ShopLoginFieldsType {
-  password: string;
-}
 
 export async function ShopLoginService(password:string,req:Request) {
   try {
