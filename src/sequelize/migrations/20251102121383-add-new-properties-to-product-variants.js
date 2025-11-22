@@ -9,13 +9,8 @@ module.exports = {
       allowNull: false,
       defaultValue: 0,
     });
-  
-    await queryInterface.renameColumn(
-      "ProductVariants",
-      "variantPrice",
-      "variant_price"
-    );
 
+   
     await queryInterface.addColumn("ProductVariants", "variant_quantity", {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -36,11 +31,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.renameColumn(
-      "ProductVariants",
-      "variant_price",
-      "variantPrice"
-    )
+
     await queryInterface.removeColumn("ProductVariants", "variantPrice");
 
     await queryInterface.removeColumn("ProductVariants", "variant_quantity");
