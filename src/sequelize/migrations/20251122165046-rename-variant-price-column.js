@@ -6,6 +6,7 @@ module.exports = {
     await queryInterface.renameColumn("ProductVariants","variantPrice","variant_price")
   },
   async down (queryInterface, Sequelize) {
+    console.log("helou world")
    await queryInterface.renameColumn("ProductVariants","variant_price","variantPrice")
   }
 };
