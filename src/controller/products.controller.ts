@@ -9,28 +9,28 @@ import {
 
   VipProductsService,
 } from "../services/product.service";
-import { success } from "zod";
 import Products from "../sequelize/models/products";
+import { PAGE_SIZE } from "../constants";
+
 export async function AllProductsController(req: Request, res: Response) {
 const page = Number(req.query.page)
-const pageSize = Number(req.query.pageSize)
-console.log(page,pageSize)
-if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
+console.log( `Fetching products at page ${page}`)
+if (isNaN(page) || page < 0 ) {
   return res.status(400).json({
     success: false,
     message: "Invalid query parameters"
   });
 }
   try {
-    const products = await AllProductsService(page,pageSize);
+    const products = await AllProductsService(page,PAGE_SIZE);
      const totalCount = await Products.count()
-     const hasMore = totalCount > page * pageSize + products.length
+     const hasMore = totalCount > page * PAGE_SIZE + products.length
     return res.status(200).json({
       success: true,
       message: "Products fetched successfully",
       data: products,
       page:page,
-      pageSize:pageSize,
+      pageSize:PAGE_SIZE,
       hasMore:hasMore   
     });
   } catch (error: any) {
@@ -44,24 +44,24 @@ if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
 
 export async function VipProductsController(req: Request, res: Response) {
   const page = Number(req.query.page)
-const pageSize = Number(req.query.pageSize)
-if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
+
+if (isNaN(page) || page < 0) {
   return res.status(400).json({
     success: false,
     message: "Invalid query parameters"
   });
 }
   try {
-    const vipProducts = await VipProductsService(page,pageSize);
+    const vipProducts = await VipProductsService(page,PAGE_SIZE);
     const totalCount = await Products.count()
-    const hasMore = totalCount > page * pageSize + vipProducts.length
+    const hasMore = totalCount > page * PAGE_SIZE + vipProducts.length
     return res.status(200).json({
       success: true,
       message: "VIP products fetched successfully",
       data: vipProducts,
       hasMore:hasMore,
       page:page,
-      pageSize:pageSize
+      pageSize:PAGE_SIZE
     });
   } catch (error: any) {
     console.log(error);
@@ -71,28 +71,26 @@ if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
     });
   }
 }
-
 export async function FeaturedProductsController(req: Request, res: Response) {
     const page = Number(req.query.page)
-const pageSize = Number(req.query.pageSize)
-if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
+
+if (isNaN(page) || page < 0) {
   return res.status(400).json({
     success: false,
     message: "Invalid query parameters"
   });
 }
   try {
-
-    const featuredProducts = await FeaturedProductsService(page,pageSize);
+    const featuredProducts = await FeaturedProductsService(page,PAGE_SIZE);
     const totalCount = await Products.count()
-    const hasMore = totalCount > page * pageSize + featuredProducts.length
+    const hasMore = totalCount > page * PAGE_SIZE + featuredProducts.length
     return res.status(200).json({
       success: true,
       message: "Featured products fetched successfully",
       data: featuredProducts,
       hasMore,
       page,
-      pageSize
+      pageSize:PAGE_SIZE
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -101,9 +99,6 @@ if (isNaN(page) || page < 0 || isNaN(pageSize) || pageSize <= 0) {
     });
   }
 }
-
-
-
 export async function SearchProductsController(req: Request, res: Response) {
   try {
     const query = req.query.q as string;
