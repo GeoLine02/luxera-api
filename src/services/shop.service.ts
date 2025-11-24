@@ -171,8 +171,8 @@ export async function ShopDeleteService(
         message: "Shop does not exist",
       });
     }
-
-    const isCorrectpassword = bcrypt.compare(
+    
+    const isCorrectpassword = await bcrypt.compare(
       data.password,
       existingShop?.password as string
     );

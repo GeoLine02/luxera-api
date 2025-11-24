@@ -23,8 +23,6 @@
  *               password:
  *                 type: string
  *                 format: password
- *               userId:
- *                 type: integer
  *     responses:
  *       '200':
  *         description: Shop registered successfully

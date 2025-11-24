@@ -5,7 +5,7 @@ module.exports = {
   async up (queryInterface, Sequelize) {
  await queryInterface.bulkInsert('Shops', [
   {
-    id:1,
+    id:439850568054860348605689,
     shop_name: 'Demo Shop',
     password:"shop123",
     owner_id:1,
@@ -14,7 +14,6 @@ module.exports = {
   }
  ])
   },
-
   async down (queryInterface, Sequelize) {
     /**
      * Add commands to revert seed here.

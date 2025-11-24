@@ -6,7 +6,7 @@ import userRoutes from "./routes/user.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import shopRoutes from "./routes/shop.routes";
-
+import sellerRoutes from "./seller/routes/seller.routes"
 import cartRoutes from "./routes/cart.routes";
 import path from "path";
 import cookieParser from "cookie-parser";
@@ -42,7 +42,7 @@ app.use("/categories", categoriesRoutes);
 app.use("/shop", shopRoutes);
 app.use("/cart",cartRoutes)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use("/seller",sellerRoutes)
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);
 // ✅ Database connection
