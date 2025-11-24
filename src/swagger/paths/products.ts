@@ -12,12 +12,6 @@
  *           type: integer
  *           default: 1
  *         description: Page number
- *       - in: query
- *         name: pageSize
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Items per page
  *     responses:
  *       '200':
  *         description: Products list retrieved
