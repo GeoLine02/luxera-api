@@ -13,5 +13,6 @@ export const registerUserSchema = z.object({
     .max(100, "Password must be at most 100 characters long"),
 });
 
+
 // TypeScript type inferred from schema
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;

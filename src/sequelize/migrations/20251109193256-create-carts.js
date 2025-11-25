@@ -29,6 +29,7 @@ module.exports = {
           key:"id"
 
         },
+
         onUpdate:"CASCADE",
         onDelete:"CASCADE"
       },

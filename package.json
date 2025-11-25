@@ -11,6 +11,7 @@
     "migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
     "seed:undo:all": "npx sequelize-cli db:seed:undo:all",
     "seed": "npx sequelize-cli db:seed:all"
+    
   },
   "keywords": [],
   "author": "",

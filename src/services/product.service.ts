@@ -18,7 +18,6 @@ export async function AllProductsService(page:number,pageSize:number) {
       order: [["id", "ASC"]],
       offset: offset,
       limit: limit,
-    
     });
 
     return products;

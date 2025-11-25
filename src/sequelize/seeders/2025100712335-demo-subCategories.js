@@ -18,6 +18,7 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      
       {
         sub_category_name: "Sofas",
         sub_category_image: "sofas.jpg",
