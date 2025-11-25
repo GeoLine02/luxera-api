@@ -11,7 +11,7 @@ jobs:
           deploy_url: ${{secrets.RENDER_DEPLOY_HOOK_URL}}
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" "$deploy_url")
-          if [$response -eq 200] || [ $response -eq 201 ]; then
+          if [ $response -eq 200] || [ $response -eq 201 ]; then
             echo "✅ Deployed successfully"
           else 
             echo "❌ Deployment failed with status $response"
