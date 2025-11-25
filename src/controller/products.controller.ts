@@ -21,6 +21,7 @@ if (isNaN(page) || page < 0 ) {
     message: "Invalid query parameters"
   });
 }
+
   try {
     const products = await AllProductsService(page,PAGE_SIZE);
      const totalCount = await Products.count()
