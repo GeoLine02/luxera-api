@@ -35,7 +35,7 @@ export async function CreateProductService(
 
     // Validate category & subcategory
     const category = await Categories.findByPk(productCategoryId);
-    
+  
     const subCategory = await SubCategories.findOne({
       where: { id: subCategoryId, category_id: productCategoryId },
     });

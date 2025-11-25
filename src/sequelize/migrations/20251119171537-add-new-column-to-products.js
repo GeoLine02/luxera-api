@@ -13,7 +13,6 @@ module.exports = {
     allowNull:false,
     defaultValue:1
    })
-
   },
 
   async down (queryInterface, Sequelize) {

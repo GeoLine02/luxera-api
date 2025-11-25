@@ -35,7 +35,7 @@ import { success } from "zod";
         return res.status(204).json({
             success:true,
             message:"Item removed from cart successfully",
-            data: true
+            data: null
         })
     } catch (error : any) {
         return res.status(500).json({

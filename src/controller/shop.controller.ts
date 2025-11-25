@@ -53,7 +53,6 @@ export async function ShopLoginController(req: Request, res: Response) {
         message:"Password is required"
       })
     }
-    
     const loggedInShop = await ShopLoginService(password,req);
 
     if (loggedInShop) {
