@@ -9,11 +9,11 @@ import {
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
 import { Response } from "express";
-export async function AllProductsService(page:number,pageSize:number) {
+export async function AllProductsService(page: number, pageSize: number) {
   try {
     sequelize.authenticate();
     const offset = page * pageSize;
-    const limit = pageSize
+    const limit = pageSize;
     const products = await Products.findAll({
       order: [["id", "ASC"]],
       offset: offset,
@@ -36,7 +36,6 @@ export async function GetProductByIdService(productId: number, res: Response) {
       });
     }
 
- 
     const product = await Products.findOne({
       where: { id: productId },
       include: [
@@ -68,44 +67,50 @@ export async function GetProductByIdService(productId: number, res: Response) {
   }
 }
 
-export async function VipProductsService(page:number,pageSize:number) {
+export async function VipProductsService(res: Response) {
   try {
-    sequelize.authenticate();
-
     const vipProducts = await Products.findAll({
       where: {
         product_status: "vip",
       },
-      order: [["id", "ASC"]],
-      offset: page * pageSize,
-      limit: pageSize,
+      limit: 10,
     });
 
-    return vipProducts;
+    return res.status(200).json({
+      success: true,
+      data: vipProducts,
+    });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch vip products");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch VIP products",
+      error,
+    });
   }
 }
 
-export async function FeaturedProductsService(page:number,pageSize:number) {
+export async function FeaturedProductsService(res: Response) {
   try {
-    sequelize.authenticate();
     const featuredProducts = await Products.findAll({
       where: {
         product_price: {
           [Op.gt]: 100,
         },
       },
-      offset: page * pageSize,
-      limit: pageSize,
-      order: [["id", "ASC"]],
+      limit: 10,
     });
 
-    return featuredProducts;
+    return res.status(200).json({
+      success: true,
+      data: featuredProducts,
+    });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch featured products");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch featured products",
+    });
   }
 }
 export async function SearchProductsService(query: string) {
@@ -121,7 +126,9 @@ export async function SearchProductsService(query: string) {
             "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
           },
           {
-            "$subCategory.category.category_name$": { [Op.iLike]: `%${query}%` },
+            "$subCategory.category.category_name$": {
+              [Op.iLike]: `%${query}%`,
+            },
           },
         ],
       },
@@ -148,7 +155,3 @@ export async function SearchProductsService(query: string) {
     throw new Error("Unable to search products");
   }
 }
-
-
-
-
