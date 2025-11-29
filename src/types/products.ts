@@ -28,4 +28,4 @@ interface ProductUpdatePayload extends CreateProductPayload {
 }
 
 
-export { CreateProductPayload, VariantsMetadata ,ProductUpdatePayload};
+export { CreateProductPayload, VariantsMetadata ,ProductUpdatePayload,VariantImagesMap};

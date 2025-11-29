@@ -8,13 +8,14 @@ import {
 } from "../sequelize/models/associate";
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
-import { Response } from "express";
+import { Response,Request } from "express";
 import { ProductStatus } from "../constants/enums";
+import { PAGE_SIZE } from "../constants/constants";
 export async function AllProductsService(page:number,pageSize:number) {
   try {
     sequelize.authenticate();
     const offset = page * pageSize;
-    const limit = pageSize
+    const limit = pageSize;
     const products = await Products.findAll({
       order: [["id", "ASC"]],
       where:{
@@ -43,8 +44,10 @@ export async function AllProductsService(page:number,pageSize:number) {
   }
 }
 
-export async function GetProductByIdService(productId: number, res: Response) {
+export async function GetProductByIdService(req: Request, res: Response) {
   try {
+    const productId = req.params.id;
+
     if (!productId) {
       return res.status(400).json({
         success: false,
@@ -83,48 +86,49 @@ export async function GetProductByIdService(productId: number, res: Response) {
   }
 }
 
-export async function VipProductsService(page:number,pageSize:number) {
+export async function VipProductsService(page:number,res: Response) {
+  
   try {
-    sequelize.authenticate();
-
     const vipProducts = await Products.findAll({
       where: {
         product_status:ProductStatus.Vip,
       },
       order: [["id", "ASC"]],
-      offset: page * pageSize,
-      limit: pageSize,
+      offset: page * PAGE_SIZE,
+      limit: PAGE_SIZE,
       include:[
         {
           model:ProductVariants,
           as:"primaryVariant",
-      
         }
       ]
     });
-
-    return vipProducts;
+    return vipProducts
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch vip products");
+   throw new Error("Unable to fetch vip products")
   }
 }
 
-export async function FeaturedProductsService(page:number,pageSize:number) {
+export async function FeaturedProductsService(page:number,res: Response) {
   try {
-    sequelize.authenticate();
     const featuredProducts = await Products.findAll({
       where: {
         product_status: ProductStatus.Featured,   
       },
-      offset: page * pageSize,
-      limit: pageSize,
-      order: [["id", "ASC"]],
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      include:[
+        {
+          model:ProductVariants,
+          as:"primaryVariant",
+        }
+      ]
     });
     return featuredProducts;
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch featured products");
+   throw new Error("Unable to fetch featured products")
   }
 }
 export async function SearchProductsService(query: string) {
@@ -140,7 +144,9 @@ export async function SearchProductsService(query: string) {
             "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
           },
           {
-            "$subCategory.category.category_name$": { [Op.iLike]: `%${query}%` },
+            "$subCategory.category.category_name$": {
+              [Op.iLike]: `%${query}%`,
+            },
           },
         ],
       },
@@ -172,7 +178,3 @@ export async function SearchProductsService(query: string) {
     throw new Error("Unable to search products");
   }
 }
-
-
-
-

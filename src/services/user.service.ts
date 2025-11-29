@@ -16,7 +16,7 @@ export async function RegisterUserService(
   res: Response
 ) {
   try {
-    sequelize.authenticate()
+    sequelize.authenticate();
     const existingUser = await User.findOne({ where: { email: data.email } });
     if (existingUser) {
       return res.status(400).json({
@@ -33,12 +33,11 @@ export async function RegisterUserService(
         full_name: data.fullName,
         email: email,
         password: hashedPassword,
-      }})
-  
+      },
+    });
+
     if (!created) {
-      console.error(
-        "Register Failed: User with this email already exists"
-      );
+      console.error("Register Failed: User with this email already exists");
       return res.status(400).json({
         success: false,
         message: "User with this email already exists",
@@ -50,7 +49,7 @@ export async function RegisterUserService(
       id: newUser.id,
       email: newUser.email,
     };
-     const accessToken = generateAccessToken(payload);
+    const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
     res.cookie("accessToken", accessToken, {
@@ -72,7 +71,7 @@ export async function RegisterUserService(
         user: userWithoutPassword,
         accessToken,
         refreshToken,
-      }
+      },
     });
   } catch (error: any) {
     console.error("RegisterUserService error:", error);
@@ -125,14 +124,14 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000, // 15 min
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -261,8 +260,10 @@ export async function UserByTokenService(accessToken: string, res: Response) {
     return res.status(500).json({
       success: false,
 
-      message: process.env.NODE_ENV === "development" ? error.message : "Internal server error",
-    
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
     });
   }
 }
