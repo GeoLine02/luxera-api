@@ -10,7 +10,7 @@ import {
   VipProductsService,
 } from "../services/product.service";
 import Products from "../sequelize/models/products";
-import { PAGE_SIZE } from "../constants";
+import { PAGE_SIZE } from "../constants/constants";
 
 export async function AllProductsController(req: Request, res: Response) {
 const page = Number(req.query.page)

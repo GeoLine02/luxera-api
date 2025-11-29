@@ -1,21 +1,18 @@
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
+import { ProductStatus } from "../../constants/enums";
+
 interface ProductAttributes {
   id: number;
   product_name: string;
-  product_price: number;
   product_description: string | null;
   product_rating: number;
-  product_image: string;
   product_owner_id: number;
   product_subcategory_id: number;
   product_status: string;
   shop_id:number,
-  product_quantity:number,
-  product_discount:number
-
-  
+  primary_variant_id?:number | null
 }
 interface ProductImageAttributes {
   id:number,
@@ -39,21 +36,18 @@ interface ProductCreationAtrributes extends Optional<ProductAttributes, "id"> {}
 class Products extends Model<ProductAttributes,ProductCreationAtrributes>  implements ProductAttributes {
   declare id: number;
   declare product_name: string;
-  declare product_price: number;
   declare product_description: string | null;
   declare product_rating: number;
-  declare product_image: string;
   declare product_owner_id: number;
   declare product_subcategory_id: number;
   declare product_status: string;
   declare shop_id:number;
-  declare product_quantity:number;
-  declare product_discount:number
+  declare primary_variant_id?:number | null
+  
   public readonly declare variants: ProductVariantsAttributes[]
   
   
   public readonly declare images:ProductImageAttributes[]
-
 
 
 
@@ -82,6 +76,11 @@ class Products extends Model<ProductAttributes,ProductCreationAtrributes>  imple
       foreignKey: "product_id",
       as: "variants",
     });
+    Products.belongsTo(models.ProductVariants,{
+      foreignKey:"primary_variant_id",
+      as:"primaryVariant",
+      constraints:false
+    })
 
     Products.belongsTo(models.Shop, {
       foreignKey: "shop_id",
@@ -101,34 +100,31 @@ Products.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    product_discount: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    product_quantity: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
+  
     product_name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    product_price: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
+ 
     product_description: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    primary_variant_id:{
+      type:DataTypes.INTEGER,
+      allowNull:true,
+      references:{
+        model:"ProductVariants",
+        key:"id"
+      },
+      onDelete:"SET NULL",
+  
     },
     product_rating: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    product_image: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+ 
     shop_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -162,8 +158,9 @@ Products.init(
       onUpdate: "CASCADE",
     },
     product_status: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM(ProductStatus.Pending, ProductStatus.Active, ProductStatus.Vip, ProductStatus.Featured),
       allowNull: false,
+      defaultValue: ProductStatus.Pending,
     },
   },
   {

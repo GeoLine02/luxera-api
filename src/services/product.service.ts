@@ -9,6 +9,7 @@ import {
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
 import { Response } from "express";
+import { ProductStatus } from "../constants/enums";
 export async function AllProductsService(page:number,pageSize:number) {
   try {
     sequelize.authenticate();
@@ -16,10 +17,25 @@ export async function AllProductsService(page:number,pageSize:number) {
     const limit = pageSize
     const products = await Products.findAll({
       order: [["id", "ASC"]],
+      where:{
+
+          // product_status:{
+          //   [Op.ne]:'pending'
+          // },
+         
+      },
+  
       offset: offset,
       limit: limit,
+      include:[
+        {
+          model:ProductVariants,
+          as:"primaryVariant",
+      
+        }
+      ]
     });
-
+    console.log(products)
     return products;
   } catch (error) {
     console.log(error);
@@ -35,7 +51,6 @@ export async function GetProductByIdService(productId: number, res: Response) {
         message: "Invalid product ID",
       });
     }
-
  
     const product = await Products.findOne({
       where: { id: productId },
@@ -74,11 +89,18 @@ export async function VipProductsService(page:number,pageSize:number) {
 
     const vipProducts = await Products.findAll({
       where: {
-        product_status: "vip",
+        product_status:ProductStatus.Vip,
       },
       order: [["id", "ASC"]],
       offset: page * pageSize,
       limit: pageSize,
+      include:[
+        {
+          model:ProductVariants,
+          as:"primaryVariant",
+      
+        }
+      ]
     });
 
     return vipProducts;
@@ -93,15 +115,12 @@ export async function FeaturedProductsService(page:number,pageSize:number) {
     sequelize.authenticate();
     const featuredProducts = await Products.findAll({
       where: {
-        product_price: {
-          [Op.gt]: 100,
-        },
+        product_status: ProductStatus.Featured,   
       },
       offset: page * pageSize,
       limit: pageSize,
       order: [["id", "ASC"]],
     });
-
     return featuredProducts;
   } catch (error) {
     console.log(error);
@@ -115,7 +134,7 @@ export async function SearchProductsService(query: string) {
       where: {
         [Op.or]: [
           {
-            product_name: { [Op.iLike]: `%${query}%` },
+            "$primaryVariant.variant_name$": { [Op.iLike]: `%${query}%` },
           },
           {
             "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
@@ -136,8 +155,13 @@ export async function SearchProductsService(query: string) {
               as: "category",
               attributes: ["id", "category_name"],
             },
+           
           ],
         },
+         {
+            model:ProductVariants,
+            as:"primaryVariant",
+          }
       ],
     });
 

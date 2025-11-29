@@ -108,46 +108,29 @@ async function getCartService(userId:number,res:Response){
         where:{
             user_id:userId
         },
-        attributes:[ 'id','product_quantity'],
-        
+   
         include:[{
-          
+
             model: Products,
             as: "product",
-            attributes: ['id', 'product_name', 'product_price', 'product_image'],
-       
+         
         },
     {
+
         model:ProductVariants,
-        required:false,
+        
         as:"variant",
-        attributes:['id','variant_name','variant_price'],
         include:[{
             model:ProductImages,
             as:"images",
             attributes:['id','image'],
-            required:false
         }]
         },
      
     ]
     })
-   
- // map cart items to include product and variant details.
- // if variant exists, use variant details else use product details
- 
-    return cartItems.map((item) => ({
-        id: item.id,
-        productId: item.product.id,
-        variantId: item.variant ? item.variant.id : null,
-        productName: item.variant ? item.variant.variantName : item.product.product_name,
-        productImage: item.variant 
-            ? (item.variant.images?.[0]?.image || item.product.product_image) // Fallback if no variant image
-            : item.product.product_image,
-        productQuantity: item.product_quantity,
-        productPrice: item.variant ? item.variant.variantPrice : item.product.product_price,
-    }));
 
+    return cartItems
   } catch (error) {
     console.error("getCartService error:", error);
      throw new Error("Failed to fetch cart items")

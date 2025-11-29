@@ -46,7 +46,6 @@ class Carts
       image: string;
     }[];
   } | null;
-
   static associate(models: TypeModels) {
     Carts.belongsTo(models.User, {
       foreignKey: "user_id",

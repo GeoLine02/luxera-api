@@ -1,19 +1,36 @@
 "use strict";
 
-import { Model, DataTypes } from "sequelize";
+import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
-import Products from "./products";
 import { TypeModels } from "./associate";
+interface ProductImageAttributes {
+  id:number,
+  image:string,
+  product_id:number,
+  variant_id:number | null
+}
+interface ProductVariantCreationAttributes  extends Optional<ProductImageAttributes, "id"> {}
 
-class ProductVariants extends Model {
+
+interface ProductVariantsAttributes  {
+  id: number;
+  variant_name: string;
+  variant_price: number;
+  variant_quantity: number;
+  variant_discount:number
+
+  product_id:number,
+  image:string
+}
+class ProductVariants extends Model<ProductVariantsAttributes,ProductVariantCreationAttributes> implements ProductVariantsAttributes{
   declare id: number;
   declare variant_name: string;
   declare variant_price: number;
   declare variant_quantity: number;
   declare variant_discount: number;
   declare product_id: number;
-  declare readonly createdAt: Date;
-  declare readonly updatedAt: Date;
+  declare image:string
+
 
   static associate(models:TypeModels) {
     // Each variant belongs to one product
@@ -31,7 +48,6 @@ class ProductVariants extends Model {
     })
   }
 }
-
 ProductVariants.init(
   {
     id: {
@@ -67,7 +83,9 @@ ProductVariants.init(
       },
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
-    },
+    }, 
+image:{type:DataTypes.STRING,allowNull:false},
+    
   },
   {
     sequelize,

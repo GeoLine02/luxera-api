@@ -68,32 +68,6 @@ const ProductCreationSchema = z.object({
         .int("Subcategory ID must be an integer")
         .positive("Subcategory ID must be a positive number")
     ),
-  productPrice: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .positive("Product price must be a positive number")
-        .finite("Product price must be a valid number")
-    ),
-  productQuantity: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .int("Product quantity must be an integer")
-        .nonnegative("Product quantity must be a positive number")
-    ),
-  productDiscount: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .min(0, "Product discount must be at least 0")
-        .max(100, "Product discount must not exceed 100")
-        .finite("Product discount must be a valid number")
-    ),
-
   userId: z
     .string()
     .transform(Number)
@@ -102,8 +76,6 @@ const ProductCreationSchema = z.object({
         .int("User ID must be an integer")
         .positive("User ID must be a positive number")
     ),
-
-
 });
 
 // ✅ Product update schema - accepts strings, transforms to numbers
@@ -144,31 +116,7 @@ productStatus: z.enum(PRODUCT_STATUSES, { message: "Product status must be one o
         .int("Subcategory ID must be an integer")
         .positive("Subcategory ID must be a positive number")
     ),
-  productPrice: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .positive("Product price must be a positive number")
-        .finite("Product price must be a valid number")
-    ),
-  productQuantity: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .int("Product quantity must be an integer")
-        .nonnegative("Product quantity must be a positive number")
-    ),
-  productDiscount: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .min(0, "Product discount must be at least 0")
-        .max(100, "Product discount must not exceed 100")
-        .finite("Product discount must be a valid number")
-    ),
+ 
   userId: z
     .string()
     .transform(Number)

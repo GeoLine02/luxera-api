@@ -15,23 +15,19 @@ export async function getSellerProductsController(req: Request, res: Response) {
     }
 
 }
+
+
 export async function CreateProductController(req: Request, res: Response) {
   try {
     const body = req.body;
     
     const files = req.files as Express.Multer.File[];
     console.log("Files received in controller:", files);
-    // Extract product preview images
-    const productPreviewImages = files.filter(
-      (file) => file.fieldname === "productPreviewImages"
-    );
-
     // Parse variants metadata from JSON
     const variantsMetadata = JSON.parse(body.variantsMetadata || "[]");
 
     // Organize variant images by index
     const variantImagesMap: Record<number, Express.Multer.File[]> = {};
-
     files.forEach((file) => {
       // Match pattern: variantImages_0, variantImages_1, etc.
       const match = file.fieldname.match(/^variantImages_(\d+)$/);
@@ -40,19 +36,15 @@ export async function CreateProductController(req: Request, res: Response) {
         if (!variantImagesMap[variantIndex]) {
           variantImagesMap[variantIndex] = [];
         }
-        variantImagesMap[variantIndex].push(file);
+        variantImagesMap[variantIndex].push(file); 
       }
     });
   const parsedBody = {
 productCategoryId: Number( body.productCategoryId),
 subCategoryId: Number(body.subCategoryId),
 productDescription: body.productDescription,
-productQuantity: Number( body.productQuantity),
-productDiscount: Number( body.productDiscount),
 productName: body.productName,
-productPrice: Number( body.productPrice),
 variantsMetadata: variantsMetadata,
-productPreviewImages: productPreviewImages,
 userId:Number( body.userId),
 variantImagesMap: variantImagesMap
   } as CreateProductPayload;
@@ -130,8 +122,14 @@ export async function UpdateProductController(req: Request, res: Response) {
 
 export async function DeleteProductController(req: Request, res: Response) {
   try {
-    const productId = req.query.q as string;
-
+    const productId = req.params.id as string;
+    if(!productId){
+      return res.status(400).json({
+        success:false,
+        message:"Invalid product ID"
+      })
+    }
+ 
     const deletedProduct = await DeleteProductService(productId,res);
     return res.status(204).json({
       success:true,
