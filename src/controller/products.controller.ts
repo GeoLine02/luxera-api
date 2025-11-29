@@ -77,15 +77,8 @@ export async function SearchProductsController(req: Request, res: Response) {
 }
 export async function GetProductByIdController(req: Request, res: Response) {
   try {
-    const productId = req.params.id;
-
-    const product = await GetProductByIdService(Number(productId), res);
-    console.log(product);
-    return res.status(200).json({
-      success: true,
-      message: "Product fetched successfully",
-      data: product,
-    });
+    const product = await GetProductByIdService(req, res);
+    return product;
   } catch (error: any) {
     console.log(error);
     return res.status(500).json({

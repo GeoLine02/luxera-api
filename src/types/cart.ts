@@ -1,31 +1,31 @@
-import { VariantsMetadata } from "./products"
+import { VariantsMetadata } from "./products";
 
 interface AddCartItemPayload {
-    productId:number,
-    userId:number
-    variantId?: number
+  productId: number;
+  userId: number;
+  variantId: number;
+  productQuantity: number;
 }
-interface DeleteCartItemPayload extends AddCartItemPayload{
-    removeCompletely?: boolean
+interface DeleteCartItemPayload extends AddCartItemPayload {
+  removeCompletely?: boolean;
 }
 interface CartItemDBPayload {
-    id:number,
-    product_quantity:number
-    variant: {
-    id:number,
-    variantName:string,
-    variantPrice:number,
+  id: number;
+  product_quantity: number;
+  variant: {
+    id: number;
+    variantName: string;
+    variantPrice: number;
     images: {
-        id:number,
-        image:string
-    }[]
-
-    } | null,
-    product:{
-        id:number,
-        product_name:string,
-        product_price:number,
-        product_image:string
-    }
+      id: number;
+      image: string;
+    }[];
+  } | null;
+  product: {
+    id: number;
+    product_name: string;
+    product_price: number;
+    product_image: string;
+  };
 }
-export type  { AddCartItemPayload, CartItemDBPayload,DeleteCartItemPayload};
+export type { AddCartItemPayload, CartItemDBPayload, DeleteCartItemPayload };

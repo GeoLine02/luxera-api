@@ -8,7 +8,7 @@ import {
 } from "../sequelize/models/associate";
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
-import { Response } from "express";
+import { Request, Response } from "express";
 export async function AllProductsService(page: number, pageSize: number) {
   try {
     sequelize.authenticate();
@@ -27,8 +27,10 @@ export async function AllProductsService(page: number, pageSize: number) {
   }
 }
 
-export async function GetProductByIdService(productId: number, res: Response) {
+export async function GetProductByIdService(req: Request, res: Response) {
   try {
+    const productId = req.params.id;
+
     if (!productId) {
       return res.status(400).json({
         success: false,
