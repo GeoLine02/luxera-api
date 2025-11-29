@@ -109,44 +109,32 @@ async function getCartService(req: Request, res: Response) {
     const userId = req.params.userId;
 
     const cartItems = await Carts.findAll({
-      where: {
-        user_id: userId,
-      },
-      attributes: ["id", "product_quantity"],
-
-      include: [
-        {
-          model: Products,
-          as: "product",
-          attributes: [
-            "id",
-            "product_name",
-            "product_description",
-            "product_price",
-            "product_image",
-          ],
+        where:{
+            user_id:userId
         },
-        {
-          model: ProductVariants,
-          required: false,
-          as: "variant",
-          attributes: ["id", "variant_name", "variant_price"],
-          include: [
-            {
-              model: ProductImages,
-              as: "images",
-              attributes: ["id", "image"],
-              required: false,
-            },
-          ],
-        },
-      ],
-    });
+   
+        include:[{
 
-    return res.status(200).json({
-      success: true,
-      data: cartItems,
-    });
+            model: Products,
+            as: "product",
+         
+        },
+    {
+
+        model:ProductVariants,
+        
+        as:"variant",
+        include:[{
+            model:ProductImages,
+            as:"images",
+            attributes:['id','image'],
+        }]
+        },
+     
+    ]
+    })
+
+    return cartItems
   } catch (error) {
     console.log(error);
     return res.status(500).json({

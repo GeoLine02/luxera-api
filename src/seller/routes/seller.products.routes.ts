@@ -29,7 +29,7 @@ router.put(
 );
 
 
-router.delete("/", 
+router.delete("/:id", 
     authGuard,
   shopAuthGuard,
   DeleteProductController);

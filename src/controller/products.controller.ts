@@ -7,7 +7,7 @@ import {
   VipProductsService,
 } from "../services/product.service";
 import Products from "../sequelize/models/products";
-import { PAGE_SIZE } from "../constants";
+import { PAGE_SIZE } from "../constants/constants";
 
 export async function AllProductsController(req: Request, res: Response) {
   const page = Number(req.query.page);
@@ -42,16 +42,52 @@ export async function AllProductsController(req: Request, res: Response) {
 
 export async function VipProductsController(req: Request, res: Response) {
   try {
-    const vipProducts = await VipProductsService(res);
-    return vipProducts;
+    const page = Number(req.query.page);
+      if (isNaN(page) || page < 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid query parameters",
+    });
+  }
+    const vipProducts = await VipProductsService(page,res);
+    const totalCount = await Products.count({
+      where: {
+        product_status: "vip",
+      },
+    });
+    const hasMore = totalCount > page * PAGE_SIZE + vipProducts.length;
+    return res.status(200).json({
+      success: true,
+      message: "Vip products fetched successfully",
+      data: vipProducts,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
+    });
   } catch (error) {
     console.log(error);
   }
 }
 export async function FeaturedProductsController(req: Request, res: Response) {
+
   try {
-    const featuredProducts = await FeaturedProductsService(res);
-    return featuredProducts;
+    const page = Number(req.query.page);
+    const featuredProducts = await FeaturedProductsService(page,res);
+    
+    const totalCount = await Products.count({
+      where: {
+        product_status: "featured",
+      },
+    });
+    const hasMore = totalCount > page * PAGE_SIZE + featuredProducts.length;
+    return res.status(200).json({
+      success: true,
+      message: "Featured products fetched successfully",
+      data: featuredProducts,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
+    });
   } catch (error) {
     console.log(error);
   }
