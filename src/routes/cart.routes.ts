@@ -18,7 +18,7 @@ router.post("/", validateRequest(AddcartItemSchema), addCartItemController);
 
 // DELETE /api/cart - Delete or decrement item from cart
 router.delete(
-  "/",
+  "/:id",
   validateRequest(DeleteCartItemSchema),
   deleteCartItemController
 );
