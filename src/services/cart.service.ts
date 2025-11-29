@@ -94,6 +94,7 @@ async function deleteCartItemService(req: Request, res: Response) {
     if (deletedCartItem) {
       return res.status(200).json({
         success: true,
+        data: { itemid: cartItem.id },
       });
     }
   } catch (error) {
