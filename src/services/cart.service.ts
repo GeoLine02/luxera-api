@@ -7,7 +7,7 @@ import {
   CartItemDBPayload,
   DeleteCartItemPayload,
 } from "../types/cart";
-import { Response } from "express";
+import { Request, Response } from "express";
 async function addCartItemService(data: AddCartItemPayload, res: Response) {
   const { productId, userId, variantId, productQuantity } = data;
   console.log("productQuantity", productQuantity);
@@ -108,10 +108,10 @@ async function deleteCartItemService(
     throw new Error("Failed to delete cart item");
   }
 }
-async function getCartService(userId: number, res: Response) {
+async function getCartService(req: Request, res: Response) {
   try {
-    console.log("Fetching cart items for user:", userId);
-    // fetch all cart items for user
+    const userId = req.params.userId;
+
     const cartItems = await Carts.findAll({
       where: {
         user_id: userId,
@@ -122,7 +122,13 @@ async function getCartService(userId: number, res: Response) {
         {
           model: Products,
           as: "product",
-          attributes: ["id", "product_name", "product_price", "product_image"],
+          attributes: [
+            "id",
+            "product_name",
+            "product_description",
+            "product_price",
+            "product_image",
+          ],
         },
         {
           model: ProductVariants,
@@ -141,28 +147,65 @@ async function getCartService(userId: number, res: Response) {
       ],
     });
 
-    // map cart items to include product and variant details.
-    // if variant exists, use variant details else use product details
-
-    return cartItems.map((item) => ({
-      id: item.id,
-      productId: item.product.id,
-      variantId: item.variant ? item.variant.id : null,
-      productName: item.variant
-        ? item.variant.variantName
-        : item.product.product_name,
-      productImage: item.variant
-        ? item.variant.images?.[0]?.image || item.product.product_image // Fallback if no variant image
-        : item.product.product_image,
-      productQuantity: item.product_quantity,
-      productPrice: item.variant
-        ? item.variant.variantPrice
-        : item.product.product_price,
-    }));
+    return res.status(200).json({
+      success: true,
+      data: cartItems,
+    });
   } catch (error) {
-    console.error("getCartService error:", error);
-    throw new Error("Failed to fetch cart items");
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch cart",
+      error,
+    });
   }
 }
 
-export { addCartItemService, deleteCartItemService, getCartService };
+const changCartItemQuantityService = async (req: Request, res: Response) => {
+  try {
+    const productId = req.params.productId;
+    const newQuantity = req.body.quantity;
+
+    const existingItem = await Carts.findOne({
+      where: {
+        id: productId,
+      },
+    });
+
+    if (!existingItem) {
+      return res.status(400).json({
+        success: false,
+        message: `Cart item wiht id ${productId} does not exist`,
+      });
+    }
+
+    const [success, returnedResult] = await Carts.update(
+      { product_quantity: newQuantity },
+      {
+        where: {
+          id: productId,
+        },
+        returning: true,
+      }
+    );
+
+    return res.status(200).json({
+      success: success === 1,
+      data: returnedResult[0],
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to changer product quantity",
+      error,
+    });
+  }
+};
+
+export {
+  addCartItemService,
+  deleteCartItemService,
+  getCartService,
+  changCartItemQuantityService,
+};

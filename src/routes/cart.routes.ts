@@ -1,12 +1,15 @@
 import e from "express";
-import { Request, Response } from "express";
 import {
   addCartItemController,
+  changeCartItemQuantityController,
   deleteCartItemController,
   getCartController,
 } from "../controller/cart.controller";
 import { validateRequest } from "../middleware/validateRequest";
-import { AddcartItemSchema, DeleteCartItemSchema } from "../validators/cartValidators";
+import {
+  AddcartItemSchema,
+  DeleteCartItemSchema,
+} from "../validators/cartValidators";
 
 const router = e.Router();
 
@@ -22,5 +25,6 @@ router.delete(
 
 // GET /api/cart/:userId - Get cart items for a user
 router.get("/:userId", getCartController);
+router.put("/:productId", changeCartItemQuantityController);
 
 export default router;
