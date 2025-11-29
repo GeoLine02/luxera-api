@@ -27,20 +27,11 @@ async function addCartItemController(req: Request, res: Response) {
 }
 
 async function deleteCartItemController(req: Request, res: Response) {
-  const body = req.body as DeleteCartItemPayload;
-
   try {
-    await deleteCartItemService(body, res);
-    return res.status(204).json({
-      success: true,
-      message: "Item removed from cart successfully",
-      data: null,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    const deletedProduct = await deleteCartItemService(req, res);
+    return deletedProduct;
+  } catch (error) {
+    console.log(error);
   }
 }
 async function getCartController(req: Request, res: Response) {

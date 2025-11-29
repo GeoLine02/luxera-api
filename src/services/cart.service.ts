@@ -68,18 +68,14 @@ async function addCartItemService(data: AddCartItemPayload, res: Response) {
     throw new Error("Failed to add item to cart");
   }
 }
-async function deleteCartItemService(
-  data: DeleteCartItemPayload,
-  res: Response
-) {
-  const { productId, userId, removeCompletely } = data;
+async function deleteCartItemService(req: Request, res: Response) {
+  const cartItemId = req.params.id;
 
   try {
     // find the cart item
     const cartItem = await Carts.findOne({
       where: {
-        product_id: productId,
-        user_id: userId,
+        id: cartItemId,
       },
     });
     if (!cartItem) {
@@ -88,24 +84,23 @@ async function deleteCartItemService(
         message: "Cart item not found",
       });
     }
-    if (removeCompletely) {
-      // remove cart item completely
-      await cartItem.destroy();
-      return cartItem;
-    }
-    // decriment quantity by 1
-    //  if quantity is greater than 1 decriment else remove item completely
-    if (cartItem.product_quantity > 1) {
-      cartItem.product_quantity -= 1;
-      await cartItem.save();
-      return cartItem;
-    } else {
-      await cartItem.destroy();
-      return cartItem;
+
+    const deletedCartItem = await Carts.destroy({
+      where: {
+        id: cartItemId,
+      },
+    });
+
+    if (deletedCartItem) {
+      return res.status(200).json({
+        success: true,
+      });
     }
   } catch (error) {
-    console.error("deleteCartItemService error:", error);
-    throw new Error("Failed to delete cart item");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to delete cart item",
+    });
   }
 }
 async function getCartService(req: Request, res: Response) {
