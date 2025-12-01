@@ -37,7 +37,7 @@ class Products
   declare product_rating: number;
   declare product_owner_id: number;
   declare product_subcategory_id: number;
-  declare product_status: string;
+  declare product_status: ProductStatus;
   declare shop_id: number;
 
   public declare readonly variants: ProductVariantsAttributes[];
