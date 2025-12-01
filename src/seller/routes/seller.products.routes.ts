@@ -6,28 +6,10 @@ import { ProductCreationSchema } from "../../validators/productValidators";
 import {
   DeleteProductController,
   getSellerProductsController,
-  UpdateProductController,
 } from "../controller/seller.products.controller";
 
 const router = express.Router();
 router.get("/", authGuard, shopAuthGuard, getSellerProductsController);
-// router.post(
-//   "/create",
-// authGuard,
-// shopAuthGuard,
-//   upload.any(),
-//   validateRequest(ProductCreationSchema),
-//   CreateProductController
-// );
-
-router.put(
-  "/update",
-  authGuard,
-  shopAuthGuard,
-  upload.any(),
-  validateRequest(ProductCreationSchema),
-  UpdateProductController
-);
 
 router.delete("/:id", authGuard, shopAuthGuard, DeleteProductController);
 
