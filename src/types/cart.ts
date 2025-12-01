@@ -4,7 +4,6 @@ interface AddCartItemPayload {
   productId: number;
   userId: number;
   variantId: number;
-  productQuantity: number;
 }
 interface DeleteCartItemPayload extends AddCartItemPayload {
   removeCompletely?: boolean;
@@ -23,9 +22,13 @@ interface CartItemDBPayload {
   } | null;
   product: {
     id: number;
-    product_name: string;
-    product_price: number;
-    product_image: string;
+    product_description: string;
+    product_rating: number;
+    product_owner_id: number;
+    product_subcategory_id: number;
+    product_status: string;
+    shop_id: number;
+    primary_variant_id: number;
   };
 }
 export type { AddCartItemPayload, CartItemDBPayload, DeleteCartItemPayload };

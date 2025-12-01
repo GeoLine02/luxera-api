@@ -8,39 +8,46 @@ import {
 } from "../sequelize/models/associate";
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
-import { Response,Request } from "express";
+import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
 import { PAGE_SIZE } from "../constants/constants";
-export async function AllProductsService(page:number,pageSize:number) {
+import { success } from "zod";
+export async function AllProductsService(page: number, res: Response) {
   try {
-    sequelize.authenticate();
-    const offset = page * pageSize;
-    const limit = pageSize;
+    const offset = PAGE_SIZE * page;
     const products = await Products.findAll({
       order: [["id", "ASC"]],
-      where:{
-
-          // product_status:{
-          //   [Op.ne]:'pending'
-          // },
-         
+      where: {
+        // product_status:{
+        //   [Op.ne]:'pending'
+        // },
       },
-  
       offset: offset,
-      limit: limit,
-      include:[
+      limit: PAGE_SIZE,
+      include: [
         {
-          model:ProductVariants,
-          as:"primaryVariant",
-      
-        }
-      ]
+          model: ProductVariants,
+          as: "primaryVariant",
+        },
+      ],
     });
-    console.log(products)
-    return products;
+    const totalCount = await Products.count();
+    const hasMore = totalCount > page * PAGE_SIZE + products.length;
+    return res.status(200).json({
+      success: true,
+      message: "Products fetched successfully",
+      data: products,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
+    });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch products");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch all products",
+      error,
+    });
   }
 }
 
@@ -54,7 +61,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
         message: "Invalid product ID",
       });
     }
- 
+
     const product = await Products.findOne({
       where: { id: productId },
       include: [
@@ -82,53 +89,67 @@ export async function GetProductByIdService(req: Request, res: Response) {
     });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch product by ID");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch product",
+      error,
+    });
   }
 }
 
-export async function VipProductsService(page:number,res: Response) {
-  
+export async function VipProductsService(res: Response) {
   try {
     const vipProducts = await Products.findAll({
       where: {
-        product_status:ProductStatus.Vip,
+        product_status: ProductStatus.Vip,
       },
       order: [["id", "ASC"]],
-      offset: page * PAGE_SIZE,
-      limit: PAGE_SIZE,
-      include:[
+      include: [
         {
-          model:ProductVariants,
-          as:"primaryVariant",
-        }
-      ]
+          model: ProductVariants,
+          as: "primaryVariant",
+        },
+      ],
     });
-    return vipProducts
+    return res.status(200).json({
+      success: true,
+      message: "Vip products fetched successfully",
+      data: vipProducts,
+    });
   } catch (error) {
     console.log(error);
-   throw new Error("Unable to fetch vip products")
+    res.status(500).json({
+      message: "Unable to fetch vip products",
+    });
   }
 }
 
-export async function FeaturedProductsService(page:number,res: Response) {
+export async function FeaturedProductsService(res: Response) {
   try {
     const featuredProducts = await Products.findAll({
       where: {
-        product_status: ProductStatus.Featured,   
+        "$primaryVariant.variant_price$": {
+          [Op.gt]: 100,
+        },
       },
-      limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-      include:[
+      order: [["id", "ASC"]],
+      include: [
         {
-          model:ProductVariants,
-          as:"primaryVariant",
-        }
-      ]
+          model: ProductVariants,
+          as: "primaryVariant",
+        },
+      ],
     });
-    return featuredProducts;
+    return res.status(200).json({
+      message: "Featured products fetched successfully",
+      success: true,
+      data: featuredProducts,
+    });
   } catch (error) {
     console.log(error);
-   throw new Error("Unable to fetch featured products")
+    res.status(500).json({
+      message: "Unable to fetch featured products",
+    });
   }
 }
 export async function SearchProductsService(query: string) {
@@ -140,6 +161,7 @@ export async function SearchProductsService(query: string) {
           {
             "$primaryVariant.variant_name$": { [Op.iLike]: `%${query}%` },
           },
+
           {
             "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
           },
@@ -161,17 +183,15 @@ export async function SearchProductsService(query: string) {
               as: "category",
               attributes: ["id", "category_name"],
             },
-           
           ],
         },
-         {
-            model:ProductVariants,
-            as:"primaryVariant",
-          }
+        {
+          model: ProductVariants,
+          as: "primaryVariant",
+        },
       ],
     });
 
-    console.log("Search Results:", searchResults);
     return searchResults;
   } catch (error) {
     console.log(error);

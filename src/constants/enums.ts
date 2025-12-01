@@ -1,9 +1,7 @@
- enum ProductStatus {
+enum ProductStatus {
   Pending = "pending",
   Active = "active",
   Vip = "vip",
-  Featured = "featured",
-  Basic = "basic"
-  
+  Rejected = "rejected",
 }
-export {ProductStatus}
+export { ProductStatus };

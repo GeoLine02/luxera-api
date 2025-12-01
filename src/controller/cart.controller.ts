@@ -8,26 +8,22 @@ import {
 } from "../services/cart.service";
 import { success } from "zod";
 
- async function addCartItemController(req:Request,res:Response){
-    const  body = req.body as AddCartItemPayload
- 
-    
-    try {
-  
-     const cartItem =  await addCartItemService(body,res)
-        return res.status(200).json({
-            success:true,
-            message:"Item added to cart successfully",
-            data:cartItem
-        })
+async function addCartItemController(req: Request, res: Response) {
+  const body = req.body as AddCartItemPayload;
 
-    } catch (error:any) {
-         return res.status(500).json({
-            success:false,
-            message:error.message
-         })
-    }
-    
+  try {
+    const cartItem = await addCartItemService(body, res);
+    return res.status(200).json({
+      success: true,
+      message: "Item added to cart successfully",
+      data: cartItem,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 }
 
 async function deleteCartItemController(req: Request, res: Response) {
@@ -38,6 +34,7 @@ async function deleteCartItemController(req: Request, res: Response) {
     console.log(error);
   }
 }
+
 async function getCartController(req: Request, res: Response) {
   try {
     const cartItems = await getCartService(req, res);

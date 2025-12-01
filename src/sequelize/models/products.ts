@@ -5,51 +5,30 @@ import { ProductStatus } from "../../constants/enums";
 
 interface ProductAttributes {
   id: number;
-  product_name: string;
+
   product_description: string | null;
   product_rating: number;
   product_owner_id: number;
   product_subcategory_id: number;
   product_status: string;
-  shop_id:number,
-  primary_variant_id?:number | null
+  shop_id: number;
+  primary_variant_id?: number | null;
 }
-interface ProductImageAttributes {
-  id:number,
-  image:string,
-  product_id:number,
-  variant_id?:number | null
-}
-interface ProductVariantsAttributes {
-  id: number;
-  variant_name: string;
-  variant_price: number;
-  variant_quantity: number;
-  variant_discount:number
-  images:ProductImageAttributes[]
-}
-
-
-
 
 interface ProductCreationAtrributes extends Optional<ProductAttributes, "id"> {}
-class Products extends Model<ProductAttributes,ProductCreationAtrributes>  implements ProductAttributes {
+class Products
+  extends Model<ProductAttributes, ProductCreationAtrributes>
+  implements ProductAttributes
+{
   declare id: number;
-  declare product_name: string;
+
   declare product_description: string | null;
   declare product_rating: number;
   declare product_owner_id: number;
   declare product_subcategory_id: number;
   declare product_status: string;
-  declare shop_id:number;
-  declare primary_variant_id?:number | null
-  
-  public readonly declare variants: ProductVariantsAttributes[]
-  
-  
-  public readonly declare images:ProductImageAttributes[]
-
-
+  declare shop_id: number;
+  declare primary_variant_id: number | null;
 
   static associate(models: TypeModels) {
     // Each product → belongs to one user
@@ -68,28 +47,28 @@ class Products extends Model<ProductAttributes,ProductCreationAtrributes>  imple
       foreignKey: "product_id",
       as: "images",
     });
-    Products.hasMany(models.Carts,{
-       foreignKey:"product_id"
-    })
+    Products.hasMany(models.Carts, {
+      foreignKey: "product_id",
+    });
 
     Products.hasMany(models.ProductVariants, {
       foreignKey: "product_id",
       as: "variants",
     });
-    Products.belongsTo(models.ProductVariants,{
-      foreignKey:"primary_variant_id",
-      as:"primaryVariant",
-      constraints:false
-    })
+    Products.belongsTo(models.ProductVariants, {
+      foreignKey: "primary_variant_id",
+      as: "primaryVariant",
+      constraints: false,
+    });
 
     Products.belongsTo(models.Shop, {
       foreignKey: "shop_id",
       as: "shop",
     });
-    Products.hasMany(models.Carts,{
-      foreignKey:"product_id",
-      as:"cartItems"
-    })
+    Products.hasMany(models.Carts, {
+      foreignKey: "product_id",
+      as: "cartItems",
+    });
   }
 }
 
@@ -100,31 +79,25 @@ Products.init(
       autoIncrement: true,
       primaryKey: true,
     },
-  
-    product_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
- 
+
     product_description: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    primary_variant_id:{
-      type:DataTypes.INTEGER,
-      allowNull:true,
-      references:{
-        model:"ProductVariants",
-        key:"id"
+    primary_variant_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "ProductVariants",
+        key: "id",
       },
-      onDelete:"SET NULL",
-  
+      onDelete: "SET NULL",
     },
     product_rating: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
- 
+
     shop_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -142,7 +115,7 @@ Products.init(
         model: "Users",
         key: "id",
       },
-    
+
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
@@ -158,7 +131,11 @@ Products.init(
       onUpdate: "CASCADE",
     },
     product_status: {
-      type: DataTypes.ENUM(ProductStatus.Pending, ProductStatus.Active, ProductStatus.Vip, ProductStatus.Featured),
+      type: DataTypes.ENUM(
+        ProductStatus.Pending,
+        ProductStatus.Active,
+        ProductStatus.Vip
+      ),
       allowNull: false,
       defaultValue: ProductStatus.Pending,
     },
