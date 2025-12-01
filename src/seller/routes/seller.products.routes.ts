@@ -3,21 +3,22 @@ import { authGuard, shopAuthGuard } from "../../middleware/authGuard";
 import upload from "../../middleware/upload";
 import { validateRequest } from "../../middleware/validateRequest";
 import { ProductCreationSchema } from "../../validators/productValidators";
-import { CreateProductController, DeleteProductController, getSellerProductsController, UpdateProductController } from "../controller/seller.products.controller";
+import {
+  DeleteProductController,
+  getSellerProductsController,
+  UpdateProductController,
+} from "../controller/seller.products.controller";
 
 const router = express.Router();
-router.get("/",
-  authGuard,
-  shopAuthGuard,
-  getSellerProductsController)
-router.post(
-  "/create",
-authGuard,
-shopAuthGuard,
-  upload.any(),
-  validateRequest(ProductCreationSchema),
-  CreateProductController
-);
+router.get("/", authGuard, shopAuthGuard, getSellerProductsController);
+// router.post(
+//   "/create",
+// authGuard,
+// shopAuthGuard,
+//   upload.any(),
+//   validateRequest(ProductCreationSchema),
+//   CreateProductController
+// );
 
 router.put(
   "/update",
@@ -28,11 +29,6 @@ router.put(
   UpdateProductController
 );
 
-
-router.delete("/:id", 
-    authGuard,
-  shopAuthGuard,
-  DeleteProductController);
-
+router.delete("/:id", authGuard, shopAuthGuard, DeleteProductController);
 
 export default router;
