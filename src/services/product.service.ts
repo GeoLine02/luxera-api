@@ -8,39 +8,52 @@ import {
 } from "../sequelize/models/associate";
 import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
-import { Response,Request } from "express";
+import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
-import { PAGE_SIZE } from "../constants/constants";
-export async function AllProductsService(page:number,pageSize:number) {
+export async function AllProductsService(req: Request, res: Response) {
   try {
-    sequelize.authenticate();
-    const offset = page * pageSize;
-    const limit = pageSize;
+    const page = Number(req.query.page) || 1; // default page = 0
+    const limit = 20;
+    const offset = limit * (page - 1);
     const products = await Products.findAll({
-      order: [["id", "ASC"]],
-      where:{
-
-          // product_status:{
-          //   [Op.ne]:'pending'
-          // },
-         
+      where: {
+        product_status: {
+          [Op.not]: ProductStatus.Pending, // NOT equal to pending
+        },
       },
-  
       offset: offset,
-      limit: limit,
-      include:[
+      limit: 20,
+
+      include: [
         {
-          model:ProductVariants,
-          as:"primaryVariant",
-      
-        }
-      ]
+          model: ProductVariants,
+          as: "variants",
+          separate: true,
+          limit: 1,
+          order: [["id", "ASC"]],
+
+          include: [
+            {
+              model: ProductImages,
+              as: "images",
+              required: false,
+            },
+          ],
+        },
+      ],
     });
-    console.log(products)
-    return products;
+
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch products");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch all products",
+      error,
+    });
   }
 }
 
@@ -54,7 +67,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
         message: "Invalid product ID",
       });
     }
- 
+
     const product = await Products.findOne({
       where: { id: productId },
       include: [
@@ -86,49 +99,73 @@ export async function GetProductByIdService(req: Request, res: Response) {
   }
 }
 
-export async function VipProductsService(page:number,res: Response) {
-  
+export async function VipProductsService(req: Request, res: Response) {
   try {
     const vipProducts = await Products.findAll({
       where: {
-        product_status:ProductStatus.Vip,
+        product_status: ProductStatus.Vip,
       },
-      order: [["id", "ASC"]],
-      offset: page * PAGE_SIZE,
-      limit: PAGE_SIZE,
-      include:[
+      limit: 10,
+      include: [
         {
-          model:ProductVariants,
-          as:"primaryVariant",
-        }
-      ]
+          model: ProductVariants,
+          as: "variants",
+          separate: true,
+          order: [["id", "ASC"]],
+          limit: 1,
+          include: [
+            {
+              model: ProductImages,
+              as: "images",
+            },
+          ],
+        },
+      ],
     });
-    return vipProducts
+
+    return res.status(200).json({
+      success: true,
+      data: vipProducts,
+    });
   } catch (error) {
     console.log(error);
-   throw new Error("Unable to fetch vip products")
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch vip products",
+    });
   }
 }
 
-export async function FeaturedProductsService(page:number,res: Response) {
+export async function FeaturedProductsService(req: Request, res: Response) {
   try {
     const featuredProducts = await Products.findAll({
       where: {
-        product_status: ProductStatus.Featured,   
+        product_status: ProductStatus.Featured,
       },
-      limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-      include:[
+      limit: 10,
+      include: [
         {
-          model:ProductVariants,
-          as:"primaryVariant",
-        }
-      ]
+          model: ProductVariants,
+          as: "variants",
+          separate: true,
+          order: [["id", "ASC"]],
+          limit: 1,
+          include: [{ model: ProductImages, as: "images" }],
+        },
+      ],
     });
-    return featuredProducts;
+
+    return res.status(200).json({
+      success: true,
+      data: featuredProducts,
+    });
   } catch (error) {
     console.log(error);
-   throw new Error("Unable to fetch featured products")
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch featured products",
+      error,
+    });
   }
 }
 export async function SearchProductsService(query: string) {
@@ -161,13 +198,12 @@ export async function SearchProductsService(query: string) {
               as: "category",
               attributes: ["id", "category_name"],
             },
-           
           ],
         },
-         {
-            model:ProductVariants,
-            as:"primaryVariant",
-          }
+        {
+          model: ProductVariants,
+          as: "primaryVariant",
+        },
       ],
     });
 
@@ -176,5 +212,107 @@ export async function SearchProductsService(query: string) {
   } catch (error) {
     console.log(error);
     throw new Error("Unable to search products");
+  }
+}
+
+interface ProductVariantTypePayload {
+  variantName: string;
+  variantPrice: number;
+  variantQuantity: number;
+  variantDiscount: number;
+}
+
+export async function CreateProductService(req: Request, res: Response) {
+  try {
+    const {
+      productDescription,
+      productVariants,
+      ownerId,
+      productSubCategoryId,
+    } = req.body;
+    const shop = req.shop;
+    const images = req.files as Express.Multer.File[];
+    const parsedProductVariants = JSON.parse(productVariants);
+
+    if (!images || images.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No images uploaded",
+      });
+    }
+
+    const createdProduct = await Products.create({
+      product_rating: 0,
+      product_owner_id: ownerId,
+      product_status: "pending",
+      product_subcategory_id: productSubCategoryId,
+      shop_id: shop?.id as number,
+      product_description: productDescription,
+    });
+
+    if (createdProduct) {
+      const createdProductVariantsArray = parsedProductVariants.map(
+        (variant: ProductVariantTypePayload) => ({
+          variant_name: variant.variantName,
+          product_id: createdProduct.id,
+          variant_price: variant.variantPrice,
+          variant_quantity: variant.variantQuantity,
+          variant_discount: variant.variantDiscount,
+        })
+      );
+
+      const createdVariants = await ProductVariants.bulkCreate(
+        createdProductVariantsArray
+      );
+
+      if (createdVariants && createdVariants.length > 0) {
+        // Group images by fieldname and map to variant IDs
+        const productImagesArray: any[] = [];
+
+        images.forEach((file) => {
+          // Extract variant index from fieldname (e.g., "variant-1-image" -> 1)
+          const variantIndexMatch = file.fieldname.match(/variant-(\d+)-image/);
+
+          if (variantIndexMatch) {
+            const variantIndex = parseInt(variantIndexMatch[1]) - 1; // Convert to 0-based index
+
+            // Make sure the variant exists
+            if (createdVariants[variantIndex]) {
+              const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+                file.filename
+              }`;
+
+              productImagesArray.push({
+                image: imageUrl,
+                product_id: createdProduct.id,
+                variant_id: createdVariants[variantIndex].id,
+              });
+            }
+          }
+        });
+
+        // Create all product images
+        const createdProductImages = await ProductImages.bulkCreate(
+          productImagesArray
+        );
+
+        return res.status(201).json({
+          success: true,
+          message: "Product created successfully",
+          data: {
+            product: createdProduct,
+            variants: createdVariants,
+            images: createdProductImages,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to create product",
+      error,
+    });
   }
 }

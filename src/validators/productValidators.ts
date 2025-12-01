@@ -2,17 +2,6 @@ import { z } from "zod";
 const PRODUCT_STATUSES = ["basic", "vip", "active"];
 // ✅ Reusable variant schema with proper validation
 const ProductVariantSchema = z.object({
-  id: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z
-        .number()
-        .int("Variant ID must be an integer")
-        .positive("Variant ID must be a positive number")
-    )
-    .optional(),
-  index: z.string().optional(), // For matching with uploaded images
   variantName: z
     .string()
     .min(1, "Variant name is required")
@@ -50,26 +39,12 @@ const ProductVariantSchema = z.object({
 
 // ✅ Product creation schema - accepts strings, transforms to numbers
 const ProductCreationSchema = z.object({
-  productName: z
-    .string()
-    .min(1, "Product name is required")
-    .max(200, "Product name must not exceed 200 characters")
-    .trim(),
   productDescription: z
     .string()
     .min(1, "Product description is required")
     .max(5000, "Product description must not exceed 5000 characters")
     .trim(),
-  productCategoryId: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z
-        .number()
-        .int("Category ID must be an integer")
-        .positive("Category ID must be a positive number")
-    ),
-  subCategoryId: z
+  productSubCategoryId: z
     .string()
     .transform(Number)
     .pipe(
@@ -77,14 +52,6 @@ const ProductCreationSchema = z.object({
         .number()
         .int("Subcategory ID must be an integer")
         .positive("Subcategory ID must be a positive number")
-    ),
-  userId: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z.number()
-        .int("User ID must be an integer")
-        .positive("User ID must be a positive number")
     ),
 });
 
@@ -131,7 +98,7 @@ const UpdateProductSchema = z.object({
         .int("Subcategory ID must be an integer")
         .positive("Subcategory ID must be a positive number")
     ),
- 
+
   userId: z
     .string()
     .transform(Number)

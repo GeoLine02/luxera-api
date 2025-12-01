@@ -5,12 +5,12 @@ import {
   VipProductsController,
   SearchProductsController,
   GetProductByIdController,
+  CreateProductController,
 } from "../controller/products.controller";
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
 import { validateRequest } from "../middleware/validateRequest";
 import {
-  CreateProductController,
   UpdateProductController,
   DeleteProductController,
 } from "../seller/controller/seller.products.controller";
@@ -24,7 +24,7 @@ router.get("/featured", FeaturedProductsController);
 router.get("/search", SearchProductsController);
 router.get("/:id", GetProductByIdController);
 router.post(
-  "/create",
+  "/",
   authGuard,
   shopAuthGuard,
   upload.any(),
