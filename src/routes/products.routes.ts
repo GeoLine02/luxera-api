@@ -10,7 +10,6 @@ import {
 import { authGuard, shopAuthGuard } from "../middleware/authGuard";
 import upload from "../middleware/upload";
 import { validateRequest } from "../middleware/validateRequest";
-import { DeleteProductController } from "../seller/controller/seller.products.controller";
 import { ProductCreationSchema } from "../validators/productValidators";
 
 const router = express.Router();
@@ -28,7 +27,5 @@ router.post(
   validateRequest(ProductCreationSchema),
   CreateProductController
 );
-
-router.delete("/delete", DeleteProductController);
 
 export default router;
