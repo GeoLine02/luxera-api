@@ -254,10 +254,10 @@ export async function CreateProductService(req: Request, res: Response) {
       const createdProductVariantsArray = parsedProductVariants.map(
         (variant: ProductVariantTypePayload) => ({
           variant_name: variant.variantName,
-          product_id: createdProduct.id,
-          variant_price: variant.variantPrice,
-          variant_quantity: variant.variantQuantity,
-          variant_discount: variant.variantDiscount,
+          product_id: Number(createdProduct.id),
+          variant_price: Number(variant.variantPrice),
+          variant_quantity: Number(variant.variantQuantity),
+          variant_discount: Number(variant.variantDiscount),
         })
       );
 
