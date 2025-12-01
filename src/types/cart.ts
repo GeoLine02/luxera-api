@@ -1,5 +1,3 @@
-import { VariantsMetadata } from "./products";
-
 interface AddCartItemPayload {
   productId: number;
   userId: number;
