@@ -21,7 +21,6 @@ export async function CreateProductService(
   try {
     const shop = req.shop;
     const {
-      productName,
       productDescription,
       productCategoryId,
       subCategoryId,
