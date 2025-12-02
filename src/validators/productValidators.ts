@@ -53,6 +53,15 @@ const ProductCreationSchema = z.object({
         .int("Subcategory ID must be an integer")
         .positive("Subcategory ID must be a positive number")
     ),
+  productCategoryId: z
+    .string()
+    .transform(Number)
+    .pipe(
+      z
+        .number()
+        .int("Subcategory ID must be an integer")
+        .positive("Subcategory ID must be a positive number")
+    ),
 });
 
 // ✅ Product update schema - accepts strings, transforms to numbers
@@ -67,14 +76,6 @@ const UpdateProductSchema = z.object({
         .positive("Product ID must be a positive number")
     ),
 
-  productStatus: z.enum(PRODUCT_STATUSES, {
-    message: "Product status must be one of: " + PRODUCT_STATUSES.join(", "),
-  }),
-  productName: z
-    .string()
-    .min(1, "Product name is required")
-    .max(200, "Product name must not exceed 200 characters")
-    .trim(),
   productDescription: z
     .string()
     .min(1, "Product description is required")
@@ -89,7 +90,7 @@ const UpdateProductSchema = z.object({
         .int("Category ID must be an integer")
         .positive("Category ID must be a positive number")
     ),
-  subCategoryId: z
+  productSubCategoryId: z
     .string()
     .transform(Number)
     .pipe(

@@ -11,7 +11,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import { initAssociations } from "./sequelize/models/associate";
 import swaggerRouter from "./swagger/swagger";
-
+import sellerRoutes from "./seller/routes/seller.routes";
 dotenv.config();
 
 const app = express();
@@ -41,7 +41,7 @@ app.use("/categories", categoriesRoutes);
 app.use("/shop", shopRoutes);
 app.use("/cart", cartRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use("/seller", sellerRoutes);
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);
 // ✅ Database connection

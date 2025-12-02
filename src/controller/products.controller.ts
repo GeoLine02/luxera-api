@@ -10,16 +10,17 @@ import {
 
 export async function AllProductsController(req: Request, res: Response) {
   try {
-    const products = await AllProductsService(req, res);
+    const page = Number(req.query.page);
+    const products = await AllProductsService(page, res);
     return products;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
   }
 }
 
 export async function VipProductsController(req: Request, res: Response) {
   try {
-    const vipProducts = await VipProductsService(req, res);
+    const vipProducts = await VipProductsService(res);
     return vipProducts;
   } catch (error) {
     console.log(error);
@@ -27,7 +28,7 @@ export async function VipProductsController(req: Request, res: Response) {
 }
 export async function FeaturedProductsController(req: Request, res: Response) {
   try {
-    const featuredProducts = await FeaturedProductsService(req, res);
+    const featuredProducts = await FeaturedProductsService(res);
     return featuredProducts;
   } catch (error) {
     console.log(error);
@@ -70,9 +71,5 @@ export async function GetProductByIdController(req: Request, res: Response) {
     return product;
   } catch (error: any) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
   }
 }

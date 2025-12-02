@@ -1,8 +1,4 @@
-import {
-  Model,
-  DataTypes,
-  Optional,
-} from "sequelize";
+import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
 
@@ -28,15 +24,14 @@ class Carts
   public product_quantity!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-  public product_variant_id!: number
+  public product_variant_id!: number;
 
-   public readonly product!: {
+  public readonly product!: {
     id: number;
     product_name: string;
     product_price: number;
     product_image: string;
   };
-
   public readonly variant?: {
     id: number;
     variantName: string;
@@ -59,7 +54,7 @@ class Carts
     Carts.belongsTo(models.ProductVariants, {
       foreignKey: "product_variant_id",
       as: "variant",
-    })
+    });
   }
 }
 
@@ -72,39 +67,38 @@ Carts.init(
     },
     user_id: {
       type: DataTypes.INTEGER,
-      
+
       allowNull: false,
-      references:{
-        model:"Users",
-        key:"id"
-        
+      references: {
+        model: "Users",
+        key: "id",
       },
-      onDelete:"CASCADE",
-      onUpdate:"CASCADE"
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references:{
-       model:"Products",
-        key:"id"
+      references: {
+        model: "Products",
+        key: "id",
       },
-      onDelete:"CASCADE",
-      onUpdate:"CASCADE"
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
-    product_quantity:{
+    product_quantity: {
       type: DataTypes.INTEGER,
-      allowNull:false,
-      defaultValue:1
+      allowNull: false,
+      defaultValue: 1,
     },
-    product_variant_id:{
+    product_variant_id: {
       type: DataTypes.INTEGER,
-      allowNull:true,
-      references:{
-       model:"ProductVariants",
-        key:"id"
+      allowNull: true,
+      references: {
+        model: "ProductVariants",
+        key: "id",
       },
-    }
+    },
   },
   {
     sequelize,
@@ -114,4 +108,4 @@ Carts.init(
   }
 );
 
-export default Carts
+export default Carts;

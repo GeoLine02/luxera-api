@@ -22,7 +22,7 @@ class ProductImages
   declare product_id: number;
   declare variant_id: number | null;
 
-  static associate(models:TypeModels) {
+  static associate(models: TypeModels) {
     ProductImages.belongsTo(models.Products, {
       foreignKey: "product_id",
       as: "product",
@@ -30,7 +30,7 @@ class ProductImages
     ProductImages.belongsTo(models.ProductVariants, {
       foreignKey: "variant_id",
       as: "variant",
-    })
+    });
   }
 }
 
@@ -58,9 +58,10 @@ ProductImages.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "Products",
+        model: "ProductsVariants",
         key: "id",
       },
+      onUpdate: "CASCADE",
       onDelete: "CASCADE",
     },
   },
@@ -69,7 +70,6 @@ ProductImages.init(
     modelName: "ProductImages",
     tableName: "ProductImages",
     timestamps: true,
-   
   }
 );
 

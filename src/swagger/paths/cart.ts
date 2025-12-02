@@ -63,7 +63,7 @@
  *         variantId:
  *           type: integer
  *           example: 2
- * 
+ *
  *     DeleteCartItem:
  *       type: object
  *       required:
@@ -99,7 +99,7 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/AddCartItem'         
+ *             $ref: '#/components/schemas/AddCartItem'
  *     responses:
  *       '200':
  *         description: Item added to cart successfully
@@ -128,7 +128,7 @@
 
 /**
  * @swagger
- * /cart:
+ * /cart/{cartItemId}:
  *   delete:
  *     summary: Delete or decrement item from cart
  *     tags:
@@ -191,5 +191,3 @@
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-
-

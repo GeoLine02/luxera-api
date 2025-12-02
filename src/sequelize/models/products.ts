@@ -5,26 +5,14 @@ import { ProductStatus } from "../../constants/enums";
 
 interface ProductAttributes {
   id: number;
+
   product_description: string | null;
   product_rating: number;
   product_owner_id: number;
   product_subcategory_id: number;
   product_status: string;
   shop_id: number;
-}
-interface ProductImageAttributes {
-  id: number;
-  image: string;
-  product_id: number;
-  variant_id?: number | null;
-}
-interface ProductVariantsAttributes {
-  id: number;
-  variant_name: string;
-  variant_price: number;
-  variant_quantity: number;
-  variant_discount: number;
-  images: ProductImageAttributes[];
+  primary_variant_id?: number | null;
 }
 
 interface ProductCreationAtrributes extends Optional<ProductAttributes, "id"> {}
@@ -33,16 +21,14 @@ class Products
   implements ProductAttributes
 {
   declare id: number;
+
   declare product_description: string | null;
   declare product_rating: number;
   declare product_owner_id: number;
   declare product_subcategory_id: number;
-  declare product_status: ProductStatus;
+  declare product_status: string;
   declare shop_id: number;
-
-  public declare readonly variants: ProductVariantsAttributes[];
-
-  public declare readonly images: ProductImageAttributes[];
+  declare primary_variant_id: number | null;
 
   static associate(models: TypeModels) {
     // Each product → belongs to one user
@@ -69,6 +55,11 @@ class Products
       foreignKey: "product_id",
       as: "variants",
     });
+    Products.belongsTo(models.ProductVariants, {
+      foreignKey: "primary_variant_id",
+      as: "primaryVariant",
+      constraints: false,
+    });
 
     Products.belongsTo(models.Shop, {
       foreignKey: "shop_id",
@@ -88,11 +79,20 @@ Products.init(
       autoIncrement: true,
       primaryKey: true,
     },
+
     product_description: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
+    primary_variant_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "ProductVariants",
+        key: "id",
+      },
+      onDelete: "SET NULL",
+    },
     product_rating: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -134,8 +134,7 @@ Products.init(
       type: DataTypes.ENUM(
         ProductStatus.Pending,
         ProductStatus.Active,
-        ProductStatus.Vip,
-        ProductStatus.Featured
+        ProductStatus.Vip
       ),
       allowNull: false,
       defaultValue: ProductStatus.Pending,

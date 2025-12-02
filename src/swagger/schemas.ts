@@ -103,30 +103,15 @@
  *       properties:
  *         id:
  *           type: integer
- *           example: 1
- *         product_name:
- *           type: string
- *           example: "Premium T-Shirt"
+ *           example: 1      
  *         product_description:
  *           type: string
- *           example: "High quality cotton t-shirt"
- *         product_price:
- *           type: number
- *           format: float
- *           example: 29.99
- *         product_image:
- *           type: string
- *           example: "image-url.jpg"
+ *           example: "High quality cotton t-shirt"  
  *         product_subcategory_id:
- *           type: number
- *           
+ *           type: number        
  *         product_status:
  *           type: string
  *           enum: [active, vip,featured]
- *         product_discount:
- *           type: number
- *         product_quantity:
- *           type: number
  *         product_rating:
  *           type: number
  *         shop_id:
@@ -236,21 +221,12 @@
  *         id:
  *           type: integer
  *           example: 18
- *         product_name:
- *           type: string
- *           example: "nigozi"
- *         product_price:
- *           type: integer
- *           example: 483
  *         product_description:
  *           type: string
  *           example: "gemrilia"
  *         product_rating:
  *           type: integer
  *           example: 0
- *         product_image:
- *           type: string
- *           example: "http://localhost:4000/uploads/1763233056971-94874406.png"
  *         shop_id:
  *           type: integer
  *           example: 1
@@ -287,21 +263,12 @@
  *         id:
  *           type: integer
  *           example: 18
- *         product_name:
- *           type: string
- *           example: "nigozi"
- *         product_price:
- *           type: integer
- *           example: 483
  *         product_description:
  *           type: string
  *           example: "gemrilia"
  *         product_rating:
  *           type: integer
  *           example: 0
- *         product_image:
- *           type: string
- *           example: "http://localhost:4000/uploads/1763233056971-94874406.png"
  *         shop_id:
  *           type: integer
  *           example: 1
@@ -466,4 +433,3 @@
  *         refreshToken:
  *           type: string
  */
-

@@ -9,8 +9,7 @@ import {
 } from "../types/cart";
 import { Request, Response } from "express";
 async function addCartItemService(data: AddCartItemPayload, res: Response) {
-  const { productId, userId, variantId, productQuantity } = data;
-  console.log("productQuantity", productQuantity);
+  const { productId, userId, variantId } = data;
 
   try {
     // check if product exist in the db
@@ -39,7 +38,6 @@ async function addCartItemService(data: AddCartItemPayload, res: Response) {
         product_id: productId,
         user_id: userId,
         product_variant_id: variantId,
-        product_quantity: productQuantity,
       },
     });
 
@@ -90,9 +88,8 @@ async function deleteCartItemService(req: Request, res: Response) {
         id: cartItemId,
       },
     });
-
     if (deletedCartItem) {
-      return res.status(200).json({
+      return res.status(204).json({
         success: true,
         data: { itemid: cartItem.id },
       });
@@ -109,32 +106,33 @@ async function getCartService(req: Request, res: Response) {
     const userId = req.params.userId;
 
     const cartItems = await Carts.findAll({
-        where:{
-            user_id:userId
+      where: {
+        user_id: userId,
+      },
+      include: [
+        {
+          model: Products,
+          as: "product",
         },
-   
-        include:[{
+        {
+          model: ProductVariants,
 
-            model: Products,
-            as: "product",
-         
+          as: "variant",
+          include: [
+            {
+              model: ProductImages,
+              as: "images",
+              attributes: ["id", "image"],
+            },
+          ],
         },
-    {
+      ],
+    });
 
-        model:ProductVariants,
-        
-        as:"variant",
-        include:[{
-            model:ProductImages,
-            as:"images",
-            attributes:['id','image'],
-        }]
-        },
-     
-    ]
-    })
-
-    return cartItems
+    return res.status(200).json({
+      success: true,
+      data: cartItems,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({

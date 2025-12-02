@@ -10,42 +10,43 @@ import ProductImages from "../sequelize/models/productimages";
 import ProductVariants from "../sequelize/models/productvariants";
 import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
-export async function AllProductsService(req: Request, res: Response) {
+import { PAGE_SIZE } from "../constants/constants";
+import { success } from "zod";
+export async function AllProductsService(page: number, res: Response) {
   try {
-    const page = Number(req.query.page) || 1; // default page = 0
-    const limit = 20;
-    const offset = limit * (page - 1);
+    if (isNaN(page) || page < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid page number",
+      });
+    }
+
+    const offset = PAGE_SIZE * (page - 1);
     const products = await Products.findAll({
+      order: [["id", "ASC"]],
       where: {
-        product_status: {
-          [Op.not]: ProductStatus.Pending, // NOT equal to pending
-        },
+        // product_status:{
+        //   [Op.ne]:'pending'
+        // },
       },
       offset: offset,
-      limit: 20,
-
+      limit: PAGE_SIZE,
       include: [
         {
           model: ProductVariants,
-          as: "variants",
-          separate: true,
-          limit: 1,
-          order: [["id", "ASC"]],
-
-          include: [
-            {
-              model: ProductImages,
-              as: "images",
-              required: false,
-            },
-          ],
+          as: "primaryVariant",
         },
       ],
     });
-
+    const totalCount = await Products.count();
+    const hasMore = totalCount > page * PAGE_SIZE + products.length;
     return res.status(200).json({
       success: true,
+      message: "Products fetched successfully",
       data: products,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
     });
   } catch (error) {
     console.log(error);
@@ -95,76 +96,66 @@ export async function GetProductByIdService(req: Request, res: Response) {
     });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to fetch product by ID");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch product",
+      error,
+    });
   }
 }
 
-export async function VipProductsService(req: Request, res: Response) {
+export async function VipProductsService(res: Response) {
   try {
     const vipProducts = await Products.findAll({
       where: {
         product_status: ProductStatus.Vip,
       },
-      limit: 10,
+      order: [["id", "ASC"]],
       include: [
         {
           model: ProductVariants,
-          as: "variants",
-          separate: true,
-          order: [["id", "ASC"]],
-          limit: 1,
-          include: [
-            {
-              model: ProductImages,
-              as: "images",
-            },
-          ],
+          as: "primaryVariant",
         },
       ],
     });
-
     return res.status(200).json({
       success: true,
+      message: "Vip products fetched successfully",
       data: vipProducts,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
+    res.status(500).json({
       message: "Unable to fetch vip products",
     });
   }
 }
 
-export async function FeaturedProductsService(req: Request, res: Response) {
+export async function FeaturedProductsService(res: Response) {
   try {
     const featuredProducts = await Products.findAll({
       where: {
-        product_status: ProductStatus.Featured,
+        "$primaryVariant.variant_price$": {
+          [Op.gt]: 100,
+        },
       },
-      limit: 10,
+      order: [["id", "ASC"]],
       include: [
         {
           model: ProductVariants,
-          as: "variants",
-          separate: true,
-          order: [["id", "ASC"]],
-          limit: 1,
-          include: [{ model: ProductImages, as: "images" }],
+          as: "primaryVariant",
         },
       ],
     });
-
     return res.status(200).json({
+      message: "Featured products fetched successfully",
       success: true,
       data: featuredProducts,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
+    res.status(500).json({
       message: "Unable to fetch featured products",
-      error,
     });
   }
 }
@@ -177,6 +168,7 @@ export async function SearchProductsService(query: string) {
           {
             "$primaryVariant.variant_name$": { [Op.iLike]: `%${query}%` },
           },
+
           {
             "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
           },
@@ -207,7 +199,6 @@ export async function SearchProductsService(query: string) {
       ],
     });
 
-    console.log("Search Results:", searchResults);
     return searchResults;
   } catch (error) {
     console.log(error);
