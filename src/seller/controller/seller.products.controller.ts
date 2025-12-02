@@ -33,6 +33,12 @@ export async function CreateProductController(req: Request, res: Response) {
 
     const files = req.files as Express.Multer.File[];
     console.log("Files received in controller:", files);
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files provided",
+      });
+    }
     // Parse variants metadata from JSON
 
     const variantsMetadata = JSON.parse(body.variantsMetadata || "[]");
@@ -81,6 +87,12 @@ export async function UpdateProductController(req: Request, res: Response) {
   try {
     const body = req.body;
     const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files provided",
+      });
+    }
     const variantMetadata = JSON.parse(body.variantsMetadata || "[]");
     const variantImagesMap: Record<number, Express.Multer.File[]> = {};
 

@@ -80,7 +80,6 @@ export async function CreateProductService(
         };
       });
 
-      console.log("variants to create", variantsToCreate);
       const createdVariants = await ProductVariants.bulkCreate(
         variantsToCreate,
         {
