@@ -1,6 +1,5 @@
-
 interface VariantImagesMap {
-  [index:number]: Express.Multer.File[];
+  [index: number]: Express.Multer.File[];
 }
 interface CreateProductPayload {
   productCategoryId: number;
@@ -19,13 +18,16 @@ interface VariantsMetadata {
   variantQuantity: number;
   variantDiscount: number;
   productId: number;
-
 }
 
 interface ProductUpdatePayload extends CreateProductPayload {
-    productStatus: string;
-    productId:number;
+  productStatus: string;
+  productId: number;
 }
 
-
-export { CreateProductPayload, VariantsMetadata ,ProductUpdatePayload,VariantImagesMap};
+export {
+  CreateProductPayload,
+  VariantsMetadata,
+  ProductUpdatePayload,
+  VariantImagesMap,
+};
