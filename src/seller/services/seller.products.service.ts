@@ -364,16 +364,20 @@ export async function GetSellerProductsService(req: Request) {
       where: {
         shop_id: shop!.id,
       },
+      order: [["id", "ASC"]],
       attributes: [
         "id",
         "product_status",
-        "product_description",
-        "product_rating",
+        "views_per_day",
+        "views_per_month",
+        "sells_per_day",
+        "sells_per_month",
       ],
       include: [
         {
           model: ProductVariants,
-          as: "variants",
+          as: "primaryVariant",
+
           attributes: [
             "id",
             "variant_name",
