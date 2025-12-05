@@ -248,5 +248,66 @@
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-
-
+/**
+ * @swagger
+ * /seller/product/updateStatus:
+ *   put:
+ *     summary: Update product status
+ *     tags:
+ *       - Seller Products
+ *     security:
+ *       - ShopCookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - productId
+ *               - status
+ *             properties:
+ *               productId:
+ *                 type: integer
+ *                 description: ID of the product to update
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive, draft]
+ *                 description: New status for the product (e.g., active, inactive, draft)
+ *     responses:
+ *       '200':
+ *         description: Product status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: 'null'
+ *       '400':
+ *         description: Validation error (e.g., invalid status or missing fields)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *       '401':
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '404':
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '500':
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */

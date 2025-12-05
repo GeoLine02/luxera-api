@@ -7,7 +7,6 @@ interface SubCategoryAttributes {
   sub_category_name: string;
   sub_category_image: string;
   category_id: number;
-
 }
 
 class SubCategories extends Model implements SubCategoryAttributes {
@@ -15,13 +14,14 @@ class SubCategories extends Model implements SubCategoryAttributes {
   declare sub_category_name: string;
   declare sub_category_image: string;
   declare category_id: number;
- 
-  static associate(models: TypeModels) {  // ← Accept models parameter
+
+  static associate(models: TypeModels) {
+    // ← Accept models parameter
     SubCategories.belongsTo(models.Categories, {
       foreignKey: "category_id",
       as: "category",
     });
-    
+
     SubCategories.hasMany(models.Products, {
       foreignKey: "product_subcategory_id",
       as: "subCategoryProducts",

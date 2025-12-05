@@ -6,29 +6,47 @@ import { ProductStatus } from "../../constants/enums";
 interface ProductAttributes {
   id: number;
 
-  product_description: string | null;
+  product_description: string;
   product_rating: number;
   product_owner_id: number;
   product_subcategory_id: number;
   product_status: string;
   shop_id: number;
-  primary_variant_id?: number | null;
+  primary_variant_id: number;
+  views_per_day: number;
+  views_per_month: number;
+  sales_per_day: number;
+  sales_per_month: number;
 }
 
-interface ProductCreationAtrributes extends Optional<ProductAttributes, "id"> {}
+interface ProductCreationAtrributes
+  extends Optional<
+    ProductAttributes,
+    | "id"
+    | "primary_variant_id"
+    | "views_per_day"
+    | "views_per_month"
+    | "sales_per_day"
+    | "sales_per_month"
+    | "product_status"
+  > {}
 class Products
   extends Model<ProductAttributes, ProductCreationAtrributes>
   implements ProductAttributes
 {
   declare id: number;
 
-  declare product_description: string | null;
+  declare product_description: string;
   declare product_rating: number;
   declare product_owner_id: number;
   declare product_subcategory_id: number;
   declare product_status: string;
   declare shop_id: number;
-  declare primary_variant_id: number | null;
+  declare primary_variant_id: number;
+  declare views_per_day: number;
+  declare views_per_month: number;
+  declare sales_per_day: number;
+  declare sales_per_month: number;
 
   static associate(models: TypeModels) {
     // Each product → belongs to one user
@@ -134,10 +152,33 @@ Products.init(
       type: DataTypes.ENUM(
         ProductStatus.Pending,
         ProductStatus.Active,
-        ProductStatus.Vip
+        ProductStatus.Vip,
+        ProductStatus.Inactive,
+        ProductStatus.Rejected,
+        ProductStatus.OutOfStock
       ),
       allowNull: false,
       defaultValue: ProductStatus.Pending,
+    },
+    views_per_day: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    views_per_month: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    sales_per_day: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    sales_per_month: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
   },
   {
