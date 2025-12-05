@@ -1,5 +1,12 @@
 import { z } from "zod";
-const PRODUCT_STATUSES = ["basic", "vip", "active"];
+const PRODUCT_STATUSES = [
+  "vip",
+  "active",
+  "inactive",
+  "pending",
+  "rejected",
+  "out of stock",
+];
 // ✅ Reusable variant schema with proper validation
 const ProductVariantSchema = z.object({
   variantName: z
@@ -65,7 +72,7 @@ const ProductCreationSchema = z.object({
 });
 
 // ✅ Product update schema - accepts strings, transforms to numbers
-const UpdateProductSchema = z.object({
+const ProductUpdateSchema = z.object({
   productId: z
     .string()
     .transform(Number)
@@ -99,22 +106,22 @@ const UpdateProductSchema = z.object({
         .int("Subcategory ID must be an integer")
         .positive("Subcategory ID must be a positive number")
     ),
-
-  userId: z
-    .string()
-    .transform(Number)
-    .pipe(
-      z
-        .number()
-        .int("User ID must be an integer")
-        .positive("User ID must be a positive number")
-    ),
 });
-
+const ProductUpdateStatusSchema = z.object({
+  productId: z
+    .int("Product ID must be an integer")
+    .positive("Product ID must be a positive number"),
+  status: z.enum(PRODUCT_STATUSES),
+});
 // Export schemas
-export { ProductVariantSchema, ProductCreationSchema, UpdateProductSchema };
+export {
+  ProductVariantSchema,
+  ProductCreationSchema,
+  ProductUpdateSchema,
+  ProductUpdateStatusSchema,
+};
 
 // Type inference from schemas
 export type ProductVariantInput = z.infer<typeof ProductVariantSchema>;
 export type ProductCreationInput = z.infer<typeof ProductCreationSchema>;
-export type ProductUpdateInput = z.infer<typeof UpdateProductSchema>;
+export type ProductUpdateInput = z.infer<typeof ProductUpdateSchema>;

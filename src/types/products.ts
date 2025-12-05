@@ -20,13 +20,16 @@ interface VariantsMetadata {
 }
 
 interface ProductUpdatePayload extends CreateProductPayload {
-  productStatus: string;
   productId: number;
 }
-
+interface ProductUpdateStatusPayload {
+  productId: number;
+  status: string;
+}
 export {
   CreateProductPayload,
   VariantsMetadata,
   ProductUpdatePayload,
   VariantImagesMap,
+  ProductUpdateStatusPayload,
 };

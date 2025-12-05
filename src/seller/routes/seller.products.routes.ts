@@ -2,12 +2,17 @@ import express from "express";
 import { authGuard, shopAuthGuard } from "../../middleware/authGuard";
 import upload from "../../middleware/upload";
 import { validateRequest } from "../../middleware/validateRequest";
-import { ProductCreationSchema } from "../../validators/productValidators";
+import {
+  ProductCreationSchema,
+  ProductUpdateSchema,
+  ProductUpdateStatusSchema,
+} from "../../validators/productValidators";
 import {
   CreateProductController,
   DeleteProductController,
   getSellerProductsController,
   UpdateProductController,
+  UpdateProductStatusController,
 } from "../controller/seller.products.controller";
 
 const router = express.Router();
@@ -31,5 +36,12 @@ router.put(
 );
 
 router.delete("/:id", authGuard, shopAuthGuard, DeleteProductController);
+router.put(
+  "/updateStatus",
+  authGuard,
+  shopAuthGuard,
+  validateRequest(ProductUpdateStatusSchema),
+  UpdateProductStatusController
+);
 
 export default router;
