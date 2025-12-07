@@ -10,6 +10,7 @@ import {
 import {
   CreateProductController,
   DeleteProductController,
+  getSellerProductByIdController,
   getSellerProductsController,
   UpdateProductController,
   UpdateProductStatusController,
@@ -25,6 +26,7 @@ router.post(
   validateRequest(ProductCreationSchema),
   CreateProductController
 );
+router.get("/:id", authGuard, shopAuthGuard, getSellerProductByIdController);
 
 router.put(
   "/update",

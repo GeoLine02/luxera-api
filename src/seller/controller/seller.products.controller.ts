@@ -17,8 +17,22 @@ import { UpdateProductVariantsService } from "../services/seller.updateProductVa
 import { GetSellerProductsService } from "../services/seller.getProducts";
 import { DeleteProductService } from "../services/seller.deleteProduct";
 import { UpdateSingleProductStatusService } from "../services/seller.updateSingleProductStatus";
+import { tr } from "zod/v4/locales";
+import { getSellerProductByIdService } from "../services/seller.getProductById";
 export async function getSellerProductsController(req: Request, res: Response) {
   await GetSellerProductsService(req, res);
+}
+
+export async function getSellerProductByIdController(
+  req: Request,
+  res: Response
+) {
+  try {
+    const product = await getSellerProductByIdService(req, res);
+    return product;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 export async function CreateProductController(req: Request, res: Response) {
