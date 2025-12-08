@@ -1,10 +1,11 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-
+import cls from "cls-hooked";
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
-
+const namespace = cls.createNamespace("my-app");
+Sequelize.useCLS(namespace);
 const sequelize = isProduction
   ? new Sequelize(process.env.INTERNAL_DB_URL!, {
       dialect: "postgres",
@@ -15,7 +16,6 @@ const sequelize = isProduction
           rejectUnauthorized: false, // Render requires this
         },
       },
-      logging: console.log, // disable SQL logs in production server
     })
   : new Sequelize(
       process.env.DB_NAME_DEVELOPMENT!,
@@ -25,7 +25,7 @@ const sequelize = isProduction
         host: process.env.DB_HOST,
         port: Number(process.env.DB_PORT) || 5432,
         dialect: "postgres",
-        logging: false, // enable SQL logs in development
+        logging: console.log, // enable SQL logs in development
       }
     );
 

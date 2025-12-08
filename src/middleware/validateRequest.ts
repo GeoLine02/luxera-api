@@ -14,7 +14,6 @@ export const validateRequest =
         });
       }
       schema.parse(req.body); // validate request body
-
       next();
     } catch (err) {
       if (err instanceof ZodError) {

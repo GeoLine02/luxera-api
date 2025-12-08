@@ -12,6 +12,7 @@ import cookieParser from "cookie-parser";
 import { initAssociations } from "./sequelize/models/associate";
 import swaggerRouter from "./swagger/swagger";
 import sellerRoutes from "./seller/routes/seller.routes";
+import errorHandler from "./middleware/errorHandler";
 dotenv.config();
 
 const app = express();
@@ -54,7 +55,7 @@ app.use("/api-docs", swaggerRouter);
     console.error("Unable to connect to the database:", error);
   }
 })();
-
+app.use(errorHandler);
 // ✅ Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
