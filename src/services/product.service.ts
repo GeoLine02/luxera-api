@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { BaseError, Op } from "sequelize";
 import sequelize from "../db";
 import {
   Categories,
@@ -11,7 +11,12 @@ import ProductVariants from "../sequelize/models/productvariants";
 import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
 import { PAGE_SIZE } from "../constants/constants";
-import { success } from "zod";
+import { BadRequestError, NotFoundError } from "../errors/errors";
+import {
+  paginatedResponse,
+  successfulResponse,
+} from "../utils/responseHandler";
+
 export async function AllProductsService(page: number, res: Response) {
   try {
     if (isNaN(page) || page < 1) {
@@ -38,6 +43,7 @@ export async function AllProductsService(page: number, res: Response) {
         },
       ],
     });
+
     const totalCount = await Products.count();
     const hasMore = totalCount > page * PAGE_SIZE + products.length;
     return res.status(200).json({
@@ -72,8 +78,11 @@ export async function GetProductByIdService(req: Request, res: Response) {
     const product = await Products.findOne({
       where: { id: productId },
       include: [
-        { model: ProductImages, as: "images" },
-        { model: ProductVariants, as: "variants" },
+        {
+          model: ProductVariants,
+          as: "variants",
+          include: [{ model: ProductImages, as: "images" }],
+        },
         {
           model: User,
           as: "owner",
@@ -126,6 +135,7 @@ export async function VipProductsService(res: Response) {
   } catch (error) {
     console.log(error);
     res.status(500).json({
+      success: false,
       message: "Unable to fetch vip products",
     });
   }
@@ -155,11 +165,12 @@ export async function FeaturedProductsService(res: Response) {
   } catch (error) {
     console.log(error);
     res.status(500).json({
+      success: false,
       message: "Unable to fetch featured products",
     });
   }
 }
-export async function SearchProductsService(query: string) {
+export async function SearchProductsService(query: string, res: Response) {
   try {
     sequelize.authenticate();
     const searchResults = await Products.findAll({
@@ -199,10 +210,17 @@ export async function SearchProductsService(query: string) {
       ],
     });
 
-    return searchResults;
+    return res.status(200).json({
+      success: true,
+      message: "Products search completed successfully",
+      data: searchResults,
+    });
   } catch (error) {
     console.log(error);
-    throw new Error("Unable to search products");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to search products",
+    });
   }
 }
 
@@ -306,4 +324,46 @@ export async function CreateProductService(req: Request, res: Response) {
       error,
     });
   }
+}
+export async function GetProductsBySubCategoryService(
+  categoryName: string,
+  page: number,
+  res: Response
+) {
+  const offset = PAGE_SIZE * (page - 1);
+
+  const subCategory = await SubCategories.findOne({
+    where: {
+      sub_category_name: categoryName,
+    },
+    attributes: ["id"],
+  });
+
+  if (!subCategory) {
+    throw new NotFoundError(`Subcategory '${categoryName}' not found`);
+  }
+
+  const { count, rows: products } = await Products.findAndCountAll({
+    where: {
+      product_subcategory_id: subCategory.id,
+    },
+    order: [["id", "ASC"]],
+    offset: offset,
+    limit: PAGE_SIZE,
+  });
+
+  // Handle edge case: requested page beyond available data
+  if (products.length === 0 && page > 1) {
+    throw new NotFoundError(`No products found on page ${page}`);
+  }
+
+  const hasMore = offset + products.length < count; // ✅ CORRECT
+
+  return paginatedResponse(
+    res,
+    "Successfully fetched products",
+    products,
+    hasMore,
+    page
+  );
 }
