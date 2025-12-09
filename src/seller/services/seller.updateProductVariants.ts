@@ -2,17 +2,28 @@ import sequelize from "../../db";
 import Products from "../../sequelize/models/products";
 import ProductVariants from "../../sequelize/models/productvariants";
 import { ProductUpdatePayload } from "../../types/products";
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 export async function UpdateProductVariantsService(
   data: ProductUpdatePayload,
   req: Request,
   res: Response
 ) {
-  const { variantImagesMap = {}, variantsMetadata, productId } = data;
-  if (!variantsMetadata && !variantImagesMap) {
+  const {
+    variantImagesMap = {},
+    variantsMetadata,
+    productId,
+    existingImages,
+  } = data;
+  if (!variantsMetadata) {
     return res.status(400).json({
       success: false,
       message: "No variants provided",
+    });
+  }
+  if (!existingImages && Object.keys(variantImagesMap).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "No images provided",
     });
   }
   const transaction = await sequelize.transaction();
@@ -20,8 +31,12 @@ export async function UpdateProductVariantsService(
   // Validate each variant has images
   try {
     variantsMetadata.forEach((_, index) => {
-      const variantImages = variantImagesMap[index] || [];
-      if (!variantImages[0]) {
+      const uploadedFiles = variantImagesMap[index] || [];
+      const existingVariantImages =
+        existingImages?.find((img) => img.variantIndex === index)?.imageUrls ||
+        [];
+
+      if (uploadedFiles.length === 0 && existingVariantImages.length === 0) {
         throw new Error(`Variant ${index} must have at least one image`);
       }
     });
@@ -36,7 +51,16 @@ export async function UpdateProductVariantsService(
     const variantsToCreate = variantsMetadata.map((variant, index) => {
       const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
       const variantImages = variantImagesMap[index] || [];
-      const primaryImage = variantImages[0];
+      const existingVariantImages =
+        existingImages?.find((img) => img.variantIndex === index)?.imageUrls ||
+        [];
+
+      let primaryImageUrl;
+      if (existingVariantImages.length > 0) {
+        primaryImageUrl = existingVariantImages[0];
+      } else {
+        primaryImageUrl = `${baseUrl}${variantImages[0].filename}`;
+      }
 
       return {
         variant_name: variant.variantName,
@@ -44,7 +68,7 @@ export async function UpdateProductVariantsService(
         variant_quantity: variant.variantQuantity,
         variant_discount: variant.variantDiscount || 0,
         product_id: productId,
-        image: `${baseUrl}${primaryImage.filename}`,
+        image: primaryImageUrl,
       };
     });
 

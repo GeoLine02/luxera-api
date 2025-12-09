@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import {
   CreateProductPayload,
+  ExistingImages,
   ProductUpdatePayload,
   ProductUpdateStatusPayload,
   VariantImagesMap,
@@ -82,6 +83,7 @@ export async function CreateProductController(req: Request, res: Response) {
     parsedBody,
     createdVariants as ProductVariants[],
     createdProduct as Products,
+    [],
     req,
     res
   );
@@ -94,6 +96,9 @@ export async function UpdateProductController(req: Request, res: Response) {
   console.log("Files recieved in update product controller", files);
   const variantMetadata = JSON.parse(body.variantsMetadata || "[]");
   const variantImagesMap: VariantImagesMap = {};
+  const existingImages: ExistingImages[] = JSON.parse(
+    body.existingImages || undefined
+  );
 
   files.forEach((file) => {
     // Match pattern: variantImages_0, variantImages_1, etc.
@@ -116,6 +121,7 @@ export async function UpdateProductController(req: Request, res: Response) {
     productStatus: body.productStatus,
     variantsMetadata: variantMetadata,
     variantImagesMap: variantImagesMap,
+    existingImages: existingImages,
   } as ProductUpdatePayload;
 
   const updatedProduct = await UpdateSingleProductService(parsedData, req, res);
@@ -129,8 +135,10 @@ export async function UpdateProductController(req: Request, res: Response) {
     parsedData,
     updatedVariants as ProductVariants[],
     updatedProduct as Products,
+    existingImages,
     req,
     res,
+
     true
   );
   return;

@@ -33,7 +33,7 @@ router.put(
   authGuard,
   shopAuthGuard,
   upload.any(),
-  validateRequest(ProductCreationSchema),
+  validateRequest(ProductUpdateSchema),
   UpdateProductController
 );
 
