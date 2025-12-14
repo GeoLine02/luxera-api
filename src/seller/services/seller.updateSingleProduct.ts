@@ -25,10 +25,10 @@ export async function UpdateSingleProductService(
   }
 
   // 2️⃣ Validate category & subcategory if provided (read-only, no transaction)
-  if (productCategoryId && productCategoryId) {
+  if (productCategoryId && productSubCategoryId) {
     const category = await Categories.findByPk(productCategoryId);
     const subCategory = await SubCategories.findOne({
-      where: { id: productCategoryId, category_id: productCategoryId },
+      where: { id: productSubCategoryId, category_id: productCategoryId },
     });
 
     if (!category || !subCategory) {

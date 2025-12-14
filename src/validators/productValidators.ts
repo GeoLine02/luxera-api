@@ -113,6 +113,7 @@ const ProductUpdateStatusSchema = z.object({
     .positive("Product ID must be a positive number"),
   status: z.enum(PRODUCT_STATUSES),
 });
+
 // Export schemas
 export {
   ProductVariantSchema,

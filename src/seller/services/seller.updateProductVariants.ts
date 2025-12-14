@@ -82,6 +82,7 @@ export async function UpdateProductVariantsService(
       { primary_variant_id: newVariants[0].id },
       { where: { id: productId }, transaction }
     );
+
     await transaction.commit();
 
     return newVariants;
