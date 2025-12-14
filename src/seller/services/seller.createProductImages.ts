@@ -44,6 +44,7 @@ export async function CreateProductImagesService(
         index,
         existingVariantImages
       );
+
       // Add existing images first
       if (existingVariantImages.length > 0) {
         existingVariantImages.forEach((imageUrl) => {

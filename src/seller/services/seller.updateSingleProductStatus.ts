@@ -18,6 +18,7 @@ export async function UpdateSingleProductStatusService(
       message: "Invalid product status",
     });
   }
+
   const transaction = await sequelize.transaction();
   try {
     const userId = req.user!.id;

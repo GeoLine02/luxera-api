@@ -2,17 +2,14 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-
-
 export interface UserJwtPayload extends jwt.JwtPayload {
   id: number;
   email: string;
 }
- 
-export interface ShopJwtPayload extends jwt.JwtPayload {
- id:number,
-}
 
+export interface ShopJwtPayload extends jwt.JwtPayload {
+  id: number;
+}
 
 export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -21,7 +18,7 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     if (!accessToken) {
       return res
         .status(401)
-        .json({ success:false, message: "Unauthorized: No token provided" });
+        .json({ success: false, message: "Unauthorized: No token provided" });
     }
 
     // Verify token
@@ -29,12 +26,11 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     if (!secret) throw new Error("JWT_SECRET is not defined");
 
     const decoded = jwt.verify(accessToken, secret) as UserJwtPayload;
-   
+
     if (decoded) {
       req.user = decoded;
       next();
     }
-    
   } catch (error) {
     console.error(error);
     return res.status(401).json({
@@ -50,7 +46,6 @@ export const shopAuthGuard = async (
   next: NextFunction
 ) => {
   try {
-
     const shopAccessToken = req.cookies.shopAccessToken;
 
     const secret = process.env.ACCESS_TOKEN_SECRET;
@@ -62,9 +57,10 @@ export const shopAuthGuard = async (
       console.log(req.shop);
       next();
     }
-    
   } catch (error) {
     console.log(error);
-    return res.status(401).json({success:false, message: "Unauthorized: Invalid Shop token" });
+    return res
+      .status(401)
+      .json({ success: false, message: "Unauthorized: Invalid Shop token" });
   }
 };
