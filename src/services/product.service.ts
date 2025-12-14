@@ -17,23 +17,27 @@ import {
   successfulResponse,
 } from "../utils/responseHandler";
 
-export async function AllProductsService(page: number, res: Response) {
+export async function AllProductsService(req: Request, res: Response) {
   try {
-    if (isNaN(page) || page < 1) {
+    const { page, subCategoryId } = req.query;
+    const integerPage = Number(page);
+    if (isNaN(integerPage) || integerPage < 1) {
       return res.status(400).json({
         success: false,
         message: "Invalid page number",
       });
     }
 
-    const offset = PAGE_SIZE * (page - 1);
+    const where: any = {};
+
+    if (subCategoryId) {
+      where.product_subcategory_id = Number(subCategoryId);
+    }
+
+    const offset = PAGE_SIZE * (integerPage - 1);
     const products = await Products.findAll({
       order: [["id", "ASC"]],
-      where: {
-        // product_status:{
-        //   [Op.ne]:'pending'
-        // },
-      },
+      where,
       offset: offset,
       limit: PAGE_SIZE,
       include: [
@@ -45,7 +49,7 @@ export async function AllProductsService(page: number, res: Response) {
     });
 
     const totalCount = await Products.count();
-    const hasMore = totalCount > page * PAGE_SIZE + products.length;
+    const hasMore = totalCount > integerPage * PAGE_SIZE + products.length;
     return res.status(200).json({
       success: true,
       message: "Products fetched successfully",
