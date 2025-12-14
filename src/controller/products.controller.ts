@@ -9,7 +9,6 @@ import {
   VipProductsService,
 } from "../services/product.service";
 import { ValidationError } from "../errors/errors";
-import SubCategories from "../sequelize/models/subcategories";
 import logger from "../logger";
 
 export async function AllProductsController(req: Request, res: Response) {
