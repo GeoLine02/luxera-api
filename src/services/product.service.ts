@@ -11,41 +11,62 @@ import ProductVariants from "../sequelize/models/productvariants";
 import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
 import { PAGE_SIZE } from "../constants/constants";
-import { BadRequestError, NotFoundError } from "../errors/errors";
-import {
-  paginatedResponse,
-  successfulResponse,
-} from "../utils/responseHandler";
+import { NotFoundError } from "../errors/errors";
+import { paginatedResponse } from "../utils/responseHandler";
 
-export async function AllProductsService(page: number, res: Response) {
+export async function AllProductsService(req: Request, res: Response) {
   try {
-    if (isNaN(page) || page < 1) {
+    const {
+      page,
+      subCategoryId,
+      priceFrom = 0,
+      priceTo = Infinity,
+    } = req.query;
+    const integerPage = Number(page);
+    if (isNaN(integerPage) || integerPage < 1) {
       return res.status(400).json({
         success: false,
         message: "Invalid page number",
       });
     }
 
-    const offset = PAGE_SIZE * (page - 1);
+    const productWhere: any = {};
+    const variantWhere: any = {};
+
+    if (subCategoryId) {
+      productWhere.product_subcategory_id = Number(subCategoryId);
+    }
+
+    if (priceFrom) {
+      variantWhere.variant_price = {
+        [Op.gt]: Number(priceFrom),
+      };
+    }
+
+    if (priceTo) {
+      variantWhere.variant_price = {
+        ...(variantWhere.variant_price ?? {}),
+        [Op.lt]: Number(priceTo),
+      };
+    }
+
+    const offset = PAGE_SIZE * (integerPage - 1);
     const products = await Products.findAll({
       order: [["id", "ASC"]],
-      where: {
-        // product_status:{
-        //   [Op.ne]:'pending'
-        // },
-      },
+      where: productWhere,
       offset: offset,
       limit: PAGE_SIZE,
       include: [
         {
           model: ProductVariants,
           as: "primaryVariant",
+          where: Object.keys(variantWhere).length ? variantWhere : undefined,
         },
       ],
     });
 
     const totalCount = await Products.count();
-    const hasMore = totalCount > page * PAGE_SIZE + products.length;
+    const hasMore = totalCount > integerPage * PAGE_SIZE + products.length;
     return res.status(200).json({
       success: true,
       message: "Products fetched successfully",

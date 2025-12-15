@@ -9,13 +9,11 @@ import {
   VipProductsService,
 } from "../services/product.service";
 import { ValidationError } from "../errors/errors";
-import SubCategories from "../sequelize/models/subcategories";
 import logger from "../logger";
 
 export async function AllProductsController(req: Request, res: Response) {
   try {
-    const page = Number(req.query.page);
-    const products = await AllProductsService(page, res);
+    const products = await AllProductsService(req, res);
     return products;
   } catch (error: any) {
     console.log(error);
@@ -90,8 +88,6 @@ export async function GetProductsBySubCategoryController(
     });
   }
 
-
-  
   // Validate page
   const page = Number(pageQuery);
   if (!pageQuery || isNaN(page) || page < 1 || !Number.isInteger(page)) {
