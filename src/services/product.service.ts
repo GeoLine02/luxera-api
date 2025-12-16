@@ -16,12 +16,7 @@ import { paginatedResponse } from "../utils/responseHandler";
 
 export async function AllProductsService(req: Request, res: Response) {
   try {
-    const {
-      page,
-      subCategoryId,
-      priceFrom = 0,
-      priceTo = Infinity,
-    } = req.query;
+    const { page, subcategory, priceFrom = 0, priceTo = Infinity } = req.query;
     const integerPage = Number(page);
     if (isNaN(integerPage) || integerPage < 1) {
       return res.status(400).json({
@@ -30,11 +25,15 @@ export async function AllProductsService(req: Request, res: Response) {
       });
     }
 
+    console.log("request query params", req.query);
     const productWhere: any = {};
     const variantWhere: any = {};
 
-    if (subCategoryId) {
-      productWhere.product_subcategory_id = Number(subCategoryId);
+    const subcategoryId = (subcategory as string)?.split("-")[1];
+    console.log("subcategoryId", subcategoryId);
+
+    if (subcategory) {
+      productWhere.product_subcategory_id = subcategoryId;
     }
 
     if (priceFrom) {
