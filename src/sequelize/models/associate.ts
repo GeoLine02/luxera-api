@@ -5,8 +5,9 @@ import Categories from "./categories";
 import ProductImages from "./productimages";
 import Shop from "./shop";
 import ProductVariants from "./productvariants";
-import  Carts  from "./carts";
-export  type TypeModels = {
+import Carts from "./carts";
+import Notifications from "./notifications";
+export type TypeModels = {
   User: typeof User;
   Products: typeof Products;
   SubCategories: typeof SubCategories;
@@ -15,12 +16,12 @@ export  type TypeModels = {
   Shop: typeof Shop;
   ProductVariants: typeof ProductVariants;
   Carts: typeof Carts;
+  Notifications: typeof Notifications;
 };
-
 
 export function initAssociations() {
   // Pass all models to each associate function
-  const models : TypeModels = {
+  const models: TypeModels = {
     User,
     Products,
     SubCategories,
@@ -28,18 +29,20 @@ export function initAssociations() {
     ProductImages,
     Shop,
     ProductVariants,
-    Carts
+    Carts,
+    Notifications,
   };
 
   User.associate?.(models);
   Shop.associate?.(models);
   Products.associate?.(models);
-   Categories.associate?.(models);
+  Categories.associate?.(models);
   SubCategories.associate?.(models);
- 
+
   ProductImages.associate?.(models);
   ProductVariants.associate?.(models);
   Carts.associate?.(models);
+  Notifications.associate?.(models);
 }
 
 export { User, Products, SubCategories, Categories, Shop };

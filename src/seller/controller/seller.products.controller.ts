@@ -8,18 +8,18 @@ import {
   VariantImagesMap,
 } from "../../types/products";
 
-import { CreateSingleProductService } from "../services/seller.createSingleProduct";
-import { CreateProductImagesService } from "../services/seller.createProductImages";
+import { CreateSingleProductService } from "../services/products/seller.createSingleProduct";
+import { CreateProductImagesService } from "../services/products/seller.createProductImages";
 import ProductVariants from "../../sequelize/models/productvariants";
-import { CreateProductVariantsService } from "../services/seller.createProductVariants";
+import { CreateProductVariantsService } from "../services/products/seller.createProductVariants";
 import Products from "../../sequelize/models/products";
-import { UpdateSingleProductService } from "../services/seller.updateSingleProduct";
-import { UpdateProductVariantsService } from "../services/seller.updateProductVariants";
-import { GetSellerProductsService } from "../services/seller.getProducts";
-import { DeleteProductService } from "../services/seller.deleteProduct";
-import { UpdateSingleProductStatusService } from "../services/seller.updateSingleProductStatus";
+import { UpdateSingleProductService } from "../services/products/seller.updateSingleProduct";
+import { UpdateProductVariantsService } from "../services/products/seller.updateProductVariants";
+import { GetSellerProductsService } from "../services/products/seller.getProducts";
+import { DeleteProductService } from "../services/products/seller.deleteProduct";
+import { UpdateSingleProductStatusService } from "../services/products/seller.updateSingleProductStatus";
 import { tr } from "zod/v4/locales";
-import { getSellerProductByIdService } from "../services/seller.getProductById";
+import { getSellerProductByIdService } from "../services/products/seller.getProductById";
 export async function getSellerProductsController(req: Request, res: Response) {
   await GetSellerProductsService(req, res);
 }

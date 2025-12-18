@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Products from "../../sequelize/models/products";
-import ProductImages from "../../sequelize/models/productimages";
-import ProductVariants from "../../sequelize/models/productvariants";
+import Products from "../../../sequelize/models/products";
+import ProductImages from "../../../sequelize/models/productimages";
+import ProductVariants from "../../../sequelize/models/productvariants";
 
 export async function getSellerProductByIdService(req: Request, res: Response) {
   try {

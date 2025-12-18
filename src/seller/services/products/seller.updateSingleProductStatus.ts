@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { ProductStatus } from "../../constants/enums";
-import { ProductUpdateStatusPayload } from "../../types/products";
-import sequelize from "../../db";
-import Products from "../../sequelize/models/products";
+import { ProductStatus } from "../../../constants/enums";
+import { ProductUpdateStatusPayload } from "../../../types/products";
+import sequelize from "../../../db";
+import Products from "../../../sequelize/models/products";
 export async function UpdateSingleProductStatusService(
   data: ProductUpdateStatusPayload,
   req: Request,

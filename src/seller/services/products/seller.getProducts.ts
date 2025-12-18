@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import ProductVariants from "../../sequelize/models/productvariants";
-import sequelize from "../../db";
-import Products from "../../sequelize/models/products";
-import ProductImages from "../../sequelize/models/productimages";
+import ProductVariants from "../../../sequelize/models/productvariants";
+import sequelize from "../../../db";
+import Products from "../../../sequelize/models/products";
+import ProductImages from "../../../sequelize/models/productimages";
 
 export async function GetSellerProductsService(req: Request, res: Response) {
   const transaction = await sequelize.transaction();

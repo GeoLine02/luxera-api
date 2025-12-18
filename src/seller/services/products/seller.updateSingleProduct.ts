@@ -1,8 +1,8 @@
-import sequelize from "../../db";
-import Categories from "../../sequelize/models/categories";
-import Products from "../../sequelize/models/products";
-import SubCategories from "../../sequelize/models/subcategories";
-import { ProductUpdatePayload } from "../../types/products";
+import sequelize from "../../../db";
+import Categories from "../../../sequelize/models/categories";
+import Products from "../../../sequelize/models/products";
+import SubCategories from "../../../sequelize/models/subcategories";
+import { ProductUpdatePayload } from "../../../types/products";
 import { Request, Response } from "express";
 export async function UpdateSingleProductService(
   data: ProductUpdatePayload,

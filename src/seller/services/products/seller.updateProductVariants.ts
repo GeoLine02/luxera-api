@@ -1,7 +1,7 @@
-import sequelize from "../../db";
-import Products from "../../sequelize/models/products";
-import ProductVariants from "../../sequelize/models/productvariants";
-import { ProductUpdatePayload } from "../../types/products";
+import sequelize from "../../../db";
+import Products from "../../../sequelize/models/products";
+import ProductVariants from "../../../sequelize/models/productvariants";
+import { ProductUpdatePayload } from "../../../types/products";
 import e, { Request, Response } from "express";
 export async function UpdateProductVariantsService(
   data: ProductUpdatePayload,
