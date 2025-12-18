@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import Products from "../../sequelize/models/products";
-import sequelize from "../../db";
+import Products from "../../../sequelize/models/products";
+import sequelize from "../../../db";
 
 export async function DeleteProductService(productId: number, res: Response) {
   if (!productId) {

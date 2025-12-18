@@ -87,6 +87,10 @@ class Products
       foreignKey: "product_id",
       as: "cartItems",
     });
+    Products.hasMany(models.Notifications, {
+      foreignKey: "product_id",
+      as: "notifications",
+    });
   }
 }
 

@@ -1,10 +1,11 @@
 import { success } from "zod";
-import sequelize from "../../db";
-import ProductImages from "../../sequelize/models/productimages";
-import ProductVariants from "../../sequelize/models/productvariants";
-import { CreateProductPayload, ExistingImages } from "../../types/products";
+import sequelize from "../../../db";
+
 import { Request, Response } from "express";
-import Products from "../../sequelize/models/products";
+import Products from "../../../sequelize/models/products";
+import { CreateProductPayload, ExistingImages } from "../../../types/products";
+import ProductVariants from "../../../sequelize/models/productvariants";
+import ProductImages from "../../../sequelize/models/productimages";
 
 export async function CreateProductImagesService(
   data: CreateProductPayload,

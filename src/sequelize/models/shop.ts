@@ -18,6 +18,10 @@ class Shop extends Model {
       onDelete: "CASCADE",
       hooks: true,
     });
+    Shop.hasMany(models.Notifications, {
+      foreignKey: "shop_id",
+      as: "notifications",
+    });
   }
 }
 

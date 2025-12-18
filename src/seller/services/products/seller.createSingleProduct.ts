@@ -1,9 +1,9 @@
-import { ProductStatus } from "../../constants/enums";
-import sequelize from "../../db";
-import Categories from "../../sequelize/models/categories";
-import Products from "../../sequelize/models/products";
-import SubCategories from "../../sequelize/models/subcategories";
-import { CreateProductPayload } from "../../types/products";
+import { ProductStatus } from "../../../constants/enums";
+import sequelize from "../../../db";
+import Categories from "../../../sequelize/models/categories";
+import Products from "../../../sequelize/models/products";
+import SubCategories from "../../../sequelize/models/subcategories";
+import { CreateProductPayload } from "../../../types/products";
 import { Request, Response } from "express";
 
 export async function CreateSingleProductService(

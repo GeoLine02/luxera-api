@@ -1,7 +1,7 @@
-import sequelize from "../../db";
-import Products from "../../sequelize/models/products";
-import ProductVariants from "../../sequelize/models/productvariants";
-import { CreateProductPayload } from "../../types/products";
+import sequelize from "../../../db";
+import Products from "../../../sequelize/models/products";
+import ProductVariants from "../../../sequelize/models/productvariants";
+import { CreateProductPayload } from "../../../types/products";
 import { Request, Response } from "express";
 
 export async function CreateProductVariantsService(
