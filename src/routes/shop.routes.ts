@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getShopByIdController,
   GetShopByTokenController,
   RefreshShopAccessTokenController,
   ShopDeleteController,
@@ -24,7 +25,8 @@ router.post(
 );
 router.post("/login", authGuard, ShopLoginController);
 router.get("/refresh", RefreshShopAccessTokenController);
-router.get("/",authGuard,shopAuthGuard,  GetShopByTokenController);
-router.delete("/",authGuard,shopAuthGuard, ShopDeleteController);
+router.get("/", authGuard, shopAuthGuard, GetShopByTokenController);
+router.get("/:shopId", getShopByIdController);
+router.delete("/", authGuard, shopAuthGuard, ShopDeleteController);
 
 export default router;

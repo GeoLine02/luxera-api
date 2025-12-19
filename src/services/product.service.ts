@@ -3,6 +3,7 @@ import sequelize from "../db";
 import {
   Categories,
   Products,
+  Shop,
   SubCategories,
   User,
 } from "../sequelize/models/associate";
@@ -84,6 +85,39 @@ export async function AllProductsService(req: Request, res: Response) {
   }
 }
 
+export async function getSellerProductsService(req: Request, res: Response) {
+  try {
+    const shopId = Number(req.query.shopId);
+    const page = Number(req.query.page);
+
+    const offest = PAGE_SIZE * (page - 1);
+    const hasMore = await Products.count({
+      where: { shop_id: shopId },
+    });
+    const sellerProducts = await Products.findAll({
+      where: {
+        shop_id: shopId,
+      },
+      offset: offest,
+      include: [
+        {
+          model: ProductVariants,
+          as: "primaryVariant",
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: sellerProducts,
+      page: page,
+      hasMore: hasMore,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 export async function GetProductByIdService(req: Request, res: Response) {
   try {
     const productId = req.params.id;
@@ -107,6 +141,10 @@ export async function GetProductByIdService(req: Request, res: Response) {
           model: User,
           as: "owner",
           attributes: { exclude: ["password", "createdAt", "updatedAt"] },
+        },
+        {
+          model: Shop,
+          as: "shop",
         },
       ],
     });

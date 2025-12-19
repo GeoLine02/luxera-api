@@ -8,16 +8,22 @@ import { Response, Request } from "express";
 import { th } from "zod/v4/locales";
 import createError from "../utils/error";
 import { create } from "domain";
+import Products from "../sequelize/models/products";
+import ProductVariants from "../sequelize/models/productvariants";
+import { PAGE_SIZE } from "../constants/constants";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
-
 }
 
-export async function RegisterShopService(data: ShopRegisterFieldsType,req:Request, res:Response) {
+export async function RegisterShopService(
+  data: ShopRegisterFieldsType,
+  req: Request,
+  res: Response
+) {
   try {
     sequelize.authenticate();
-  
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const existedShop = await Shop.findOne({
@@ -27,18 +33,18 @@ export async function RegisterShopService(data: ShopRegisterFieldsType,req:Reque
     });
 
     if (existedShop) {
-    throw createError(`Shop "${data.shopName}" already exists`,400);
+      throw createError(`Shop "${data.shopName}" already exists`, 400);
     }
-  const userId = req.user?.id
-// check if user already has a shop
-  const userShop = await Shop.findOne({
-    where: {
-      owner_id: userId,
-    },
-  });
-  if (userShop) {
-    throw createError("User already has a shop",400);
-  } 
+    const userId = req.user?.id;
+    // check if user already has a shop
+    const userShop = await Shop.findOne({
+      where: {
+        owner_id: userId,
+      },
+    });
+    if (userShop) {
+      throw createError("User already has a shop", 400);
+    }
     const registeredShop = await Shop.create({
       shop_name: data.shopName,
       password: hashedPassword,
@@ -51,48 +57,45 @@ export async function RegisterShopService(data: ShopRegisterFieldsType,req:Reque
       shopAccessToken,
       shopRefreshToken,
     };
-  } catch (error:any) {
-     const err = new Error(error.message);
-  if (error.status) {
-    (err as any).status = error.status;
-  }
-  throw err;
-    
+  } catch (error: any) {
+    const err = new Error(error.message);
+    if (error.status) {
+      (err as any).status = error.status;
+    }
+    throw err;
   }
 }
 
-
-export async function ShopLoginService(password:string,req:Request) {
+export async function ShopLoginService(password: string, req: Request) {
   try {
+    const userId = req.user!.id;
 
-   const userId = req.user!.id
-   
-   const shop = await Shop.findOne({
+    const shop = await Shop.findOne({
       where: {
         owner_id: userId,
       },
     });
     if (!shop) {
-      throw createError("Shop for this user does not exist",404)
+      throw createError("Shop for this user does not exist", 404);
     }
-   const isCorrectPassword = await bcrypt.compare(
+    const isCorrectPassword = await bcrypt.compare(
       password,
       shop.password as string
     );
-  
+
     if (!isCorrectPassword) {
-      throw createError("Incorrect password",400)
+      throw createError("Incorrect password", 400);
     }
     const shopAccessToken = generateAccessToken({ id: shop.id });
     const shopRefreshToken = generateRefreshToken({ id: shop.id });
 
     return { shopAccessToken, shopRefreshToken };
-  } catch (error : any) {
-     const err = new Error(error.message);
-  if (error.status) {
-    (err as any).status = error.status;
-  }
-  throw err;
+  } catch (error: any) {
+    const err = new Error(error.message);
+    if (error.status) {
+      (err as any).status = error.status;
+    }
+    throw err;
   }
 }
 
@@ -146,11 +149,11 @@ interface ShopDeleteFieldsType {
 
 export async function ShopDeleteService(
   data: ShopDeleteFieldsType,
-  req:Request,
+  req: Request,
   res: Response
 ) {
   try {
-    const userId = req.user?.id
+    const userId = req.user?.id;
 
     if (!data.password || !data.password.length) {
       return res.status(400).json({
@@ -165,13 +168,13 @@ export async function ShopDeleteService(
       },
     });
 
-   if (!existingShop) {
+    if (!existingShop) {
       return res.status(400).json({
         success: false,
         message: "Shop does not exist",
       });
     }
-    
+
     const isCorrectpassword = await bcrypt.compare(
       data.password,
       existingShop?.password as string
@@ -214,6 +217,48 @@ export async function ShopDeleteService(
     return res.status(500).json({
       success: false,
       message: "Unable to delete shop",
+    });
+  }
+}
+
+export async function getShopByIdService(req: Request, res: Response) {
+  try {
+    const shopId = req.params.shopId;
+
+    const existingShop = await Shop.findOne({
+      where: { id: shopId },
+      limit: PAGE_SIZE,
+      include: [
+        {
+          model: Products,
+          as: "products",
+          include: [
+            {
+              model: ProductVariants,
+              as: "primaryVariant",
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!existingShop) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop does not exist",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: existingShop,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "unable to get shop by id",
+      error,
     });
   }
 }
