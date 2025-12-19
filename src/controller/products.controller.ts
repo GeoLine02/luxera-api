@@ -5,6 +5,7 @@ import {
   FeaturedProductsService,
   GetProductByIdService,
   GetProductsBySubCategoryService,
+  getSellerProductsService,
   SearchProductsService,
   VipProductsService,
 } from "../services/product.service";
@@ -16,6 +17,15 @@ export async function AllProductsController(req: Request, res: Response) {
     const products = await AllProductsService(req, res);
     return products;
   } catch (error: any) {
+    console.log(error);
+  }
+}
+
+export async function getSellerProductsController(req: Request, res: Response) {
+  try {
+    const sellerProducts = await getSellerProductsService(req, res);
+    return sellerProducts;
+  } catch (error) {
     console.log(error);
   }
 }

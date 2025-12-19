@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  getShopByIdService,
   RefreshAccessToken,
   RegisterShopService,
   ShopDeleteService,
@@ -10,8 +11,8 @@ import Shop from "../sequelize/models/shop";
 export async function ShopRegisterController(req: Request, res: Response) {
   try {
     const body = req.body;
-  
-    const registeredShop = await RegisterShopService(body,req,res);
+
+    const registeredShop = await RegisterShopService(body, req, res);
 
     if (registeredShop) {
       res.cookie("shopAccessToken", registeredShop.shopAccessToken, {
@@ -35,8 +36,8 @@ export async function ShopRegisterController(req: Request, res: Response) {
       });
     }
   } catch (error: any) {
-    const status = error.status as number || 500
-    console.log(error)
+    const status = (error.status as number) || 500;
+    console.log(error);
     return res.status(status).json({
       success: false,
       message: error.message,
@@ -47,13 +48,13 @@ export async function ShopRegisterController(req: Request, res: Response) {
 export async function ShopLoginController(req: Request, res: Response) {
   try {
     const password = req.query.password as string;
-    if(!password){
+    if (!password) {
       return res.status(400).json({
-        success:false,
-        message:"Password is required"
-      })
+        success: false,
+        message: "Password is required",
+      });
     }
-    const loggedInShop = await ShopLoginService(password,req);
+    const loggedInShop = await ShopLoginService(password, req);
 
     if (loggedInShop) {
       res.cookie("shopAccessToken", loggedInShop.shopAccessToken, {
@@ -70,7 +71,6 @@ export async function ShopLoginController(req: Request, res: Response) {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-
       return res.status(203).json({
         success: true,
         message: "Shop logged in successfully",
@@ -78,9 +78,8 @@ export async function ShopLoginController(req: Request, res: Response) {
       });
     }
   } catch (error: any) {
-  
-     const status = error.status as number || 500
-     console.log(error)
+    const status = (error.status as number) || 500;
+    console.log(error);
     return res.status(status).json({
       success: false,
       message: error.message,
@@ -121,17 +120,17 @@ export async function RefreshShopAccessTokenController(
 
 export async function GetShopByTokenController(req: Request, res: Response) {
   try {
-    const shopId = req.shop!.id
-    console.log("shop id", shopId)
-   const shopData = await Shop.findByPk(shopId,{
-     attributes:{exclude:["password"]}  //exclude password
-   })
+    const shopId = req.shop!.id;
+    console.log("shop id", shopId);
+    const shopData = await Shop.findByPk(shopId, {
+      attributes: { exclude: ["password"] }, //exclude password
+    });
 
-   return res.status(200).json({
-    success:true,
-    message:"Shop fetched successfully",
-    data:shopData
-   })
+    return res.status(200).json({
+      success: true,
+      message: "Shop fetched successfully",
+      data: shopData,
+    });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
@@ -148,12 +147,21 @@ export async function ShopDeleteController(req: Request, res: Response) {
       password: query.password as string,
     };
 
-    const deletedShop = await ShopDeleteService(data,req, res);
+    const deletedShop = await ShopDeleteService(data, req, res);
     return deletedShop;
   } catch (error: any) {
     return res.status(500).json({
       success: false,
       message: error.message,
     });
+  }
+}
+
+export async function getShopByIdController(req: Request, res: Response) {
+  try {
+    const shopById = await getShopByIdService(req, res);
+    return shopById;
+  } catch (err) {
+    console.log(err);
   }
 }
