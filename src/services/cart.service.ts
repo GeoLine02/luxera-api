@@ -9,8 +9,7 @@ import {
 } from "../types/cart";
 import { Request, Response } from "express";
 async function addCartItemService(data: AddCartItemPayload, res: Response) {
-  const { productId, userId, variantId } = data;
-
+  const { productId, userId, variantId, quantity } = data;
   try {
     // check if product exist in the db
     const product = await Products.findOne({
@@ -43,7 +42,7 @@ async function addCartItemService(data: AddCartItemPayload, res: Response) {
 
     if (cartItem) {
       // if exists, increment quantity by 1
-      cartItem.product_quantity += 1;
+      cartItem.product_quantity += quantity;
       await cartItem.save();
       return cartItem;
     }
@@ -52,6 +51,7 @@ async function addCartItemService(data: AddCartItemPayload, res: Response) {
       product_id: productId,
       user_id: userId,
       product_variant_id: variantId,
+      product_quantity: quantity,
     });
 
     const newCartItem = await Carts.findOne({
@@ -68,7 +68,6 @@ async function addCartItemService(data: AddCartItemPayload, res: Response) {
 }
 async function deleteCartItemService(req: Request, res: Response) {
   const cartItemId = req.params.id;
-
   try {
     // find the cart item
     const cartItem = await Carts.findOne({
@@ -89,9 +88,9 @@ async function deleteCartItemService(req: Request, res: Response) {
       },
     });
     if (deletedCartItem) {
-      return res.status(204).json({
+      return res.status(200).json({
         success: true,
-        data: { itemid: cartItem.id },
+        data: { itemId: cartItem.id },
       });
     }
   } catch (error) {
