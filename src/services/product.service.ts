@@ -2,6 +2,7 @@ import { BaseError, Op } from "sequelize";
 import sequelize from "../db";
 import {
   Categories,
+  Cities,
   Products,
   Shop,
   SubCategories,
@@ -145,6 +146,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
         {
           model: Shop,
           as: "shop",
+          include: [{ model: Cities, as: "city" }],
         },
       ],
     });
