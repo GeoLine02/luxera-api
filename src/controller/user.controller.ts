@@ -42,6 +42,7 @@ export async function UserTokenRefreshController(req: Request, res: Response) {
 
 export async function userByTokenController(req: Request, res: Response) {
   try {
+    console.log("userByTOken", req.cookies);
     const authHeaders = req.headers?.authorization;
     if (!authHeaders) {
       return res.status(401).json({

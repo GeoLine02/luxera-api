@@ -22,6 +22,11 @@ class Shop extends Model {
       foreignKey: "shop_id",
       as: "notifications",
     });
+
+    Shop.belongsTo(models.Cities, {
+      foreignKey: "city_id",
+      as: "city",
+    });
   }
 }
 
@@ -50,6 +55,22 @@ Shop.init(
       },
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
+    },
+    city_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: "Cities",
+        key: "id",
+      },
+      onDelete: "RESTRICT",
+      onUpdate: "CASCADE",
+    },
+    custom_city_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
     },
   },
   {
