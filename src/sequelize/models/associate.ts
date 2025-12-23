@@ -7,6 +7,7 @@ import Shop from "./shop";
 import ProductVariants from "./productvariants";
 import Carts from "./carts";
 import Notifications from "./notifications";
+import Cities from "./cities";
 export type TypeModels = {
   User: typeof User;
   Products: typeof Products;
@@ -17,6 +18,7 @@ export type TypeModels = {
   ProductVariants: typeof ProductVariants;
   Carts: typeof Carts;
   Notifications: typeof Notifications;
+  Cities: typeof Cities;
 };
 
 export function initAssociations() {
@@ -31,6 +33,7 @@ export function initAssociations() {
     ProductVariants,
     Carts,
     Notifications,
+    Cities,
   };
 
   User.associate?.(models);
@@ -43,6 +46,7 @@ export function initAssociations() {
   ProductVariants.associate?.(models);
   Carts.associate?.(models);
   Notifications.associate?.(models);
+  Cities.associate?.(models);
 }
 
-export { User, Products, SubCategories, Categories, Shop };
+export { User, Products, SubCategories, Categories, Shop, Cities };

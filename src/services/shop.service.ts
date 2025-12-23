@@ -11,6 +11,7 @@ import { create } from "domain";
 import Products from "../sequelize/models/products";
 import ProductVariants from "../sequelize/models/productvariants";
 import { PAGE_SIZE } from "../constants/constants";
+import Cities from "../sequelize/models/cities";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
@@ -259,6 +260,80 @@ export async function getShopByIdService(req: Request, res: Response) {
       success: false,
       message: "unable to get shop by id",
       error,
+    });
+  }
+}
+
+export async function updateShopLocationService(req: Request, res: Response) {
+  try {
+    const { locationId, customCity } = req.body; // partial update
+    const shopId = req.shop?.id;
+
+    // Fetch existing shop
+    const existingShop = await Shop.findOne({ where: { id: shopId } });
+    if (!existingShop) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop does not exist",
+      });
+    }
+
+    // Validate input
+    if (locationId && customCity) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot set both a city and a custom city name at the same time",
+      });
+    }
+
+    if (!locationId && !customCity) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide either a city or a custom city name",
+      });
+    }
+
+    const updateData: {
+      city_id?: number | null;
+      custom_city_name?: string | null;
+    } = {};
+
+    if (locationId) {
+      // Validate that city exists
+      const city = await Cities.findByPk(locationId);
+      if (!city) {
+        return res.status(400).json({
+          success: false,
+          message: "Selected city does not exist",
+        });
+      }
+      updateData.city_id = locationId;
+      updateData.custom_city_name = null; // clear custom city if previously set
+    }
+
+    if (customCity) {
+      updateData.custom_city_name = customCity;
+      updateData.city_id = null; // clear city_id if previously set
+    }
+
+    // Update shop
+    const [_, [updatedShop]] = await Shop.update(updateData, {
+      where: { id: shopId },
+      returning: true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Shop location updated successfully",
+      data: updatedShop,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update shop location",
+      error: err instanceof Error ? err.message : err,
     });
   }
 }

@@ -11,6 +11,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import { initAssociations } from "./sequelize/models/associate";
 import swaggerRouter from "./swagger/swagger";
+import cityRoutes from "./routes/city.routes";
 import sellerRoutes from "./seller/routes/seller.routes";
 import errorHandler from "./middleware/errorHandler";
 dotenv.config();
@@ -26,11 +27,6 @@ app.use(
   })
 );
 
-// app.use((err: any, req: any, res: any, next: any) => {
-//   console.error(err.stack);
-//   res.status(500).send(err.message);
-// });
-
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data
 app.use(cookieParser());
@@ -43,6 +39,7 @@ app.use("/shop", shopRoutes);
 app.use("/cart", cartRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/seller", sellerRoutes);
+app.use("/cities", cityRoutes);
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);
 // ✅ Database connection
