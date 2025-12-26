@@ -42,16 +42,8 @@ export async function UserTokenRefreshController(req: Request, res: Response) {
 
 export async function userByTokenController(req: Request, res: Response) {
   try {
-    console.log("userByTOken", req.cookies);
-    const authHeaders = req.headers?.authorization;
-    if (!authHeaders) {
-      return res.status(401).json({
-        success: false,
-        message: "Authorization header required",
-      });
-    }
+    const accessToken = req.cookies?.accessToken;
 
-    const accessToken = authHeaders.split(" ")[1];
     if (!accessToken) {
       return res.status(401).json({
         success: false,
@@ -59,8 +51,8 @@ export async function userByTokenController(req: Request, res: Response) {
       });
     }
 
-    // Call service and let it handle the response
-    return await UserByTokenService(accessToken, res);
+    const user = await UserByTokenService(accessToken, res);
+    return user;
   } catch (error) {
     console.error("Error in userByTokenController:", error);
     return res.status(500).json({
