@@ -9,7 +9,6 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     await queryInterface.addColumn("ProductVariants", "image", {
       type: Sequelize.STRING,
-      allowNull: false,
     });
   },
 };
