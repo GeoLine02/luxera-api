@@ -7,7 +7,7 @@ module.exports = {
       {
         sub_category_name: "Smartphones",
         sub_category_image: "smartphones.jpg",
-        category_id: 983, // Make sure this category exists
+        category_id: 983,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -18,7 +18,6 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-
       {
         sub_category_name: "Sofas",
         sub_category_image: "sofas.jpg",
@@ -44,6 +43,29 @@ module.exports = {
         sub_category_name: "Jeans",
         sub_category_image: "jeans.jpg",
         category_id: 984,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+
+      // 🔽 New subcategories
+      {
+        sub_category_name: "Tablets",
+        sub_category_image: "tablets.jpg",
+        category_id: 983,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        sub_category_name: "Headphones",
+        sub_category_image: "headphones.jpg",
+        category_id: 983,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        sub_category_name: "Beds",
+        sub_category_image: "beds.jpg",
+        category_id: 986,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
