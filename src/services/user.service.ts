@@ -99,7 +99,7 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     if (!existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User with this email does not exist",
+        message: "Email or password is incorrect",
       });
     }
 
@@ -111,7 +111,7 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     if (!isCorrectPassword) {
       return res.status(400).json({
         success: false,
-        message: "Email or password is not correct",
+        message: "Email or password is incorrect",
       });
     }
 

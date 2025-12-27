@@ -52,6 +52,17 @@ export async function RegisterShopService(
       owner_id: userId,
     });
 
+    if (registeredShop) {
+      await User.update(
+        { role: "seller" },
+        {
+          where: {
+            id: userId,
+          },
+        }
+      );
+    }
+
     const shopAccessToken = generateAccessToken({ id: registeredShop.id });
     const shopRefreshToken = generateRefreshToken({ id: registeredShop.id });
     return {
