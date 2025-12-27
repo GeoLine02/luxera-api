@@ -26,7 +26,7 @@ router.post(
 router.post("/login", authGuard, ShopLoginController);
 router.get("/refresh", RefreshShopAccessTokenController);
 router.get("/", authGuard, shopAuthGuard, GetShopByTokenController);
-router.get("/:shopId", getShopByIdController);
+router.get("/:shopId", authGuard, getShopByIdController);
 router.delete("/", authGuard, shopAuthGuard, ShopDeleteController);
 
 export default router;

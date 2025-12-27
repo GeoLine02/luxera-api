@@ -26,7 +26,7 @@ export const validateRequest =
         return res.status(400).json({
           success: false,
           message: "Invalid request data",
-          validationErrors: formattedErrors,
+          errors: formattedErrors,
         });
       }
       next(err); // pass other errors to global error handler
