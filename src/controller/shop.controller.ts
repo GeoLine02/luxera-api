@@ -5,6 +5,7 @@ import {
   RegisterShopService,
   ShopDeleteService,
   ShopLoginService,
+  updateShopLocationService,
 } from "../services/shop.service";
 import Shop from "../sequelize/models/shop";
 
@@ -163,5 +164,17 @@ export async function getShopByIdController(req: Request, res: Response) {
     return shopById;
   } catch (err) {
     console.log(err);
+  }
+}
+
+export async function updateShopLocationController(
+  req: Request,
+  res: Response
+) {
+  try {
+    const locationUpdateShop = await updateShopLocationService(req, res);
+    return locationUpdateShop;
+  } catch (error) {
+    console.log(error);
   }
 }

@@ -6,6 +6,7 @@ import {
   ShopDeleteController,
   ShopLoginController,
   ShopRegisterController,
+  updateShopLocationController,
 } from "../controller/shop.controller";
 
 import {
@@ -28,5 +29,11 @@ router.get("/refresh", RefreshShopAccessTokenController);
 router.get("/", authGuard, shopAuthGuard, GetShopByTokenController);
 router.get("/:shopId", authGuard, getShopByIdController);
 router.delete("/", authGuard, shopAuthGuard, ShopDeleteController);
+router.patch(
+  "/location",
+  authGuard,
+  shopAuthGuard,
+  updateShopLocationController
+);
 
 export default router;

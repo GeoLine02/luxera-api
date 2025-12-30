@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import cls from "cls-hooked";
+import { fa } from "zod/v4/locales";
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -25,7 +26,7 @@ const sequelize = isProduction
         host: process.env.DB_HOST,
         port: Number(process.env.DB_PORT) || 5432,
         dialect: "postgres",
-        logging: console.log, // enable SQL logs in development
+        logging: false, // enable SQL logs in development
       }
     );
 

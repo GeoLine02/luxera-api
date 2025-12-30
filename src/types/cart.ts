@@ -2,6 +2,7 @@ interface AddCartItemPayload {
   productId: number;
   userId: number;
   variantId: number;
+  quantity: number;
 }
 interface DeleteCartItemPayload extends AddCartItemPayload {
   removeCompletely?: boolean;

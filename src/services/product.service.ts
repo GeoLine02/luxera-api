@@ -2,6 +2,7 @@ import { BaseError, Op } from "sequelize";
 import sequelize from "../db";
 import {
   Categories,
+  Cities,
   Products,
   Shop,
   SubCategories,
@@ -17,7 +18,14 @@ import { paginatedResponse } from "../utils/responseHandler";
 
 export async function AllProductsService(req: Request, res: Response) {
   try {
-    const { page, subcategory, priceFrom = 0, priceTo = Infinity } = req.query;
+    const {
+      page,
+      subcategory,
+      priceDirection,
+      priceFrom = 0,
+      priceTo = Infinity,
+      search,
+    } = req.query;
     const integerPage = Number(page);
     if (isNaN(integerPage) || integerPage < 1) {
       return res.status(400).json({
@@ -26,7 +34,6 @@ export async function AllProductsService(req: Request, res: Response) {
       });
     }
 
-    console.log("request query params", req.query);
     const productWhere: any = {};
     const variantWhere: any = {};
 
@@ -50,10 +57,38 @@ export async function AllProductsService(req: Request, res: Response) {
       };
     }
 
+    let order: any[] = [["id", "ASC"]]; // default
+
+    if (priceDirection === "asc") {
+      order = [
+        [
+          { model: ProductVariants, as: "primaryVariant" },
+          "variant_price",
+          "ASC",
+        ],
+      ];
+    }
+
+    if (priceDirection === "desc") {
+      order = [
+        [
+          { model: ProductVariants, as: "primaryVariant" },
+          "variant_price",
+          "DESC",
+        ],
+      ];
+    }
+
+    if (search && typeof search === "string") {
+      variantWhere.variant_name = {
+        [Op.iLike]: `%${search}%`,
+      };
+    }
+
     const offset = PAGE_SIZE * (integerPage - 1);
     const products = await Products.findAll({
-      order: [["id", "ASC"]],
       where: productWhere,
+      order,
       offset: offset,
       limit: PAGE_SIZE,
       include: [
@@ -145,6 +180,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
         {
           model: Shop,
           as: "shop",
+          include: [{ model: Cities, as: "city" }],
         },
       ],
     });

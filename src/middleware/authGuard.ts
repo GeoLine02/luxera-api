@@ -14,19 +14,14 @@ export interface ShopJwtPayload extends jwt.JwtPayload {
 export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   try {
     // Get token from cookies
+    console.log("user auth guard req,cookies", req.cookies);
     const accessToken = req.cookies?.accessToken;
-    if (!accessToken) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized: No token provided" });
-    }
 
     // Verify token
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("JWT_SECRET is not defined");
 
     const decoded = jwt.verify(accessToken, secret) as UserJwtPayload;
-
     if (decoded) {
       req.user = decoded;
       next();
@@ -36,6 +31,7 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).json({
       success: false,
       message: "Unauthorized: Invalid token",
+      error,
     });
   }
 };
@@ -54,7 +50,6 @@ export const shopAuthGuard = async (
     const decoded = jwt.verify(shopAccessToken, secret) as ShopJwtPayload;
     if (decoded) {
       req.shop = decoded;
-      console.log(req.shop);
       next();
     }
   } catch (error) {

@@ -51,11 +51,10 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
+    await queryInterface.dropTable("Notifications");
+
+    await queryInterface.sequelize.query(
+      'DROP TYPE IF EXISTS "enum_Notifications_notification_type";'
+    );
   },
 };
