@@ -12,4 +12,10 @@ enum NotificationType {
   AccountWarning = "account_warning",
   SystemAnnouncement = "system_announcement",
 }
-export { ProductStatus, NotificationType };
+enum AllowedMimeTypes {
+  JPG = "image/jpg",
+  PNG = "image/png",
+  JPEG = "image/jpeg",
+  WEBP = "image/webp",
+}
+export { ProductStatus, NotificationType, AllowedMimeTypes };
