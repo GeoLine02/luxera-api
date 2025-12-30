@@ -11,7 +11,7 @@ interface CreateProductPayload {
 }
 
 interface VariantsMetadata {
-  index: number;
+  id?: number;
   variantName: string;
   variantPrice: number;
   variantQuantity: number;
@@ -21,12 +21,10 @@ interface VariantsMetadata {
 
 interface ProductUpdatePayload extends CreateProductPayload {
   productId: number;
-  existingImages?: ExistingImages[];
+  deletedVariantIds?: number[];
+  deletedImageIds?: number[];
 }
-interface ExistingImages {
-  variantIndex: number;
-  imageUrls: string[];
-}
+
 interface ProductUpdateStatusPayload {
   productId: number;
   status: string;
@@ -37,5 +35,4 @@ export {
   ProductUpdatePayload,
   VariantImagesMap,
   ProductUpdateStatusPayload,
-  ExistingImages,
 };

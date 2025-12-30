@@ -33,12 +33,15 @@ const upload = multer({
   fileFilter: async function (req, file, callback) {
     if (!ALLOWED_TYPES.includes(file.mimetype as AllowedMimeTypes)) {
       return callback(
-        new ValidationError([
-          {
-            field: "File",
-            message: "Invalid MIME type",
-          },
-        ])
+        new ValidationError(
+          [
+            {
+              field: "File",
+              message: "Invalid MIME type",
+            },
+          ],
+          "Invalid File type"
+        )
       );
     }
 
@@ -93,6 +96,7 @@ export const validateUploadedFiles = async (
         logger.warn(file.path, "was deleted");
       });
     }
+
     // Return error response
     return res.status(400).json({
       success: false,

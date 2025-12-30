@@ -16,19 +16,6 @@ export const validateRequest =
       schema.parse(req.body); // validate request body
       next();
     } catch (err) {
-      if (err instanceof ZodError) {
-        const formattedErrors = err.issues.map((issue) => {
-          return {
-            field: issue.path.join("."),
-            message: issue.message,
-          };
-        });
-        return res.status(400).json({
-          success: false,
-          message: "Invalid request data",
-          errors: formattedErrors,
-        });
-      }
       next(err); // pass other errors to global error handler
     }
   };

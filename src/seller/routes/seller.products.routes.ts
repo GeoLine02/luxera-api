@@ -28,7 +28,7 @@ router.post(
 );
 router.get("/:id", authGuard, shopAuthGuard, getSellerProductByIdController);
 
-router.put(
+router.patch(
   "/update",
   authGuard,
   shopAuthGuard,

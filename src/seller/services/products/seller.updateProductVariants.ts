@@ -1,97 +1,144 @@
-import sequelize from "../../../db";
+import { Transaction } from "sequelize";
 import Products from "../../../sequelize/models/products";
 import ProductVariants from "../../../sequelize/models/productvariants";
 import { ProductUpdatePayload } from "../../../types/products";
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
+import {
+  NotFoundError,
+  ValidationError,
+  BadRequestError,
+} from "../../../errors/errors";
+import { getImageBaseUrl } from "../../../constants/constants";
+
 export async function UpdateProductVariantsService(
   data: ProductUpdatePayload,
   req: Request,
-  res: Response
+  res: Response,
+  transaction: Transaction
 ) {
   const {
     variantImagesMap = {},
-    variantsMetadata,
+    variantsMetadata = [],
     productId,
-    existingImages,
+    deletedVariantIds,
   } = data;
-  if (!variantsMetadata) {
-    return res.status(400).json({
-      success: false,
-      message: "No variants provided",
-    });
+  const results = {
+    updated: 0,
+    deleted: 0,
+    created: 0,
+  };
+
+  // Attach original indices to avoid object identity issues
+  const variantsWithIndex = variantsMetadata.map((v, i) => ({
+    ...v,
+    _originalIndex: i,
+  }));
+  const toCreate = variantsWithIndex.filter((v) => !v.id);
+  const toUpdate = variantsWithIndex.filter((v) => v.id);
+
+  // Ownership & product existence check (within the same transaction)
+  const product = await Products.findOne({
+    where: { id: productId, product_owner_id: req.user!.id },
+    transaction,
+    lock: transaction.LOCK.UPDATE,
+  });
+  if (!product) {
+    throw new BadRequestError("Product not found or you don't have permission");
   }
-  if (!existingImages && Object.keys(variantImagesMap).length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "No images provided",
-    });
-  }
-  const transaction = await sequelize.transaction();
 
-  // Validate each variant has images
-  try {
-    variantsMetadata.forEach((_, index) => {
-      const uploadedFiles = variantImagesMap[index] || [];
-      const existingVariantImages =
-        existingImages?.find((img) => img.variantIndex === index)?.imageUrls ||
-        [];
-
-      if (uploadedFiles.length === 0 && existingVariantImages.length === 0) {
-        throw new Error(`Variant ${index} must have at least one image`);
-      }
-    });
-
-    // Delete all existing variants (cascade will delete variant images)
-    await ProductVariants.destroy({
-      where: { product_id: productId },
-      transaction,
-    });
-
-    // Create new variants with primary images
-    const variantsToCreate = variantsMetadata.map((variant, index) => {
-      const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
-      const variantImages = variantImagesMap[index] || [];
-      const existingVariantImages =
-        existingImages?.find((img) => img.variantIndex === index)?.imageUrls ||
-        [];
-
-      let primaryImageUrl;
-      if (existingVariantImages.length > 0) {
-        primaryImageUrl = existingVariantImages[0];
-      } else {
-        primaryImageUrl = `${baseUrl}${variantImages[0].filename}`;
-      }
-
-      return {
-        variant_name: variant.variantName,
-        variant_price: variant.variantPrice,
-        variant_quantity: variant.variantQuantity,
-        variant_discount: variant.variantDiscount || 0,
+  // handle deleted variants (use transaction)
+  if (deletedVariantIds && deletedVariantIds.length > 0) {
+    const deletedCount = await ProductVariants.destroy({
+      where: {
         product_id: productId,
-        image: primaryImageUrl,
-      };
-    });
-
-    const newVariants = await ProductVariants.bulkCreate(variantsToCreate, {
-      returning: true,
+        id: deletedVariantIds,
+      },
       transaction,
     });
+    results.deleted = deletedCount;
+  }
 
-    // Update primary variant
-    await Products.update(
-      { primary_variant_id: newVariants[0].id },
-      { where: { id: productId }, transaction }
+  // handle created ones
+  const productVariantPayload = toCreate.map((variant) => {
+    const index = variant._originalIndex;
+    const variantImages = variantImagesMap[index];
+    if (!variantImages || variantImages.length === 0) {
+      throw new ValidationError(
+        [
+          {
+            field: `variants[${index}].images`,
+            message: "At least one image required for new variant",
+          },
+        ],
+        "Missing images"
+      );
+    }
+    const primaryImage = variantImages[0]; // First image for THIS variant
+    return {
+      image: `${getImageBaseUrl(req)}${primaryImage.filename}`,
+      product_id: productId,
+      variant_discount: variant.variantDiscount,
+      variant_name: variant.variantName,
+      variant_price: variant.variantPrice,
+      variant_quantity: variant.variantQuantity,
+    } as any;
+  });
+  let createdWithIndices: any[] = [];
+  if (productVariantPayload.length > 0) {
+    const createdVariants = await ProductVariants.bulkCreate(
+      productVariantPayload,
+      {
+        returning: true,
+        transaction,
+      }
     );
+    results.created = createdVariants.length;
+    createdWithIndices = createdVariants.map((v, i) => ({
+      ...v.toJSON(),
+      _originalIndex: toCreate[i]._originalIndex,
+    }));
+  }
 
-    await transaction.commit();
+  // handle updated ones (use row-level locks and transaction)
+  const updatedWithIndices: any[] = [];
+  for (const variant of toUpdate) {
+    const index = variant._originalIndex;
+    const existingVariant = await ProductVariants.findOne({
+      where: { id: variant.id, product_id: productId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!existingVariant) {
+      throw new NotFoundError("Variant Not Found");
+    }
 
-    return newVariants;
-  } catch (error) {
-    await transaction.rollback();
-    console.error("UpdateProductVariants error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Unable to update product variants",
+    let primaryImageUrl = existingVariant.image;
+    if (variantImagesMap[index] && variantImagesMap[index].length > 0) {
+      primaryImageUrl = `${getImageBaseUrl(req)}${
+        variantImagesMap[index][0].filename
+      }`;
+    }
+
+    const toUpdatePayload = {
+      image: primaryImageUrl,
+      product_id: productId,
+      variant_discount: variant.variantDiscount,
+      variant_name: variant.variantName,
+      variant_price: variant.variantPrice,
+      variant_quantity: variant.variantQuantity,
+    };
+    await existingVariant.update(toUpdatePayload, { transaction });
+    results.updated += 1;
+    updatedWithIndices.push({
+      id: existingVariant.id,
+      _originalIndex: variant._originalIndex,
     });
   }
+
+  // Do NOT commit here - controller should manage transaction
+  return {
+    createdVariants: createdWithIndices,
+    updatedVariants: updatedWithIndices,
+    results,
+  };
 }

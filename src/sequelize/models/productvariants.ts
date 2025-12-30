@@ -3,15 +3,6 @@
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
-interface ProductImageAttributes {
-  id: number;
-  image: string;
-  product_id: number;
-  variant_id: number | null;
-}
-interface ProductVariantCreationAttributes
-  extends Optional<ProductImageAttributes, "id"> {}
-
 interface ProductVariantsAttributes {
   id: number;
   variant_name: string;
@@ -21,6 +12,9 @@ interface ProductVariantsAttributes {
   product_id: number;
   image: string;
 }
+interface ProductVariantCreationAttributes
+  extends Optional<ProductVariantsAttributes, "id"> {}
+
 class ProductVariants
   extends Model<ProductVariantsAttributes, ProductVariantCreationAttributes>
   implements ProductVariantsAttributes
