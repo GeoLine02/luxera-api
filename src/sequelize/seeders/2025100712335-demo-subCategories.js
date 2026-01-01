@@ -6,6 +6,7 @@ module.exports = {
     await queryInterface.bulkInsert("SubCategories", [
       {
         sub_category_name: "Smartphones",
+        sub_category_name_ka: "სმარტფონები",
         sub_category_image: "smartphones.jpg",
         category_id: 983,
         createdAt: new Date(),
@@ -13,6 +14,7 @@ module.exports = {
       },
       {
         sub_category_name: "Laptops",
+        sub_category_name_ka: "ლეპტოპები",
         sub_category_image: "laptops.jpg",
         category_id: 984,
         createdAt: new Date(),
@@ -20,6 +22,7 @@ module.exports = {
       },
       {
         sub_category_name: "Sofas",
+        sub_category_name_ka: "მდივნები",
         sub_category_image: "sofas.jpg",
         category_id: 986,
         createdAt: new Date(),
@@ -27,6 +30,7 @@ module.exports = {
       },
       {
         sub_category_name: "Chairs",
+        sub_category_name_ka: "სკამები",
         sub_category_image: "chairs.jpg",
         category_id: 986,
         createdAt: new Date(),
@@ -34,6 +38,7 @@ module.exports = {
       },
       {
         sub_category_name: "T-Shirts",
+        sub_category_name_ka: "მაისურები",
         sub_category_image: "tshirts.jpg",
         category_id: 984,
         createdAt: new Date(),
@@ -41,6 +46,7 @@ module.exports = {
       },
       {
         sub_category_name: "Jeans",
+        sub_category_name_ka: "ჯინსები",
         sub_category_image: "jeans.jpg",
         category_id: 984,
         createdAt: new Date(),
@@ -50,6 +56,7 @@ module.exports = {
       // 🔽 New subcategories
       {
         sub_category_name: "Tablets",
+        sub_category_name_ka: "ტაბლეტები",
         sub_category_image: "tablets.jpg",
         category_id: 983,
         createdAt: new Date(),
@@ -57,6 +64,7 @@ module.exports = {
       },
       {
         sub_category_name: "Headphones",
+        sub_category_name_ka: "ყურსასმენები",
         sub_category_image: "headphones.jpg",
         category_id: 983,
         createdAt: new Date(),
@@ -64,6 +72,7 @@ module.exports = {
       },
       {
         sub_category_name: "Beds",
+        sub_category_name_ka: "საწოლები",
         sub_category_image: "beds.jpg",
         category_id: 986,
         createdAt: new Date(),
