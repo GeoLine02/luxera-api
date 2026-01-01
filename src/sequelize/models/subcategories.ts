@@ -12,6 +12,7 @@ interface SubCategoryAttributes {
 class SubCategories extends Model implements SubCategoryAttributes {
   declare id: number;
   declare sub_category_name: string;
+  declare sub_category_name_ka: string;
   declare sub_category_image: string;
   declare category_id: number;
 
@@ -33,6 +34,7 @@ SubCategories.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     sub_category_name: { type: DataTypes.STRING, allowNull: false },
+    sub_category_name_ka: { type: DataTypes.STRING, allowNull: false },
     sub_category_image: { type: DataTypes.STRING, allowNull: true },
     category_id: {
       type: DataTypes.INTEGER,
