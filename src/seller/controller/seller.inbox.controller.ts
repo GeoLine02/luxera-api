@@ -6,7 +6,7 @@ import {
   GetUnreadCountService,
   MarkAllNotificationsAsReadService,
   MarkNotificationAsReadService,
-} from "../services/notifications/seller.notifications.service";
+} from "../services/inbox/seller.inbox.service";
 import {
   paginatedResponse,
   successfulResponse,

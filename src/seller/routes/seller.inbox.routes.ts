@@ -6,7 +6,7 @@ import {
   GetUnreadCountController,
   MarkAllNotificationsAsReadController,
   MarkNotificationAsReadController,
-} from "../controller/seller.notifications.controller";
+} from "../controller/seller.inbox.controller";
 const router = e.Router();
 router.get("/", authGuard, shopAuthGuard, GetSellerNotificationsController);
 router.get("/unread-count", authGuard, shopAuthGuard, GetUnreadCountController);

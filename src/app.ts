@@ -14,6 +14,7 @@ import swaggerRouter from "./swagger/swagger";
 import cityRoutes from "./routes/city.routes";
 import sellerRoutes from "./seller/routes/seller.routes";
 import errorHandler from "./middleware/errorHandler";
+
 dotenv.config();
 
 const app = express();
@@ -40,6 +41,7 @@ app.use("/cart", cartRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/seller", sellerRoutes);
 app.use("/cities", cityRoutes);
+
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);
 // ✅ Database connection
