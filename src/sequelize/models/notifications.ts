@@ -49,6 +49,21 @@ class Notifications
       as: "shop",
     });
   }
+  async markAsRead(): Promise<void> {
+    if (!this.read) {
+      this.read = true;
+      this.read_at = new Date();
+      await this.save();
+    }
+  }
+
+  async markAsUnread(): Promise<void> {
+    if (this.read) {
+      this.read = false;
+      this.read_at = null;
+      await this.save();
+    }
+  }
 }
 Notifications.init(
   {
