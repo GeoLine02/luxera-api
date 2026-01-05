@@ -1,4 +1,4 @@
-import { BaseError, Op } from "sequelize";
+import { BaseError, Op, Transaction } from "sequelize";
 import sequelize from "../db";
 import {
   Categories,
@@ -13,8 +13,9 @@ import ProductVariants from "../sequelize/models/productvariants";
 import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
 import { PAGE_SIZE } from "../constants/constants";
-import { NotFoundError } from "../errors/errors";
+import { BadRequestError, NotFoundError } from "../errors/errors";
 import { paginatedResponse } from "../utils/responseHandler";
+import { ProductUpdatePayload } from "../types/products";
 
 export async function AllProductsService(req: Request, res: Response) {
   try {
@@ -318,107 +319,6 @@ export async function SearchProductsService(query: string, res: Response) {
   }
 }
 
-interface ProductVariantTypePayload {
-  variantName: string;
-  variantPrice: number;
-  variantQuantity: number;
-  variantDiscount: number;
-}
-
-export async function CreateProductService(req: Request, res: Response) {
-  try {
-    const {
-      productDescription,
-      productVariants,
-      ownerId,
-      productSubCategoryId,
-    } = req.body;
-    const shop = req.shop;
-    const images = req.files as Express.Multer.File[];
-    const parsedProductVariants = JSON.parse(productVariants);
-
-    if (!images || images.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No images uploaded",
-      });
-    }
-
-    const createdProduct = await Products.create({
-      product_rating: 0,
-      product_owner_id: ownerId,
-      product_status: "pending",
-      product_subcategory_id: productSubCategoryId,
-      shop_id: shop?.id as number,
-      product_description: productDescription,
-    });
-
-    if (createdProduct) {
-      const createdProductVariantsArray = parsedProductVariants.map(
-        (variant: ProductVariantTypePayload) => ({
-          variant_name: variant.variantName,
-          product_id: Number(createdProduct.id),
-          variant_price: Number(variant.variantPrice),
-          variant_quantity: Number(variant.variantQuantity),
-          variant_discount: Number(variant.variantDiscount),
-        })
-      );
-
-      const createdVariants = await ProductVariants.bulkCreate(
-        createdProductVariantsArray
-      );
-
-      if (createdVariants && createdVariants.length > 0) {
-        // Group images by fieldname and map to variant IDs
-        const productImagesArray: any[] = [];
-
-        images.forEach((file) => {
-          // Extract variant index from fieldname (e.g., "variant-1-image" -> 1)
-          const variantIndexMatch = file.fieldname.match(/variant-(\d+)-image/);
-
-          if (variantIndexMatch) {
-            const variantIndex = parseInt(variantIndexMatch[1]) - 1; // Convert to 0-based index
-
-            // Make sure the variant exists
-            if (createdVariants[variantIndex]) {
-              const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
-                file.filename
-              }`;
-
-              productImagesArray.push({
-                image: imageUrl,
-                product_id: createdProduct.id,
-                variant_id: createdVariants[variantIndex].id,
-              });
-            }
-          }
-        });
-
-        // Create all product images
-        const createdProductImages = await ProductImages.bulkCreate(
-          productImagesArray
-        );
-
-        return res.status(201).json({
-          success: true,
-          message: "Product created successfully",
-          data: {
-            product: createdProduct,
-            variants: createdVariants,
-            images: createdProductImages,
-          },
-        });
-      }
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Unable to create product",
-      error,
-    });
-  }
-}
 export async function GetProductsBySubCategoryService(
   categoryName: string,
   page: number,
@@ -460,4 +360,61 @@ export async function GetProductsBySubCategoryService(
     hasMore,
     page
   );
+}
+
+// TODO: recreate product create service
+export async function CreateProductService(req: Request, res: Response) {}
+
+export async function UpdateSingleProductService(
+  data: ProductUpdatePayload,
+  req: Request,
+  res: Response,
+  transaction: Transaction
+) {
+  const userId = req.user!.id;
+  const {
+    productCategoryId,
+    productSubCategoryId,
+    productDescription,
+    productId,
+  } = data;
+
+  // 2️⃣ Validate category & subcategory if provided (read-only, no transaction)
+
+  const category = await Categories.findByPk(productCategoryId);
+  const subCategory = await SubCategories.findOne({
+    where: { id: productSubCategoryId, category_id: productCategoryId },
+  });
+
+  if (!category || !subCategory) {
+    throw new NotFoundError("Invalid category or subcategory");
+  }
+
+  // 3️⃣ Check if product exists BEFORE transaction
+  const existingProduct = await Products.findByPk(productId);
+  if (!existingProduct) {
+    throw new NotFoundError("Product not found");
+  }
+
+  // 4️⃣ Validate ownership (security check)
+  if (existingProduct.product_owner_id !== userId) {
+    throw new BadRequestError(
+      "You don't have permission to update this product"
+    );
+  }
+
+  // Prepare fields to update
+  const fieldsToUpdate: any = {
+    product_description: productDescription,
+    product_category_id: productCategoryId,
+    sub_category_id: productSubCategoryId,
+    user_id: userId,
+  };
+
+  // Update product info
+  if (Object.keys(fieldsToUpdate).length > 0) {
+    await existingProduct.update(fieldsToUpdate, { transaction });
+  }
+  // Do NOT commit here - controller manages the transaction
+  return { existingProduct };
 }

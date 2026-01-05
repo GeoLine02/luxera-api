@@ -121,3 +121,10 @@ export async function GetProductsBySubCategoryController(
 
   return paginatedResult;
 }
+
+export async function updateProductController(req: Request, res: Response) {
+  try {
+  } catch (error) {
+    console.log(error);
+  }
+}
