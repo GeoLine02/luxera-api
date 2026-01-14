@@ -14,16 +14,27 @@ import swaggerRouter from "./swagger/swagger";
 import cityRoutes from "./routes/city.routes";
 import sellerRoutes from "./seller/routes/seller.routes";
 import errorHandler from "./middleware/errorHandler";
-
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+export const s3 = new S3Client({
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY!,
+    secretAccessKey: process.env.S3_SECRET_KEY!,
+  },
+  endpoint: "https://hel1.your-objectstorage.com",
+  region: "auto",
+});
 
 // ✅ Middleware (must come before routes)
 app.use(
   cors({
-    origin: "http://localhost:3000", // ✅ Frontend URL
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.PROD_FRONTEND_URL
+        : "http://localhost:3000", // ✅ Frontend URL
     credentials: true, // ✅ Allow cookies/authorization headers
   })
 );
