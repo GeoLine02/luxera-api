@@ -22,7 +22,7 @@ export async function CreateProductImagesService(
 
     variantImages.forEach((image) => {
       images.push({
-        image: `${baseUrl}${image.file?.filename}`,
+        // image: `${baseUrl}${image.file?.filename}`,
         product_id: createdVariant.product_id,
         variant_id: createdVariant.id,
       });
