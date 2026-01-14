@@ -8,10 +8,11 @@ interface ProductImageAttributes {
   image: string;
   product_id: number;
   variant_id: number | null;
+  is_primary: boolean;
 }
 
 interface ProductImageCreationAttributes
-  extends Optional<ProductImageAttributes, "id"> {}
+  extends Optional<ProductImageAttributes, "id" | "is_primary"> {}
 
 class ProductImages
   extends Model<ProductImageAttributes, ProductImageCreationAttributes>
@@ -21,6 +22,7 @@ class ProductImages
   declare image: string;
   declare product_id: number;
   declare variant_id: number | null;
+  declare is_primary: boolean;
 
   static associate(models: TypeModels) {
     ProductImages.belongsTo(models.Products, {
@@ -63,6 +65,11 @@ ProductImages.init(
       },
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
+    },
+    is_primary: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {

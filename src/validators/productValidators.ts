@@ -46,7 +46,11 @@ const ProductVariantSchema = z
 
     // Optional: ID for updates
     id: z.number().int().positive().optional(),
+    tempId: z.string().optional(),
+    imageFields: z.array(z.string()).optional(),
+    primaryImageField: z.string().optional(),
   })
+
   // Cross-field validation
   .refine(
     (data) => {

@@ -9,6 +9,8 @@ import {
   BadRequestError,
 } from "../../../errors/errors";
 import { getImageBaseUrl } from "../../../constants/constants";
+import logger from "../../../logger";
+import { log } from "console";
 
 export async function UpdateProductVariantsService(
   data: ProductUpdatePayload,
@@ -16,25 +18,33 @@ export async function UpdateProductVariantsService(
   res: Response,
   transaction: Transaction
 ) {
-  const {
-    variantImagesMap = {},
-    variantsMetadata = [],
-    productId,
-    deletedVariantIds,
-  } = data;
+  const { variantImagesMap = {}, variantsMetadata = [], productId } = data;
   const results = {
     updated: 0,
     deleted: 0,
     created: 0,
   };
 
-  // Attach original indices to avoid object identity issues
-  const variantsWithIndex = variantsMetadata.map((v, i) => ({
-    ...v,
-    _originalIndex: i,
-  }));
-  const toCreate = variantsWithIndex.filter((v) => !v.id);
-  const toUpdate = variantsWithIndex.filter((v) => v.id);
+  // Separate toCreate and toUpdate
+  const existingVariants = await ProductVariants.findAll({
+    where: { product_id: productId },
+    transaction,
+  });
+  const existingVariantIds = existingVariants.map((v) => v.id);
+  const sentIds = variantsMetadata
+    .filter((v) => v.id)
+    .map((v) => v.id!) as number[];
+  const toDeleteIds = existingVariantIds.filter((id) => !sentIds.includes(id));
+
+  // Delete variants that were removed
+  if (toDeleteIds.length > 0) {
+    results.deleted = await ProductVariants.destroy({
+      where: { id: toDeleteIds, product_id: productId },
+      transaction,
+    });
+  }
+  const toCreate = variantsMetadata.filter((v) => v.id == undefined);
+  const toUpdate = variantsMetadata.filter((v) => v.id !== undefined);
 
   // Ownership & product existence check (within the same transaction)
   const product = await Products.findOne({
@@ -46,36 +56,31 @@ export async function UpdateProductVariantsService(
     throw new BadRequestError("Product not found or you don't have permission");
   }
 
-  // handle deleted variants (use transaction)
-  if (deletedVariantIds && deletedVariantIds.length > 0) {
-    const deletedCount = await ProductVariants.destroy({
-      where: {
-        product_id: productId,
-        id: deletedVariantIds,
-      },
-      transaction,
-    });
-    results.deleted = deletedCount;
-  }
-
   // handle created ones
   const productVariantPayload = toCreate.map((variant) => {
-    const index = variant._originalIndex;
-    const variantImages = variantImagesMap[index];
-    if (!variantImages || variantImages.length === 0) {
-      throw new ValidationError(
-        [
-          {
-            field: `variants[${index}].images`,
-            message: "At least one image required for new variant",
-          },
-        ],
-        "Missing images"
-      );
+    const variantImages = variantImagesMap[variant.tempId!] || [];
+    if (variantImages.length === 0) {
+      throw new ValidationError([
+        {
+          field: `variantImage_${variant.tempId}`,
+          message: `Images not found for variant ${variant.tempId}`,
+        },
+      ]);
     }
-    const primaryImage = variantImages[0]; // First image for THIS variant
+
+    const primaryImage = variantImages.find((img) => img.isPrimary);
+    if (!primaryImage) {
+      throw new ValidationError([
+        {
+          field: `primaryImage_${variant.tempId}`,
+          message: `Primary image not found for variant ${variant.tempId}`,
+        },
+      ]);
+    }
+
     return {
-      image: `${getImageBaseUrl(req)}${primaryImage.filename}`,
+      tempId: variant.tempId,
+      image: `${getImageBaseUrl(req)}${primaryImage.file?.filename}`,
       product_id: productId,
       variant_discount: variant.variantDiscount,
       variant_name: variant.variantName,
@@ -83,7 +88,8 @@ export async function UpdateProductVariantsService(
       variant_quantity: variant.variantQuantity,
     } as any;
   });
-  let createdWithIndices: any[] = [];
+
+  let createdVariantMappings: { id: number; tempId?: string }[] = [];
   if (productVariantPayload.length > 0) {
     const createdVariants = await ProductVariants.bulkCreate(
       productVariantPayload,
@@ -92,17 +98,17 @@ export async function UpdateProductVariantsService(
         transaction,
       }
     );
+
     results.created = createdVariants.length;
-    createdWithIndices = createdVariants.map((v, i) => ({
-      ...v.toJSON(),
-      _originalIndex: toCreate[i]._originalIndex,
+    createdVariantMappings = createdVariants.map((variant, index) => ({
+      id: variant.id,
+      tempId: productVariantPayload[index].tempId,
     }));
   }
 
   // handle updated ones (use row-level locks and transaction)
-  const updatedWithIndices: any[] = [];
+
   for (const variant of toUpdate) {
-    const index = variant._originalIndex;
     const existingVariant = await ProductVariants.findOne({
       where: { id: variant.id, product_id: productId },
       transaction,
@@ -113,10 +119,19 @@ export async function UpdateProductVariantsService(
     }
 
     let primaryImageUrl = existingVariant.image;
-    if (variantImagesMap[index] && variantImagesMap[index].length > 0) {
-      primaryImageUrl = `${getImageBaseUrl(req)}${
-        variantImagesMap[index][0].filename
-      }`;
+
+    if (
+      variantImagesMap[variant.id!] &&
+      variantImagesMap[variant.id!].length > 0
+    ) {
+      const primaryImage = variantImagesMap[variant.id!].find(
+        (img) => img.isPrimary
+      );
+      if (primaryImage) {
+        primaryImageUrl = `${getImageBaseUrl(req)}${
+          primaryImage?.file?.filename
+        }`;
+      }
     }
 
     const toUpdatePayload = {
@@ -129,16 +144,12 @@ export async function UpdateProductVariantsService(
     };
     await existingVariant.update(toUpdatePayload, { transaction });
     results.updated += 1;
-    updatedWithIndices.push({
-      id: existingVariant.id,
-      _originalIndex: variant._originalIndex,
-    });
   }
 
   // Do NOT commit here - controller should manage transaction
   return {
-    createdVariants: createdWithIndices,
-    updatedVariants: updatedWithIndices,
+    createdVariants: createdVariantMappings,
+    updatedVariants: toUpdate,
     results,
   };
 }

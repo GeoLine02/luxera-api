@@ -1,6 +1,13 @@
 import { Request } from "express";
+import crypto from "crypto";
 const PAGE_SIZE = 15;
-function getImageBaseUrl(req: Request) {
+const S3_ENDPOINT = "https://hel1.your-objectstorage.com/";
+
+function getImageBaseUrl(req: Request, fileName: string): string {
   return `${req.protocol}://${req.get("host")}/uploads/`;
 }
-export { PAGE_SIZE, getImageBaseUrl };
+function getRandomImageName(bytes = 32) {
+  return crypto.randomBytes(bytes).toString("hex");
+}
+
+export { PAGE_SIZE, getImageBaseUrl, S3_ENDPOINT, getRandomImageName };

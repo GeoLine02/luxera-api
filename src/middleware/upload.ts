@@ -16,16 +16,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Configure multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -90,18 +81,18 @@ export const validateUploadedFiles = async (
     next();
   } catch (error) {
     // Clean up uploaded files on validation failure
-    for (const file of files) {
-      await fs.unlink(file.path, (err) => {
-        if (err) throw err;
-        logger.warn(file.path, "was deleted");
-      });
-    }
-
     // Return error response
     return res.status(400).json({
       success: false,
       message:
         error instanceof Error ? error.message : "File validation failed",
+      errors: [
+        {
+          field: "File",
+          message:
+            error instanceof Error ? error.message : "File validation failed",
+        },
+      ],
     });
   }
 };

@@ -1,6 +1,11 @@
-interface VariantImagesMap {
-  [index: number]: Express.Multer.File[];
+interface VariantImageInput {
+  file?: Express.Multer.File;
+  imageId?: number;
+  isPrimary?: boolean;
 }
+type VariantImagesMap = {
+  [key: string | number]: VariantImageInput[];
+};
 interface CreateProductPayload {
   productCategoryId: number;
   productSubCategoryId: number;
@@ -12,11 +17,14 @@ interface CreateProductPayload {
 
 interface VariantsMetadata {
   id?: number;
+  tempId?: string;
   variantName: string;
   variantPrice: number;
   variantQuantity: number;
   variantDiscount: number;
   productId: number;
+  imageFields?: string[];
+  primaryImageField?: string;
 }
 
 interface ProductUpdatePayload extends CreateProductPayload {

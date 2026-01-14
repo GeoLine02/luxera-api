@@ -37,7 +37,10 @@ export async function UpdateSingleProductService(
   }
 
   // 4️⃣ Validate ownership (security check)
-  if (existingProduct.product_owner_id !== userId) {
+  if (
+    existingProduct.product_owner_id !== userId ||
+    existingProduct.shop_id !== req.shop!.id
+  ) {
     throw new BadRequestError(
       "You don't have permission to update this product"
     );

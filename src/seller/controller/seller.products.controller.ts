@@ -86,9 +86,11 @@ export async function CreateProductController(req: Request, res: Response) {
       }
     }
     // validate images
+
     const imageFiles = files.filter(
       (file) => file.fieldname == `variantImages_${index}`
     );
+
     if (!imageFiles) {
       throw new ValidationError([
         {
@@ -98,7 +100,13 @@ export async function CreateProductController(req: Request, res: Response) {
       ]);
     }
 
-    variantImagesMap[index] = imageFiles;
+    const variantImagesEntry = imageFiles.map((file) => {
+      return {
+        file: file,
+        isPrimary: file.filename === variant.primaryImageField,
+      };
+    });
+    variantImagesMap[index] = variantImagesEntry;
   }
 
   const parsedBody = {
@@ -171,15 +179,14 @@ export async function UpdateProductController(req: Request, res: Response) {
   const variantMetadata: VariantsMetadata[] = JSON.parse(
     body.variantsMetadata || "[]"
   );
-  const deletedVariantIds: number[] = JSON.parse(
-    body.deletedVariantIds || "[]"
-  );
+
   const deletedImageIds: number[] = JSON.parse(body.deletedImageIds || "[]");
 
   const variantImagesMap: VariantImagesMap = {};
   // validate variantsMetaData
+
   if (variantMetadata.length > 0) {
-    for (const [index, variant] of variantMetadata.entries()) {
+    for (const variant of variantMetadata) {
       try {
         ProductVariantSchema.parse(variant);
       } catch (error) {
@@ -196,78 +203,115 @@ export async function UpdateProductController(req: Request, res: Response) {
           );
         }
       }
-      // validate products which must be updated
-      if (!variant.id) {
-        const imageFiles = files.filter(
-          (file) => file.fieldname == `variantImages_${index}`
+      // validate images
+      if (variant.id === undefined && variant.tempId) {
+        if (variant.imageFields && variant.imageFields.length > 0) {
+          const imageFiles = files.filter((file) =>
+            variant.imageFields?.includes(file.fieldname)
+          );
+
+          if (!imageFiles || imageFiles.length === 0) {
+            throw new ValidationError([
+              {
+                field: `variantImage_${variant.tempId}`,
+                message: `Images not found for variant ${variant.tempId}`,
+              },
+            ]);
+          }
+          const variantImagesMapEntry = imageFiles.map((file) => {
+            return {
+              file: file,
+              isPrimary: file.filename === variant.primaryImageField,
+            };
+          });
+          variantImagesMap[variant.tempId!] = variantImagesMapEntry;
+        }
+      }
+      // for existing variants
+      if (
+        variant.id &&
+        variant.tempId == undefined &&
+        variant.imageFields &&
+        variant.imageFields.length > 0
+      ) {
+        const imageFiles = files.filter((file) =>
+          variant.imageFields?.includes(file.fieldname)
         );
-        if (!imageFiles) {
+        if (!imageFiles || imageFiles.length === 0) {
           throw new ValidationError([
             {
-              field: `variantImages_${index}`,
-              message: `Images not found for variant ${index}`,
+              field: `variantImage_${variant.id}`,
+              message: `Images not found for variant ${variant.id}`,
             },
           ]);
         }
-
-        variantImagesMap[index] = imageFiles;
+        const variantImagesMapEntry = imageFiles.map((file) => {
+          return {
+            file: file,
+            isPrimary: file.filename === variant.primaryImageField,
+          };
+        });
+        variantImagesMap[variant.id] = variantImagesMapEntry;
       }
     }
-  }
+    const parsedData = {
+      productCategoryId: Number(body.productCategoryId),
+      productSubCategoryId: Number(body.productSubCategoryId),
+      productDescription: body.productDescription,
+      userId: Number(body.userId),
+      productId: Number(body.productId),
+      productStatus: body.productStatus,
+      variantsMetadata: variantMetadata,
+      variantImagesMap: variantImagesMap,
 
-  const parsedData = {
-    productCategoryId: Number(body.productCategoryId),
-    productSubCategoryId: Number(body.productSubCategoryId),
-    productDescription: body.productDescription,
-    userId: Number(body.userId),
-    productId: Number(body.productId),
-    productStatus: body.productStatus,
-    variantsMetadata: variantMetadata,
-    variantImagesMap: variantImagesMap,
-    deletedVariantIds: deletedVariantIds,
-    deletedImageIds: deletedImageIds,
-  } as ProductUpdatePayload;
+      deletedImageIds: deletedImageIds,
+    } as ProductUpdatePayload;
 
-  let transaction: Transaction | undefined;
-  try {
-    transaction = await sequelize.transaction();
+    let transaction: Transaction | undefined;
+    try {
+      transaction = await sequelize.transaction();
 
-    const { existingProduct } = await UpdateSingleProductService(
-      parsedData,
-      req,
-      res,
-      transaction
-    );
+      const { existingProduct } = await UpdateSingleProductService(
+        parsedData,
+        req,
+        res,
+        transaction
+      );
 
-    const { createdVariants, updatedVariants, results } =
-      await UpdateProductVariantsService(parsedData, req, res, transaction);
+      const { createdVariants, updatedVariants, results } =
+        await UpdateProductVariantsService(parsedData, req, res, transaction);
 
-    await updateProductImagesService(
-      req,
-      parsedData,
-      createdVariants,
-      updatedVariants,
-      transaction
-    );
+      const imageResults = await updateProductImagesService(
+        req,
+        parsedData,
+        createdVariants,
+        updatedVariants,
+        transaction
+      );
+      const totalResults = {
+        created: results.created + imageResults.created,
+        updated: results.updated,
+        deleted: results.deleted + imageResults.deleted,
+      };
 
-    await transaction.commit();
-    return successfulResponse(res, "Product updated", {
-      existingProduct,
-      results,
-    });
-  } catch (error) {
-    if (transaction) {
-      try {
-        await transaction.rollback();
-      } catch (rbErr) {
-        logger.error("Transaction rollback failed:", rbErr);
+      await transaction.commit();
+      return successfulResponse(res, "Product updated", {
+        existingProduct,
+        results: totalResults,
+      });
+    } catch (error) {
+      if (transaction) {
+        try {
+          await transaction.rollback();
+        } catch (rbErr) {
+          logger.error("Transaction rollback failed:", rbErr);
+        }
       }
+      logger.error("UpdateProductController error:", error);
+      throw error;
     }
-    logger.error("UpdateProductController error:", error);
-    throw error;
   }
 }
-
 export async function DeleteProductController(req: Request, res: Response) {
   const productId = req.params.id as string;
 
