@@ -28,7 +28,6 @@ export async function CreateProductImagesService(
       });
     });
   });
-
   if (images.length > 0) {
     await ProductImages.bulkCreate(images, { transaction });
     logger.info(`Inserted ${images.length} variant images`);

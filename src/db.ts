@@ -14,7 +14,7 @@ const sequelize = isProduction
       dialectOptions: {
         ssl: {
           require: true,
-          rejectUnauthorized: false, // Render requires this
+          rejectUnauthorized: false, 
         },
       },
     })

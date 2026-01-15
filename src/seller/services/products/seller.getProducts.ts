@@ -35,6 +35,7 @@ export async function GetSellerProductsService(req: Request, res: Response) {
       ],
       transaction,
     });
+    
     await transaction.commit();
     return res.status(200).json({
       success: true,
