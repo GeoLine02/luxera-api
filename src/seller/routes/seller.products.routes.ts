@@ -27,6 +27,7 @@ router.post(
   validateRequest(ProductCreationSchema),
   CreateProductController
 );
+
 router.get("/:id", authGuard, shopAuthGuard, getSellerProductByIdController);
 
 router.put(

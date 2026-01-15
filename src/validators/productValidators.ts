@@ -46,7 +46,7 @@ const UpdateProductVariantSchema = z
 
     // Optional: ID for updates
     id: z.number().int().positive().optional(),
-    tempId: z.number().optional(),
+    tempId: z.string("Temporary Id must be string"),
   })
 
   // Cross-field validation
@@ -109,7 +109,7 @@ const CreateProductVariantSchema = z
       .finite("Variant discount must be a valid number")
       .multipleOf(0.01, "Variant discount can have at most 2 decimal places"),
 
-    tempId: z.number("Temporary ID must be a number"),
+    tempId: z.string("Temporary Id must be string"),
   })
   .refine(
     (data) => {
