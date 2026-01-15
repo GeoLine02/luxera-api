@@ -15,6 +15,10 @@ import { ProductStatus } from "../constants/enums";
 import { PAGE_SIZE } from "../constants/constants";
 import { NotFoundError } from "../errors/errors";
 import { paginatedResponse } from "../utils/responseHandler";
+import { s3 } from "../app";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { HomePageProduct, ProductDetails } from "../types/products";
 
 export async function AllProductsService(req: Request, res: Response) {
   try {
@@ -86,7 +90,7 @@ export async function AllProductsService(req: Request, res: Response) {
     }
 
     const offset = PAGE_SIZE * (integerPage - 1);
-    const products = await Products.findAll({
+    const products = (await Products.findAll({
       where: productWhere,
       order,
       offset: offset,
@@ -96,16 +100,51 @@ export async function AllProductsService(req: Request, res: Response) {
           model: ProductVariants,
           as: "primaryVariant",
           where: Object.keys(variantWhere).length ? variantWhere : undefined,
+          include: [
+            {
+              model: ProductImages,
+              where: { is_primary: true },
+              as: "image",
+              required: true, // ensure we get the primary image
+              attributes: ["id", "s3_key"], // only fetch what we need
+            },
+          ],
         },
       ],
-    });
+    })) as HomePageProduct[];
 
+    const productsWithImages = await Promise.all(
+      products.map(async (product) => {
+        const primaryVariant = product.primaryVariant;
+        if (primaryVariant?.image?.s3_key) {
+          const params = {
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: primaryVariant.image.s3_key,
+          };
+
+          const signedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand(params),
+            {
+              expiresIn: 3600,
+            }
+          );
+          return {
+            ...product,
+            primaryVariant: {
+              ...primaryVariant,
+              imageUrl: signedUrl,
+            },
+          };
+        }
+      })
+    );
     const totalCount = await Products.count();
     const hasMore = totalCount > integerPage * PAGE_SIZE + products.length;
     return res.status(200).json({
       success: true,
       message: "Products fetched successfully",
-      data: products,
+      data: productsWithImages,
       page: page,
       pageSize: PAGE_SIZE,
       hasMore: hasMore,
@@ -164,7 +203,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
       });
     }
 
-    const product = await Products.findOne({
+    const product = (await Products.findOne({
       where: { id: productId },
       include: [
         {
@@ -183,19 +222,50 @@ export async function GetProductByIdService(req: Request, res: Response) {
           include: [{ model: Cities, as: "city" }],
         },
       ],
-    });
-
+    })) as ProductDetails;
     if (!product) {
       return res.status(404).json({
         success: false,
         message: `Product with ID ${productId} not found`,
       });
     }
+    const productData = product.toJSON() as ProductDetails;
+    await Promise.all(
+      productData.variants.map(async (variant: any) => {
+        if (!variant.images || variant.images.length === 0) {
+          variant.images = [];
+          return;
+        }
+        variant.images = await Promise.all(
+          variant.images.map(async (img: any) => {
+            if (!img.s3_key) {
+              return { id: img.id, imageUrl: null };
+            }
+
+            const signedUrl = await getSignedUrl(
+              s3,
+              new GetObjectCommand({
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: img.s3_key,
+              }),
+              { expiresIn: 3600 }
+            );
+
+            return {
+              id: img.id,
+              imageUrl: signedUrl,
+              // Optional: keep s3_key if needed for updates/deletes
+              // s3_key: img.s3_key,
+            };
+          })
+        );
+      })
+    );
 
     return res.status(200).json({
       success: true,
       message: "Product fetched successfully",
-      data: product,
+      data: productData,
     });
   } catch (error) {
     console.log(error);
