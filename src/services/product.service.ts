@@ -13,7 +13,7 @@ import ProductVariants from "../sequelize/models/productvariants";
 import { Response, Request } from "express";
 import { ProductStatus } from "../constants/enums";
 import { PAGE_SIZE } from "../constants/constants";
-import { NotFoundError } from "../errors/errors";
+import { NotFoundError, ValidationError } from "../errors/errors";
 import { paginatedResponse } from "../utils/responseHandler";
 import { s3 } from "../app";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
@@ -21,142 +21,131 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { HomePageProduct, ProductDetails } from "../types/products";
 
 export async function AllProductsService(req: Request, res: Response) {
-  try {
-    const {
-      page,
-      subcategory,
-      priceDirection,
-      priceFrom = 0,
-      priceTo = Infinity,
-      search,
-    } = req.query;
-    const integerPage = Number(page);
-    if (isNaN(integerPage) || integerPage < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid page number",
-      });
-    }
-
-    const productWhere: any = {};
-    const variantWhere: any = {};
-
-    const subcategoryId = (subcategory as string)?.split("-")[1];
-    console.log("subcategoryId", subcategoryId);
-
-    if (subcategory) {
-      productWhere.product_subcategory_id = subcategoryId;
-    }
-
-    if (priceFrom) {
-      variantWhere.variant_price = {
-        [Op.gt]: Number(priceFrom),
-      };
-    }
-
-    if (priceTo) {
-      variantWhere.variant_price = {
-        ...(variantWhere.variant_price ?? {}),
-        [Op.lt]: Number(priceTo),
-      };
-    }
-
-    let order: any[] = [["id", "ASC"]]; // default
-
-    if (priceDirection === "asc") {
-      order = [
-        [
-          { model: ProductVariants, as: "primaryVariant" },
-          "variant_price",
-          "ASC",
-        ],
-      ];
-    }
-
-    if (priceDirection === "desc") {
-      order = [
-        [
-          { model: ProductVariants, as: "primaryVariant" },
-          "variant_price",
-          "DESC",
-        ],
-      ];
-    }
-
-    if (search && typeof search === "string") {
-      variantWhere.variant_name = {
-        [Op.iLike]: `%${search}%`,
-      };
-    }
-
-    const offset = PAGE_SIZE * (integerPage - 1);
-    const products = (await Products.findAll({
-      where: productWhere,
-      order,
-      offset: offset,
-      limit: PAGE_SIZE,
-      include: [
+  const {
+    page,
+    subcategory,
+    priceDirection,
+    priceFrom = 0,
+    priceTo,
+    search,
+  } = req.query;
+  const integerPage = Number(page);
+  if (isNaN(integerPage) || integerPage < 1) {
+    throw new ValidationError(
+      [
         {
-          model: ProductVariants,
-          as: "primaryVariant",
-          where: Object.keys(variantWhere).length ? variantWhere : undefined,
-          include: [
-            {
-              model: ProductImages,
-              where: { is_primary: true },
-              as: "image",
-              required: true, // ensure we get the primary image
-              attributes: ["id", "s3_key"], // only fetch what we need
-            },
-          ],
+          field: "page",
+          message: "Invalid page number",
         },
       ],
-    })) as HomePageProduct[];
-
-    const productsWithImages = await Promise.all(
-      products.map(async (product) => {
-        const primaryVariant = product.primaryVariant;
-        if (primaryVariant?.image?.s3_key) {
-          const params = {
-            Bucket: process.env.S3_BUCKET_NAME!,
-            Key: primaryVariant.image.s3_key,
-          };
-
-          const signedUrl = await getSignedUrl(
-            s3,
-            new GetObjectCommand(params),
-            {
-              expiresIn: 3600,
-            }
-          );
-          return {
-            ...product,
-            primaryVariant: {
-              ...primaryVariant,
-              imageUrl: signedUrl,
-            },
-          };
-        }
-      })
+      "Invalid page number"
     );
-    const totalCount = await Products.count();
-    const hasMore = totalCount > integerPage * PAGE_SIZE + products.length;
-    return res.status(200).json({
-      success: true,
-      message: "Products fetched successfully",
-      data: productsWithImages,
-      page: page,
-      pageSize: PAGE_SIZE,
-      hasMore: hasMore,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Unable to fetch all products",
-      error,
-    });
   }
+
+  const productWhere: any = {};
+  const variantWhere: any = {};
+
+  const subcategoryId = (subcategory as string)?.split("-")[1];
+  console.log("subcategoryId", subcategoryId);
+
+  if (subcategory) {
+    productWhere.product_subcategory_id = subcategoryId;
+  }
+
+  if (priceFrom) {
+    variantWhere.variant_price = {
+      [Op.gt]: Number(priceFrom),
+    };
+  }
+
+  if (priceTo) {
+    variantWhere.variant_price = {
+      ...(variantWhere.variant_price ?? {}),
+      [Op.lt]: Number(priceTo),
+    };
+  }
+
+  let order: any[] = [["id", "ASC"]]; // default
+
+  if (priceDirection === "asc") {
+    order = [
+      [
+        { model: ProductVariants, as: "primaryVariant" },
+        "variant_price",
+        "ASC",
+      ],
+    ];
+  }
+
+  if (priceDirection === "desc") {
+    order = [
+      [
+        { model: ProductVariants, as: "primaryVariant" },
+        "variant_price",
+        "DESC",
+      ],
+    ];
+  }
+
+  if (search && typeof search === "string") {
+    variantWhere.variant_name = {
+      [Op.iLike]: `%${search}%`,
+    };
+  }
+
+  const offset = PAGE_SIZE * (integerPage - 1);
+  const products = (await Products.findAll({
+    where: productWhere,
+    order,
+    offset: offset,
+    limit: PAGE_SIZE,
+    include: [
+      {
+        model: ProductVariants,
+        as: "primaryVariant",
+        where: Object.keys(variantWhere).length ? variantWhere : undefined,
+        include: [
+          {
+            model: ProductImages,
+            where: { is_primary: true },
+            as: "images",
+            required: true, // ensure we get the primary image
+            attributes: ["id", "s3_key"], // only fetch what we need
+          },
+        ],
+      },
+    ],
+  })) as HomePageProduct[];
+  const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
+  const productsWithImages = await Promise.all(
+    plainProducts.map(async (product) => {
+      const primaryVariant = product.primaryVariant;
+      const primaryImage = primaryVariant?.images[0];
+
+      if (primaryImage) {
+        const params = {
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: primaryImage.s3_key,
+        };
+
+        const signedUrl = await getSignedUrl(s3, new GetObjectCommand(params), {
+          expiresIn: 3600,
+        });
+        return {
+          ...product,
+          primaryVariant: {
+            images: undefined,
+            ...primaryVariant,
+            imageUrl: signedUrl,
+          },
+        };
+      }
+    })
+  );
+
+  const totalCount = await Products.count();
+  const hasMore = totalCount > integerPage * PAGE_SIZE + products.length;
+  return { hasMore, integerPage, productsWithImages };
 }
 
 export async function getSellerProductsService(req: Request, res: Response) {
@@ -237,7 +226,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
           return;
         }
         variant.images = await Promise.all(
-          variant.images.map(async (img: any) => {
+          variant.images.map(async (img: ProductImages) => {
             if (!img.s3_key) {
               return { id: img.id, imageUrl: null };
             }
@@ -254,8 +243,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
             return {
               id: img.id,
               imageUrl: signedUrl,
-              // Optional: keep s3_key if needed for updates/deletes
-              // s3_key: img.s3_key,
+              isPrimary: img.is_primary,
             };
           })
         );
@@ -277,73 +265,322 @@ export async function GetProductByIdService(req: Request, res: Response) {
   }
 }
 
-export async function VipProductsService(res: Response) {
+export async function VipProductsService(req: Request, res: Response) {
   try {
-    const vipProducts = await Products.findAll({
+    const page = Number(req.query.page) || 1;
+    if (isNaN(page) || page < 1) {
+      throw new ValidationError(
+        [
+          {
+            field: "page",
+            message: "Invalid page number",
+          },
+        ],
+        "Invalid page number"
+      );
+    }
+
+    const offset = PAGE_SIZE * (page - 1);
+
+    const products = (await Products.findAll({
       where: {
         product_status: ProductStatus.Vip,
       },
       order: [["id", "ASC"]],
+      offset: offset,
+      limit: PAGE_SIZE,
       include: [
         {
           model: ProductVariants,
           as: "primaryVariant",
+          required: false,
+          include: [
+            {
+              model: ProductImages,
+              required: false,
+              as: "images",
+              attributes: ["id", "s3_key"],
+            },
+          ],
         },
       ],
+    })) as any[];
+
+    const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
+
+    const productsWithImages = await Promise.all(
+      plainProducts.map(async (product) => {
+        const primaryVariant = product.primaryVariant;
+        const primaryImage = primaryVariant?.images?.[0];
+
+        if (primaryImage) {
+          const params = {
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: primaryImage.s3_key,
+          };
+
+          const signedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand(params),
+            {
+              expiresIn: 3600,
+            }
+          );
+          return {
+            ...product,
+            primaryVariant: {
+              images: undefined,
+              ...primaryVariant,
+              imageUrl: signedUrl,
+            },
+          };
+        }
+
+        return product;
+      })
+    );
+
+    const totalCount = await Products.count({
+      where: { product_status: ProductStatus.Vip },
     });
+
+    const hasMore = totalCount > page * PAGE_SIZE;
+
     return res.status(200).json({
       success: true,
       message: "Vip products fetched successfully",
-      data: vipProducts,
+      data: productsWithImages,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to fetch vip products",
-    });
+    throw error;
   }
 }
 
-export async function FeaturedProductsService(res: Response) {
+export async function FeaturedProductsService(req: Request, res: Response) {
   try {
-    const featuredProducts = await Products.findAll({
+    const page = Number(req.query.page) || 1;
+    if (isNaN(page) || page < 1) {
+      throw new ValidationError(
+        [
+          {
+            field: "page",
+            message: "Invalid page number",
+          },
+        ],
+        "Invalid page number"
+      );
+    }
+
+    const offset = PAGE_SIZE * (page - 1);
+
+    const products = (await Products.findAll({
       where: {
         "$primaryVariant.variant_price$": {
           [Op.gt]: 100,
         },
       },
       order: [["id", "ASC"]],
+      offset: offset,
+      limit: PAGE_SIZE,
       include: [
         {
           model: ProductVariants,
           as: "primaryVariant",
+          required: true,
+          include: [
+            {
+              model: ProductImages,
+              required: false,
+              as: "images",
+              attributes: ["id", "s3_key"],
+            },
+          ],
         },
       ],
+    })) as any[];
+
+    const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
+
+    const productsWithImages = await Promise.all(
+      plainProducts.map(async (product) => {
+        const primaryVariant = product.primaryVariant;
+        const primaryImage = primaryVariant?.images?.[0];
+
+        if (primaryImage) {
+          const params = {
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: primaryImage.s3_key,
+          };
+
+          const signedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand(params),
+            {
+              expiresIn: 3600,
+            }
+          );
+          return {
+            ...product,
+            primaryVariant: {
+              images: undefined,
+              ...primaryVariant,
+              imageUrl: signedUrl,
+            },
+          };
+        }
+
+        return product;
+      })
+    );
+
+    const totalCount = await Products.count({
+      where: {
+        "$primaryVariant.variant_price$": {
+          [Op.gt]: 100,
+        },
+      },
     });
+
+    const hasMore = totalCount > page * PAGE_SIZE;
+
     return res.status(200).json({
-      message: "Featured products fetched successfully",
       success: true,
-      data: featuredProducts,
+      message: "Featured products fetched successfully",
+      data: productsWithImages,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to fetch featured products",
-    });
+    throw error;
   }
 }
-export async function SearchProductsService(query: string, res: Response) {
+export async function SearchProductsService(req: Request, res: Response) {
   try {
-    sequelize.authenticate();
-    const searchResults = await Products.findAll({
+    const query = req.query.q as string;
+
+    if (!query || query.trim().length === 0) {
+      throw new ValidationError(
+        [
+          {
+            field: "q",
+            message: "Search query is required",
+          },
+        ],
+        "Search query is required"
+      );
+    }
+
+    const page = Number(req.query.page) || 1;
+    if (isNaN(page) || page < 1) {
+      throw new ValidationError(
+        [
+          {
+            field: "page",
+            message: "Invalid page number",
+          },
+        ],
+        "Invalid page number"
+      );
+    }
+
+    const offset = PAGE_SIZE * (page - 1);
+
+    const products = (await Products.findAll({
       where: {
         [Op.or]: [
           {
             "$primaryVariant.variant_name$": { [Op.iLike]: `%${query}%` },
           },
+          {
+            "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
+          },
+          {
+            "$subCategory.category.category_name$": {
+              [Op.iLike]: `%${query}%`,
+            },
+          },
+        ],
+      },
+      order: [["id", "ASC"]],
+      offset: offset,
+      limit: PAGE_SIZE,
+      include: [
+        {
+          model: SubCategories,
+          as: "subCategory",
+          attributes: ["id", "sub_category_name"],
+          required: true,
+          include: [
+            {
+              required: true,
+              model: Categories,
+              as: "category",
+              attributes: ["id", "category_name"],
+            },
+          ],
+        },
+        {
+          model: ProductVariants,
+          as: "primaryVariant",
+          required: true,
+          include: [
+            {
+              model: ProductImages,
+              required: false,
+              as: "images",
+              attributes: ["id", "s3_key"],
+            },
+          ],
+        },
+      ],
+    })) as any[];
 
+    const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
+
+    const productsWithImages = await Promise.all(
+      plainProducts.map(async (product) => {
+        const primaryVariant = product.primaryVariant;
+        const primaryImage = primaryVariant?.images?.[0];
+
+        if (primaryImage) {
+          const params = {
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: primaryImage.s3_key,
+          };
+
+          const signedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand(params),
+            {
+              expiresIn: 3600,
+            }
+          );
+          return {
+            ...product,
+            primaryVariant: {
+              images: undefined,
+              ...primaryVariant,
+              imageUrl: signedUrl,
+            },
+          };
+        }
+
+        return product;
+      })
+    );
+
+    const totalCount = await Products.count({
+      where: {
+        [Op.or]: [
+          {
+            "$primaryVariant.variant_name$": { [Op.iLike]: `%${query}%` },
+          },
           {
             "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
           },
@@ -358,33 +595,37 @@ export async function SearchProductsService(query: string, res: Response) {
         {
           model: SubCategories,
           as: "subCategory",
-          attributes: ["id", "sub_category_name"],
+          required: false,
           include: [
             {
               model: Categories,
               as: "category",
-              attributes: ["id", "category_name"],
+              required: false,
             },
           ],
         },
         {
           model: ProductVariants,
           as: "primaryVariant",
+          required: true,
         },
       ],
+      distinct: true,
     });
+
+    const hasMore = totalCount > page * PAGE_SIZE;
 
     return res.status(200).json({
       success: true,
       message: "Products search completed successfully",
-      data: searchResults,
+      data: productsWithImages,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Unable to search products",
-    });
+    throw error;
   }
 }
 

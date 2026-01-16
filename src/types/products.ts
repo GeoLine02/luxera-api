@@ -29,8 +29,6 @@ interface VariantsMetadata {
   variantQuantity: number;
   variantDiscount: number;
   productId: number;
-  imageFields?: string[];
-  primaryImageField?: string;
 }
 
 interface ProductUpdatePayload extends CreateProductPayload {
@@ -46,11 +44,11 @@ interface ProductUpdateStatusPayload {
 
 interface HomePageProduct extends Products {
   primaryVariant:
-    | (ProductVariants & { image: { id: number; s3_key: string } })
+    | (ProductVariants & { images: { id: number; s3_key: string }[] })
     | null;
 }
 interface ProductVariantWithImages extends ProductVariants {
-  images: Omit<ProductImages[], "product_id" | "variant_id">;
+  images: ProductImages[];
 }
 interface ProductDetails extends Products {
   variants: ProductVariantWithImages[];
