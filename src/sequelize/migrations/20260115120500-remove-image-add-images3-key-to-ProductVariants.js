@@ -13,7 +13,7 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     await queryInterface.addColumn("ProductVariants", "image", {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     });
     await queryInterface.removeColumn("ProductVariants", "image_s3_key");
   },

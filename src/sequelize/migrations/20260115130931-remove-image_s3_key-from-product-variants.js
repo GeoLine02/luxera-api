@@ -9,7 +9,7 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     await queryInterface.addColumn("ProductVariants", "image_s3_key", {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true, // allow null during revert
     });
   },
 };

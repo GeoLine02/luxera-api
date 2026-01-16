@@ -22,19 +22,19 @@ module.exports = {
     await queryInterface.removeColumn("Products", "primary_variant_id");
     await queryInterface.addColumn("Products", "product_price", {
       type: Sequelize.DECIMAL,
-      allowNull: false,
+      allowNull: true,
     });
     await queryInterface.addColumn("Products", "product_image", {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     });
     await queryInterface.addColumn("Products", "product_quantity", {
       type: Sequelize.INTEGER,
-      allowNull: false,
+      allowNull: true,
     });
     await queryInterface.addColumn("Products", "product_discount", {
       type: Sequelize.DECIMAL,
-      allowNull: false,
+      allowNull: true,
     });
   },
 };
