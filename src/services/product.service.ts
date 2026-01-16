@@ -135,10 +135,12 @@ export async function AllProductsService(req: Request, res: Response) {
           ...product,
           primaryVariant: {
             ...primaryVariant,
-            images: {
-              id: primaryImage.id,
-              imageUrl: signedUrl,
-            },
+            images: [
+              {
+                id: primaryImage.id,
+                imageUrl: signedUrl,
+              },
+            ],
           },
         };
       }
@@ -334,10 +336,12 @@ export async function VipProductsService(req: Request, res: Response) {
             ...product,
             primaryVariant: {
               ...primaryVariant,
-              images: {
-                id: primaryImage.id,
-                imageUrl: signedUrl,
-              },
+              images: [
+                {
+                  id: primaryImage.id,
+                  imageUrl: signedUrl,
+                },
+              ],
             },
           };
         }
@@ -433,10 +437,12 @@ export async function FeaturedProductsService(req: Request, res: Response) {
             ...product,
             primaryVariant: {
               ...primaryVariant,
-              images: {
-                id: primaryImage.id,
-                imageUrl: signedUrl,
-              },
+              images: [
+                {
+                  id: primaryImage.id,
+                  imageUrl: signedUrl,
+                },
+              ],
             },
           };
         }
@@ -572,9 +578,13 @@ export async function SearchProductsService(req: Request, res: Response) {
           return {
             ...product,
             primaryVariant: {
-              images: undefined,
               ...primaryVariant,
-              imageUrl: signedUrl,
+              images: [
+                {
+                  id: primaryImage.id,
+                  imageUrl: signedUrl,
+                },
+              ],
             },
           };
         }

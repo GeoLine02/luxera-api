@@ -87,10 +87,12 @@ export async function GetSellerProductsService(req: Request, res: Response) {
             ...product,
             primaryVariant: {
               ...primaryVariant,
-              images: {
-                id: primaryImage.id,
-                imageUrl: signedUrl,
-              },
+              images: [
+                {
+                  id: primaryImage.id,
+                  imageUrl: signedUrl,
+                },
+              ],
             },
           };
         }
