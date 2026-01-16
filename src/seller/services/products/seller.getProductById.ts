@@ -37,7 +37,6 @@ export async function getSellerProductByIdService(req: Request, res: Response) {
     }
 
     const plainProduct = product.get({ plain: true }) as any;
-
     // Add signed URLs for all variant images
     if (plainProduct.variants && Array.isArray(plainProduct.variants)) {
       plainProduct.variants = await Promise.all(

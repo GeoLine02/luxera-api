@@ -86,9 +86,11 @@ export async function GetSellerProductsService(req: Request, res: Response) {
           return {
             ...product,
             primaryVariant: {
-              images: undefined,
               ...primaryVariant,
-              imageUrl: signedUrl,
+              images: {
+                id: primaryImage.id,
+                imageUrl: signedUrl,
+              },
             },
           };
         }
