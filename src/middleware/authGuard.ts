@@ -14,7 +14,7 @@ export interface ShopJwtPayload extends jwt.JwtPayload {
 export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   try {
     // Get token from cookies
-    console.log("user auth guard req,cookies", req.cookies);
+
     const accessToken = req.cookies?.accessToken;
 
     // Verify token
@@ -46,7 +46,6 @@ export const shopAuthGuard = async (
 
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("JWT_SECRET is not defined");
-    console.log(shopAccessToken);
     const decoded = jwt.verify(shopAccessToken, secret) as ShopJwtPayload;
     if (decoded) {
       req.shop = decoded;

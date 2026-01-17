@@ -5,9 +5,10 @@ import { TypeModels } from "./associate";
 
 interface ProductImageAttributes {
   id: number;
-  image: string;
   product_id: number;
   variant_id: number | null;
+  s3_key: string;
+  is_primary: boolean;
 }
 
 interface ProductImageCreationAttributes
@@ -18,10 +19,11 @@ class ProductImages
   implements ProductImageAttributes
 {
   declare id: number;
-  declare image: string;
+
   declare product_id: number;
   declare variant_id: number | null;
-
+  declare s3_key: string;
+  declare is_primary: boolean;
   static associate(models: TypeModels) {
     ProductImages.belongsTo(models.Products, {
       foreignKey: "product_id",
@@ -41,10 +43,7 @@ ProductImages.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    image: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
+
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -61,8 +60,17 @@ ProductImages.init(
         model: "ProductsVariants",
         key: "id",
       },
+
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
+    },
+    s3_key: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    is_primary: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
     },
   },
   {

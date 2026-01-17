@@ -1,144 +1,229 @@
 import { Transaction } from "sequelize";
 import Products from "../../../sequelize/models/products";
 import ProductVariants from "../../../sequelize/models/productvariants";
-import { ProductUpdatePayload } from "../../../types/products";
+import {
+  ProductUpdatePayload,
+  VariantImageInput,
+} from "../../../types/products";
 import { Request, Response } from "express";
 import {
   NotFoundError,
   ValidationError,
   BadRequestError,
 } from "../../../errors/errors";
-import { getImageBaseUrl } from "../../../constants/constants";
+import {
+  getImageBaseUrl,
+  getRandomImageName,
+} from "../../../constants/constants";
+import logger from "../../../logger";
+import { log } from "console";
+import ProductImages from "../../../sequelize/models/productimages";
+import { s3 } from "../../../app";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export async function UpdateProductVariantsService(
-  data: ProductUpdatePayload,
+  data: ProductUpdatePayload, // assume variantsMetadata: Array<{ id?: number; tempId?: string; ... }>
   req: Request,
-  res: Response,
-  transaction: Transaction
+  transaction: Transaction,
 ) {
-  const {
-    variantImagesMap = {},
-    variantsMetadata = [],
-    productId,
-    deletedVariantIds,
-  } = data;
+  const { variantsMetadata = [], variantImagesMap = {}, productId } = data;
+
   const results = {
+    created: 0,
     updated: 0,
     deleted: 0,
-    created: 0,
   };
 
-  // Attach original indices to avoid object identity issues
-  const variantsWithIndex = variantsMetadata.map((v, i) => ({
-    ...v,
-    _originalIndex: i,
-  }));
-  const toCreate = variantsWithIndex.filter((v) => !v.id);
-  const toUpdate = variantsWithIndex.filter((v) => v.id);
-
-  // Ownership & product existence check (within the same transaction)
+  // 1. Early ownership + product existence check (with lock)
   const product = await Products.findOne({
     where: { id: productId, product_owner_id: req.user!.id },
     transaction,
     lock: transaction.LOCK.UPDATE,
   });
+
   if (!product) {
     throw new BadRequestError("Product not found or you don't have permission");
   }
 
-  // handle deleted variants (use transaction)
-  if (deletedVariantIds && deletedVariantIds.length > 0) {
-    const deletedCount = await ProductVariants.destroy({
-      where: {
-        product_id: productId,
-        id: deletedVariantIds,
-      },
-      transaction,
-    });
-    results.deleted = deletedCount;
-  }
-
-  // handle created ones
-  const productVariantPayload = toCreate.map((variant) => {
-    const index = variant._originalIndex;
-    const variantImages = variantImagesMap[index];
-    if (!variantImages || variantImages.length === 0) {
-      throw new ValidationError(
-        [
-          {
-            field: `variants[${index}].images`,
-            message: "At least one image required for new variant",
-          },
-        ],
-        "Missing images"
-      );
-    }
-    const primaryImage = variantImages[0]; // First image for THIS variant
-    return {
-      image: `${getImageBaseUrl(req)}${primaryImage.filename}`,
-      product_id: productId,
-      variant_discount: variant.variantDiscount,
-      variant_name: variant.variantName,
-      variant_price: variant.variantPrice,
-      variant_quantity: variant.variantQuantity,
-    } as any;
+  // 2. Get existing variants
+  const existingVariants = await ProductVariants.findAll({
+    where: { product_id: productId },
+    transaction,
   });
-  let createdWithIndices: any[] = [];
-  if (productVariantPayload.length > 0) {
-    const createdVariants = await ProductVariants.bulkCreate(
-      productVariantPayload,
-      {
-        returning: true,
-        transaction,
-      }
-    );
-    results.created = createdVariants.length;
-    createdWithIndices = createdVariants.map((v, i) => ({
-      ...v.toJSON(),
-      _originalIndex: toCreate[i]._originalIndex,
-    }));
-  }
 
-  // handle updated ones (use row-level locks and transaction)
-  const updatedWithIndices: any[] = [];
-  for (const variant of toUpdate) {
-    const index = variant._originalIndex;
-    const existingVariant = await ProductVariants.findOne({
-      where: { id: variant.id, product_id: productId },
+  const existingVariantIds = existingVariants.map((v) => v.id);
+  const sentIds = variantsMetadata
+    .filter((v) => v.id !== undefined)
+    .map((v) => v.id!);
+
+  const toDeleteIds = existingVariantIds.filter((id) => !sentIds.includes(id));
+
+  // 3. Delete removed variants + their images
+  if (toDeleteIds.length > 0) {
+    // Delete images first
+    await ProductImages.destroy({
+      where: { variant_id: toDeleteIds },
       transaction,
-      lock: transaction.LOCK.UPDATE,
     });
-    if (!existingVariant) {
-      throw new NotFoundError("Variant Not Found");
-    }
 
-    let primaryImageUrl = existingVariant.image;
-    if (variantImagesMap[index] && variantImagesMap[index].length > 0) {
-      primaryImageUrl = `${getImageBaseUrl(req)}${
-        variantImagesMap[index][0].filename
-      }`;
-    }
-
-    const toUpdatePayload = {
-      image: primaryImageUrl,
-      product_id: productId,
-      variant_discount: variant.variantDiscount,
-      variant_name: variant.variantName,
-      variant_price: variant.variantPrice,
-      variant_quantity: variant.variantQuantity,
-    };
-    await existingVariant.update(toUpdatePayload, { transaction });
-    results.updated += 1;
-    updatedWithIndices.push({
-      id: existingVariant.id,
-      _originalIndex: variant._originalIndex,
+    // Then delete variants
+    results.deleted = await ProductVariants.destroy({
+      where: { id: toDeleteIds },
+      transaction,
     });
   }
 
-  // Do NOT commit here - controller should manage transaction
-  return {
-    createdVariants: createdWithIndices,
-    updatedVariants: updatedWithIndices,
-    results,
-  };
+  // 4. Separate create / update
+  const toCreate = variantsMetadata.filter((v) => v.id == undefined);
+  const toUpdate = variantsMetadata.filter((v) => v.id !== undefined);
+  console.log("to create variants: ", toCreate);
+  console.log("to update variants", toUpdate);
+
+  let createdVariants: ProductVariants[] = [];
+
+  // 5. CREATE new variants
+  if (toCreate.length > 0) {
+    const payload = toCreate.map((variant) => {
+      if (!variant.tempId) {
+        throw new ValidationError([
+          {
+            field: "tempId",
+            message: "tempId is required for new variants",
+          },
+        ]);
+      }
+      logger.info(`Creating new variant ${variant.tempId} `);
+
+      return {
+        product_id: productId,
+        variant_name: variant.variantName,
+        variant_price: variant.variantPrice,
+        variant_quantity: variant.variantQuantity,
+        variant_discount: variant.variantDiscount,
+      };
+    });
+
+    createdVariants = await ProductVariants.bulkCreate(payload, {
+      returning: true,
+      transaction,
+    });
+
+    results.created += createdVariants.length;
+  }
+
+  // 6. UPDATE existing variants
+  if (toUpdate.length > 0) {
+    await Promise.all(
+      toUpdate.map(async (variant) => {
+        const existingVariant = await ProductVariants.findOne({
+          where: { id: variant.id, product_id: productId },
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        });
+
+        if (!existingVariant) {
+          throw new NotFoundError(`Variant with id ${variant.id} not found`);
+        }
+        logger.info(`Updating  variant ${variant.id} `);
+
+        await existingVariant.update(
+          {
+            variant_name: variant.variantName,
+            variant_price: variant.variantPrice,
+            variant_quantity: variant.variantQuantity,
+            variant_discount: variant.variantDiscount,
+          },
+          { transaction },
+        );
+
+        results.updated += 1;
+      }),
+    );
+  }
+
+  const imagesToInsert: any[] = [];
+
+  for (let i = 0; i < toCreate.length; i++) {
+    const metadata = toCreate[i];
+    const tempId = metadata.tempId!;
+    const dbVariant = createdVariants[i]; // same order
+
+    const newImages = variantImagesMap[tempId];
+    if (newImages?.length) {
+      const uploaded = await uploadAndMapImages(
+        newImages,
+        productId,
+        dbVariant.id,
+      );
+      imagesToInsert.push(...uploaded);
+    }
+  }
+
+  // Process EXISTING (updated) variants (use id)
+  for (const metadata of toUpdate) {
+    const variantId = metadata.id!;
+    const dbVariant = await ProductVariants.findOne({
+      where: { id: variantId, product_id: productId },
+      transaction,
+    });
+
+    if (!dbVariant) continue;
+
+    const newImages = variantImagesMap[variantId];
+    console.log(`new images for variant ${dbVariant.id}  `, newImages);
+    if (newImages?.length) {
+      const uploaded = await uploadAndMapImages(
+        newImages,
+        productId,
+        dbVariant.id,
+      );
+
+      imagesToInsert.push(...uploaded);
+    }
+  }
+  console.log("Images to insert", imagesToInsert);
+  if (imagesToInsert.length > 0) {
+    const images = await ProductImages.bulkCreate(imagesToInsert, {
+      transaction,
+    });
+    results.created += images.length;
+  }
+  return results;
 }
+async function uploadAndMapImages(
+  images: VariantImageInput[],
+  productId: number,
+  variantId: number,
+) {
+  return await Promise.all(
+    images.map(async (img) => {
+      const s3key = getRandomImageName();
+      if (!img.file?.buffer) {
+        throw new BadRequestError(`Missing file buffer for image upload`);
+      }
+
+      try {
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: s3key,
+            Body: img.file.buffer,
+            ContentType: img.file.mimetype,
+          }),
+        );
+        logger.info(`created new image for variant ${variantId}`);
+      } catch (error) {
+        throw new Error("Failed to Upload Images to S3 bucket");
+      }
+
+      return {
+        s3_key: s3key,
+        product_id: productId,
+        variant_id: variantId,
+        is_primary: img.isPrimary,
+      };
+    }),
+  );
+}
+
+// Final insert

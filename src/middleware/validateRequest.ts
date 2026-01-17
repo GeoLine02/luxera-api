@@ -7,12 +7,6 @@ export const validateRequest =
   (schema: ZodType<any>) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (req.files && !req.files.length) {
-        return res.status(400).json({
-          success: false,
-          message: "Files not provided",
-        });
-      }
       schema.parse(req.body); // validate request body
       next();
     } catch (err) {

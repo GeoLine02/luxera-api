@@ -1,6 +1,6 @@
 import express from "express";
 import { authGuard, shopAuthGuard } from "../../middleware/authGuard";
-import upload from "../../middleware/upload";
+import upload, { validateUploadedFiles } from "../../middleware/upload";
 import { validateRequest } from "../../middleware/validateRequest";
 import {
   ProductCreationSchema,
@@ -23,12 +23,14 @@ router.post(
   authGuard,
   shopAuthGuard,
   upload.any(),
+  validateUploadedFiles,
   validateRequest(ProductCreationSchema),
   CreateProductController
 );
+
 router.get("/:id", authGuard, shopAuthGuard, getSellerProductByIdController);
 
-router.patch(
+router.put(
   "/update",
   authGuard,
   shopAuthGuard,

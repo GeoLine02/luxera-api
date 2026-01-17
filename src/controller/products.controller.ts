@@ -11,45 +11,43 @@ import {
 } from "../services/product.service";
 import { ValidationError } from "../errors/errors";
 import logger from "../logger";
+import { paginatedResponse } from "../utils/responseHandler";
 
 export async function AllProductsController(req: Request, res: Response) {
-  try {
-    const products = await AllProductsService(req, res);
-    return products;
-  } catch (error: any) {
-    console.log(error);
-  }
-}
+  const { hasMore, integerPage, productsWithImages } = await AllProductsService(
+    req,
+    res,
+  );
 
-export async function getSellerProductsController(req: Request, res: Response) {
-  try {
-    const sellerProducts = await getSellerProductsService(req, res);
-    return sellerProducts;
-  } catch (error) {
-    console.log(error);
-  }
+  return paginatedResponse(
+    res,
+    "Fetched Products",
+    productsWithImages,
+    hasMore,
+    integerPage,
+  );
 }
 
 export async function VipProductsController(req: Request, res: Response) {
   try {
-    const vipProducts = await VipProductsService(res);
-    return vipProducts;
+    await VipProductsService(req, res);
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
+
 export async function FeaturedProductsController(req: Request, res: Response) {
   try {
-    const featuredProducts = await FeaturedProductsService(res);
-    return featuredProducts;
+    await FeaturedProductsService(req, res);
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
 
 export async function CreateProductController(req: Request, res: Response) {
   try {
-    console.log(req.files);
     console.log(req.body);
     const createdProduct = await CreateProductService(req, res);
     return createdProduct;
@@ -60,16 +58,10 @@ export async function CreateProductController(req: Request, res: Response) {
 
 export async function SearchProductsController(req: Request, res: Response) {
   try {
-    const query = req.query.q as string;
-
-    const searchResults = await SearchProductsService(query, res);
-    return searchResults;
-  } catch (error: any) {
+    await SearchProductsService(req, res);
+  } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    throw error;
   }
 }
 export async function GetProductByIdController(req: Request, res: Response) {
@@ -78,7 +70,7 @@ export async function GetProductByIdController(req: Request, res: Response) {
 }
 export async function GetProductsBySubCategoryController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   // Parse and validate inputs individually for precise error messages
   const { page: pageQuery, subcategory } = req.query;
@@ -116,7 +108,7 @@ export async function GetProductsBySubCategoryController(
   const paginatedResult = await GetProductsBySubCategoryService(
     subcategory as string,
     page,
-    res
+    res,
   );
 
   return paginatedResult;

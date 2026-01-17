@@ -9,7 +9,7 @@ import {
 } from "../../types/products";
 
 import { CreateSingleProductService } from "../services/products/seller.createSingleProduct";
-import { CreateProductImagesService } from "../services/products/seller.createProductImages";
+// import { CreateProductImagesService } from "../services/products/seller.createProductImages";
 import ProductVariants from "../../sequelize/models/productvariants";
 import { CreateProductVariantsService } from "../services/products/seller.createProductVariants";
 import Products from "../../sequelize/models/products";
@@ -25,10 +25,14 @@ import sequelize from "../../db";
 import { successfulResponse } from "../../utils/responseHandler";
 import { ValidationError } from "../../errors/errors";
 import { ZodError } from "zod";
-import { ProductVariantSchema } from "../../validators/productValidators";
+import {
+  CreateProductVariantSchema,
+  UpdateProductVariantSchema,
+} from "../../validators/productValidators";
 import logger from "../../logger";
 import ProductImages from "../../sequelize/models/productimages";
-import { updateProductImagesService } from "../services/products/seller.updateProductImages";
+// import { updateProductImagesService } from "../services/products/seller.updateProductImages";
+import { deleteProductImagesService } from "../services/products/seller.deleteProductImages";
 export async function getSellerProductsController(req: Request, res: Response) {
   await GetSellerProductsService(req, res);
 }
@@ -71,9 +75,9 @@ export async function CreateProductController(req: Request, res: Response) {
   }
   // validate inside variantsMetaData
   const variantImagesMap: VariantImagesMap = {};
-  for (const [index, variant] of variantsMetadata.entries()) {
+  for (const variant of variantsMetadata) {
     try {
-      ProductVariantSchema.parse(variant);
+      CreateProductVariantSchema.parse(variant);
     } catch (error) {
       if (error instanceof ZodError) {
         const formattedErrors = error.issues.map((issue) => {
@@ -86,19 +90,37 @@ export async function CreateProductController(req: Request, res: Response) {
       }
     }
     // validate images
-    const imageFiles = files.filter(
-      (file) => file.fieldname == `variantImages_${index}`
-    );
-    if (!imageFiles) {
+    if (variant.tempId === undefined) {
       throw new ValidationError([
         {
-          field: `variantImages_${index}`,
-          message: `Image not found for variant ${index}`,
+          field: `variantImage_${variant.tempId}`,
+          message: `tempId is required for variant images mapping`,
         },
       ]);
     }
 
-    variantImagesMap[index] = imageFiles;
+    const expectedFieldName = `variantImage_${variant.tempId}`;
+
+    // Find all files uploaded for this variant
+    const imageFiles = files.filter(
+      (file) => file.fieldname === expectedFieldName
+    );
+
+    if (imageFiles.length === 0) {
+      throw new ValidationError([
+        {
+          field: expectedFieldName,
+          message: `No images found for variant ${variant.tempId}`,
+        },
+      ]);
+    }
+    // Map files: first one is primary, others are additional
+    const variantImagesEntry = imageFiles.map((file, index) => ({
+      file,
+      isPrimary: index === 0, // First uploaded image becomes primary
+    }));
+
+    variantImagesMap[variant.tempId] = variantImagesEntry;
   }
 
   const parsedBody = {
@@ -114,7 +136,7 @@ export async function CreateProductController(req: Request, res: Response) {
   let transaction: Transaction | undefined;
   let createdProduct: Products | undefined;
   let createdVariants: ProductVariants[] | undefined;
-  let createdImages: ProductImages[] | undefined;
+  let createdImages: number = 0;
 
   try {
     transaction = await sequelize.transaction();
@@ -127,19 +149,21 @@ export async function CreateProductController(req: Request, res: Response) {
     );
     createdProduct = result.createdProduct;
 
-    createdVariants = await CreateProductVariantsService(
-      parsedBody,
-      createdProduct as Products,
-      req,
-      transaction as Transaction
-    );
+    const { createdVariants, imagesInserted } =
+      await CreateProductVariantsService(
+        parsedBody,
+        createdProduct as Products,
+        transaction as Transaction
+      );
+    createdImages = imagesInserted;
 
-    createdImages = await CreateProductImagesService(
-      parsedBody,
-      createdVariants as ProductVariants[],
-      req,
-      transaction as Transaction
-    );
+    // createdImages = await CreateProductImagesService(
+    //   parsedBody,
+    //   variantsMetadata,
+
+    //   req,
+    //   transaction as Transaction
+    // );
 
     if (transaction) {
       await transaction.commit();
@@ -166,22 +190,20 @@ export async function CreateProductController(req: Request, res: Response) {
 export async function UpdateProductController(req: Request, res: Response) {
   const body = req.body;
   const files = req.files as Express.Multer.File[];
-  logger.info("Files recieved in update product controller", files);
 
   const variantMetadata: VariantsMetadata[] = JSON.parse(
     body.variantsMetadata || "[]"
   );
-  const deletedVariantIds: number[] = JSON.parse(
-    body.deletedVariantIds || "[]"
-  );
-  const deletedImageIds: number[] = JSON.parse(body.deletedImageIds || "[]");
+  console.log("files", files);
 
+  const deletedImageIds: number[] = JSON.parse(body.deletedImageIds || "[]");
   const variantImagesMap: VariantImagesMap = {};
   // validate variantsMetaData
+
   if (variantMetadata.length > 0) {
-    for (const [index, variant] of variantMetadata.entries()) {
+    for (const variant of variantMetadata) {
       try {
-        ProductVariantSchema.parse(variant);
+        UpdateProductVariantSchema.parse(variant);
       } catch (error) {
         if (error instanceof ZodError) {
           const formattedErrors = error.issues.map((issue) => {
@@ -196,78 +218,118 @@ export async function UpdateProductController(req: Request, res: Response) {
           );
         }
       }
-      // validate products which must be updated
-      if (!variant.id) {
+
+      // validate images
+      if (variant.id === undefined && variant.tempId) {
         const imageFiles = files.filter(
-          (file) => file.fieldname == `variantImages_${index}`
+          (file) => file.fieldname === `variantImage_${variant.tempId}`
         );
-        if (!imageFiles) {
+
+        if (!imageFiles || imageFiles.length === 0) {
           throw new ValidationError([
             {
-              field: `variantImages_${index}`,
-              message: `Images not found for variant ${index}`,
+              field: `variantImage_${variant.tempId}`,
+              message: `Images not found for variant ${variant.tempId}`,
             },
           ]);
         }
 
-        variantImagesMap[index] = imageFiles;
+        const variantImagesMapEntry = imageFiles.map((file, index) => {
+          return {
+            file: file,
+            isPrimary: index === 0,
+          };
+        });
+        variantImagesMap[variant.tempId] = variantImagesMapEntry;
+      }
+      // for existing variants
+      if (variant.id) {
+        const imageFiles = files.filter(
+          (file) => file.fieldname === `variantImage_${variant.id}`
+        );
+        if (imageFiles.length > 0) {
+          const variantImagesMapEntry = imageFiles.map((file, index) => {
+            return {
+              file: file,
+              isPrimary: index === 0,
+            };
+          });
+          variantImagesMap[variant.id] = variantImagesMapEntry;
+        }
       }
     }
-  }
+    console.log("variantImagesMap: ", variantImagesMap);
+    const parsedData = {
+      productCategoryId: Number(body.productCategoryId),
+      productSubCategoryId: Number(body.productSubCategoryId),
+      productDescription: body.productDescription,
+      userId: Number(body.userId),
+      productId: Number(body.productId),
+      productStatus: body.productStatus,
+      variantsMetadata: variantMetadata,
+      variantImagesMap: variantImagesMap,
+      deletedImageIds: deletedImageIds,
+    } as ProductUpdatePayload;
 
-  const parsedData = {
-    productCategoryId: Number(body.productCategoryId),
-    productSubCategoryId: Number(body.productSubCategoryId),
-    productDescription: body.productDescription,
-    userId: Number(body.userId),
-    productId: Number(body.productId),
-    productStatus: body.productStatus,
-    variantsMetadata: variantMetadata,
-    variantImagesMap: variantImagesMap,
-    deletedVariantIds: deletedVariantIds,
-    deletedImageIds: deletedImageIds,
-  } as ProductUpdatePayload;
-
-  let transaction: Transaction | undefined;
-  try {
-    transaction = await sequelize.transaction();
-
-    const { existingProduct } = await UpdateSingleProductService(
-      parsedData,
-      req,
-      res,
-      transaction
-    );
-
-    const { createdVariants, updatedVariants, results } =
-      await UpdateProductVariantsService(parsedData, req, res, transaction);
-
-    await updateProductImagesService(
-      req,
-      parsedData,
-      createdVariants,
-      updatedVariants,
-      transaction
-    );
-
-    await transaction.commit();
-    return successfulResponse(res, "Product updated", {
-      existingProduct,
-      results,
-    });
-  } catch (error) {
-    if (transaction) {
-      try {
-        await transaction.rollback();
-      } catch (rbErr) {
-        logger.error("Transaction rollback failed:", rbErr);
+    let transaction: Transaction | undefined;
+    try {
+      transaction = await sequelize.transaction();
+      const totalResults = {
+        created: 0,
+        updated: 0,
+        deleted: 0,
+      };
+      const { existingProduct } = await UpdateSingleProductService(
+        parsedData,
+        req,
+        res,
+        transaction
+      );
+      // delete product images that are removed
+      if (deletedImageIds.length > 0) {
+        const deleted = await deleteProductImagesService(
+          parsedData.productId,
+          deletedImageIds,
+          transaction
+        );
+        if (deleted) {
+          totalResults.deleted += deleted;
+        }
       }
+      const results = await UpdateProductVariantsService(
+        parsedData,
+        req,
+        transaction
+      );
+      totalResults.created += results.created;
+      totalResults.updated += results.updated;
+      totalResults.deleted += results.deleted;
+      // const imageResults = await updateProductImagesService(
+      //   req,
+      //   parsedData,
+      //   createdVariants,
+      //   updatedVariants,
+      //   transaction
+      // );
+
+      await transaction.commit();
+      return successfulResponse(res, "Product updated", {
+        existingProduct,
+        results: totalResults,
+      });
+    } catch (error) {
+      if (transaction) {
+        try {
+          await transaction.rollback();
+        } catch (rbErr) {
+          logger.error("Transaction rollback failed:", rbErr);
+        }
+      }
+      logger.error("UpdateProductController error:", error);
+      throw error;
     }
-    logger.error("UpdateProductController error:", error);
-    throw error;
   }
 }
-
 export async function DeleteProductController(req: Request, res: Response) {
   const productId = req.params.id as string;
 
