@@ -20,7 +20,7 @@ export async function GetSellerProductsService(req: Request, res: Response) {
             message: "Shop not found",
           },
         ],
-        "Shop not found"
+        "Shop not found",
       );
     }
 
@@ -33,13 +33,19 @@ export async function GetSellerProductsService(req: Request, res: Response) {
             message: "Invalid page number",
           },
         ],
-        "Invalid page number"
+        "Invalid page number",
       );
     }
 
     const offset = PAGE_SIZE * (page - 1);
 
-    const products = (await Products.findAll({
+    const totalCount = await Products.count({
+      where: {
+        shop_id: shop.id,
+      },
+    });
+
+    const products = await Products.findAll({
       where: {
         shop_id: shop.id,
       },
@@ -61,13 +67,6 @@ export async function GetSellerProductsService(req: Request, res: Response) {
           ],
         },
       ],
-      transaction,
-    });
-    
-    await transaction.commit();
-    return res.status(200).json({
-      success: true,
-      data: sellerProducts,
     });
 
     const hasMore = totalCount > page * PAGE_SIZE;
@@ -75,9 +74,9 @@ export async function GetSellerProductsService(req: Request, res: Response) {
     return paginatedResponse(
       res,
       "Fetched seller products",
-      productsWithImages,
+      products,
       hasMore,
-      page
+      page,
     );
   } catch (error) {
     console.log("GetSellerProductsService error:", error);
