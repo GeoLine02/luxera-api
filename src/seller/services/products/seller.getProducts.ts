@@ -61,48 +61,13 @@ export async function GetSellerProductsService(req: Request, res: Response) {
           ],
         },
       ],
-    })) as any[];
-
-    const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
-
-    const productsWithImages = await Promise.all(
-      plainProducts.map(async (product) => {
-        const primaryVariant = product.primaryVariant;
-        const primaryImage = primaryVariant?.images?.[0];
-
-        if (primaryImage) {
-          const params = {
-            Bucket: process.env.S3_BUCKET_NAME!,
-            Key: primaryImage.s3_key,
-          };
-
-          const signedUrl = await getSignedUrl(
-            s3,
-            new GetObjectCommand(params),
-            {
-              expiresIn: 3600,
-            }
-          );
-          return {
-            ...product,
-            primaryVariant: {
-              ...primaryVariant,
-              images: [
-                {
-                  id: primaryImage.id,
-                  imageUrl: signedUrl,
-                },
-              ],
-            },
-          };
-        }
-
-        return product;
-      })
-    );
-
-    const totalCount = await Products.count({
-      where: { shop_id: shop.id },
+      transaction,
+    });
+    
+    await transaction.commit();
+    return res.status(200).json({
+      success: true,
+      data: sellerProducts,
     });
 
     const hasMore = totalCount > page * PAGE_SIZE;

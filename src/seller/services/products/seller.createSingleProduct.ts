@@ -23,6 +23,8 @@ export async function CreateSingleProductService(
     transaction,
   });
 
+
+  
   if (!category || !subCategory) {
     throw new NotFoundError("Invalid category or subcategory");
   }
