@@ -7,7 +7,7 @@ import { Transaction } from "sequelize";
 export async function deleteProductImagesService(
   productId: number,
   deletedImageIds: number[],
-  t: Transaction
+  t: Transaction,
 ) {
   if (deletedImageIds.length > 0) {
     const deletedImages = await ProductImages.findAll({
@@ -21,17 +21,18 @@ export async function deleteProductImagesService(
             new DeleteObjectCommand({
               Bucket: process.env.S3_BUCKET_NAME!,
               Key: img.s3_key,
-            })
+            }),
           );
         } catch (err) {
           logger.warn(`Failed to delete S3 object ${img.s3_key}`, err);
         }
-      })
+      }),
     );
     const deleted = await ProductImages.destroy({
       where: { id: deletedImageIds },
       transaction: t,
     });
+    console.log(`deleted ${deleted} images for product ${productId}`);
     return deleted;
   }
 }

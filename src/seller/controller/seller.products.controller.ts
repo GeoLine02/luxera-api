@@ -190,14 +190,13 @@ export async function CreateProductController(req: Request, res: Response) {
 export async function UpdateProductController(req: Request, res: Response) {
   const body = req.body;
   const files = req.files as Express.Multer.File[];
-  logger.info("Files recieved in update product controller", files);
 
   const variantMetadata: VariantsMetadata[] = JSON.parse(
     body.variantsMetadata || "[]"
   );
+  console.log("files", files);
 
   const deletedImageIds: number[] = JSON.parse(body.deletedImageIds || "[]");
-
   const variantImagesMap: VariantImagesMap = {};
   // validate variantsMetaData
 
@@ -234,6 +233,7 @@ export async function UpdateProductController(req: Request, res: Response) {
             },
           ]);
         }
+
         const variantImagesMapEntry = imageFiles.map((file, index) => {
           return {
             file: file,
@@ -243,7 +243,7 @@ export async function UpdateProductController(req: Request, res: Response) {
         variantImagesMap[variant.tempId] = variantImagesMapEntry;
       }
       // for existing variants
-      if (variant.id && variant.tempId == undefined) {
+      if (variant.id) {
         const imageFiles = files.filter(
           (file) => file.fieldname === `variantImage_${variant.id}`
         );
@@ -258,6 +258,7 @@ export async function UpdateProductController(req: Request, res: Response) {
         }
       }
     }
+    console.log("variantImagesMap: ", variantImagesMap);
     const parsedData = {
       productCategoryId: Number(body.productCategoryId),
       productSubCategoryId: Number(body.productSubCategoryId),
@@ -295,7 +296,6 @@ export async function UpdateProductController(req: Request, res: Response) {
           totalResults.deleted += deleted;
         }
       }
-
       const results = await UpdateProductVariantsService(
         parsedData,
         req,

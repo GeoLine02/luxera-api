@@ -38,7 +38,7 @@ export async function AllProductsService(req: Request, res: Response) {
           message: "Invalid page number",
         },
       ],
-      "Invalid page number"
+      "Invalid page number",
     );
   }
 
@@ -146,7 +146,7 @@ export async function AllProductsService(req: Request, res: Response) {
       }
 
       return product;
-    })
+    }),
   );
 
   const totalCount = await Products.count();
@@ -243,7 +243,7 @@ export async function GetProductByIdService(req: Request, res: Response) {
                 Bucket: process.env.S3_BUCKET_NAME,
                 Key: img.s3_key,
               }),
-              { expiresIn: 3600 }
+              { expiresIn: 3600 },
             );
 
             return {
@@ -251,9 +251,9 @@ export async function GetProductByIdService(req: Request, res: Response) {
               imageUrl: signedUrl,
               isPrimary: img.is_primary,
             };
-          })
+          }),
         );
-      })
+      }),
     );
 
     return res.status(200).json({
@@ -282,7 +282,7 @@ export async function VipProductsService(req: Request, res: Response) {
             message: "Invalid page number",
           },
         ],
-        "Invalid page number"
+        "Invalid page number",
       );
     }
 
@@ -330,7 +330,7 @@ export async function VipProductsService(req: Request, res: Response) {
             new GetObjectCommand(params),
             {
               expiresIn: 3600,
-            }
+            },
           );
           return {
             ...product,
@@ -347,7 +347,7 @@ export async function VipProductsService(req: Request, res: Response) {
         }
 
         return product;
-      })
+      }),
     );
 
     const totalCount = await Products.count({
@@ -381,7 +381,7 @@ export async function FeaturedProductsService(req: Request, res: Response) {
             message: "Invalid page number",
           },
         ],
-        "Invalid page number"
+        "Invalid page number",
       );
     }
 
@@ -419,7 +419,6 @@ export async function FeaturedProductsService(req: Request, res: Response) {
       plainProducts.map(async (product) => {
         const primaryVariant = product.primaryVariant;
         const primaryImage = primaryVariant?.images?.[0];
-
         if (primaryImage) {
           const params = {
             Bucket: process.env.S3_BUCKET_NAME!,
@@ -431,7 +430,7 @@ export async function FeaturedProductsService(req: Request, res: Response) {
             new GetObjectCommand(params),
             {
               expiresIn: 3600,
-            }
+            },
           );
           return {
             ...product,
@@ -448,7 +447,7 @@ export async function FeaturedProductsService(req: Request, res: Response) {
         }
 
         return product;
-      })
+      }),
     );
 
     const totalCount = await Products.count({
@@ -457,6 +456,13 @@ export async function FeaturedProductsService(req: Request, res: Response) {
           [Op.gt]: 100,
         },
       },
+      include: [
+        {
+          model: ProductVariants,
+          as: "primaryVariant",
+          required: true,
+        },
+      ],
     });
 
     const hasMore = totalCount > page * PAGE_SIZE;
@@ -486,7 +492,7 @@ export async function SearchProductsService(req: Request, res: Response) {
             message: "Search query is required",
           },
         ],
-        "Search query is required"
+        "Search query is required",
       );
     }
 
@@ -499,7 +505,7 @@ export async function SearchProductsService(req: Request, res: Response) {
             message: "Invalid page number",
           },
         ],
-        "Invalid page number"
+        "Invalid page number",
       );
     }
 
@@ -573,7 +579,7 @@ export async function SearchProductsService(req: Request, res: Response) {
             new GetObjectCommand(params),
             {
               expiresIn: 3600,
-            }
+            },
           );
           return {
             ...product,
@@ -590,7 +596,7 @@ export async function SearchProductsService(req: Request, res: Response) {
         }
 
         return product;
-      })
+      }),
     );
 
     const totalCount = await Products.count({
@@ -690,11 +696,11 @@ export async function CreateProductService(req: Request, res: Response) {
           variant_price: Number(variant.variantPrice),
           variant_quantity: Number(variant.variantQuantity),
           variant_discount: Number(variant.variantDiscount),
-        })
+        }),
       );
 
       const createdVariants = await ProductVariants.bulkCreate(
-        createdProductVariantsArray
+        createdProductVariantsArray,
       );
 
       if (createdVariants && createdVariants.length > 0) {
@@ -724,9 +730,8 @@ export async function CreateProductService(req: Request, res: Response) {
         });
 
         // Create all product images
-        const createdProductImages = await ProductImages.bulkCreate(
-          productImagesArray
-        );
+        const createdProductImages =
+          await ProductImages.bulkCreate(productImagesArray);
 
         return res.status(201).json({
           success: true,
@@ -751,7 +756,7 @@ export async function CreateProductService(req: Request, res: Response) {
 export async function GetProductsBySubCategoryService(
   categoryName: string,
   page: number,
-  res: Response
+  res: Response,
 ) {
   const offset = PAGE_SIZE * (page - 1);
 
@@ -787,6 +792,6 @@ export async function GetProductsBySubCategoryService(
     "Successfully fetched products",
     products,
     hasMore,
-    page
+    page,
   );
 }

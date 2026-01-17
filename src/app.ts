@@ -33,7 +33,7 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL
+        ? process.env.PROD_FRONTEND_URL
         : "http://localhost:3000", // ✅ Frontend URL
     credentials: true, // ✅ Allow cookies/authorization headers
   })

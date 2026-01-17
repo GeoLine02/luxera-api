@@ -16,7 +16,7 @@ import { paginatedResponse } from "../utils/responseHandler";
 export async function AllProductsController(req: Request, res: Response) {
   const { hasMore, integerPage, productsWithImages } = await AllProductsService(
     req,
-    res
+    res,
   );
 
   return paginatedResponse(
@@ -24,7 +24,7 @@ export async function AllProductsController(req: Request, res: Response) {
     "Fetched Products",
     productsWithImages,
     hasMore,
-    integerPage
+    integerPage,
   );
 }
 
@@ -48,7 +48,6 @@ export async function FeaturedProductsController(req: Request, res: Response) {
 
 export async function CreateProductController(req: Request, res: Response) {
   try {
-    console.log(req.files);
     console.log(req.body);
     const createdProduct = await CreateProductService(req, res);
     return createdProduct;
@@ -71,7 +70,7 @@ export async function GetProductByIdController(req: Request, res: Response) {
 }
 export async function GetProductsBySubCategoryController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   // Parse and validate inputs individually for precise error messages
   const { page: pageQuery, subcategory } = req.query;
@@ -109,7 +108,7 @@ export async function GetProductsBySubCategoryController(
   const paginatedResult = await GetProductsBySubCategoryService(
     subcategory as string,
     page,
-    res
+    res,
   );
 
   return paginatedResult;

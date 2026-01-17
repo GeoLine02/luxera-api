@@ -24,7 +24,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 export async function UpdateProductVariantsService(
   data: ProductUpdatePayload, // assume variantsMetadata: Array<{ id?: number; tempId?: string; ... }>
   req: Request,
-  transaction: Transaction
+  transaction: Transaction,
 ) {
   const { variantsMetadata = [], variantImagesMap = {}, productId } = data;
 
@@ -76,6 +76,8 @@ export async function UpdateProductVariantsService(
   // 4. Separate create / update
   const toCreate = variantsMetadata.filter((v) => v.id == undefined);
   const toUpdate = variantsMetadata.filter((v) => v.id !== undefined);
+  console.log("to create variants: ", toCreate);
+  console.log("to update variants", toUpdate);
 
   let createdVariants: ProductVariants[] = [];
 
@@ -90,6 +92,7 @@ export async function UpdateProductVariantsService(
           },
         ]);
       }
+      logger.info(`Creating new variant ${variant.tempId} `);
 
       return {
         product_id: productId,
@@ -121,6 +124,7 @@ export async function UpdateProductVariantsService(
         if (!existingVariant) {
           throw new NotFoundError(`Variant with id ${variant.id} not found`);
         }
+        logger.info(`Updating  variant ${variant.id} `);
 
         await existingVariant.update(
           {
@@ -129,13 +133,14 @@ export async function UpdateProductVariantsService(
             variant_quantity: variant.variantQuantity,
             variant_discount: variant.variantDiscount,
           },
-          { transaction }
+          { transaction },
         );
 
         results.updated += 1;
-      })
+      }),
     );
   }
+
   const imagesToInsert: any[] = [];
 
   for (let i = 0; i < toCreate.length; i++) {
@@ -148,7 +153,7 @@ export async function UpdateProductVariantsService(
       const uploaded = await uploadAndMapImages(
         newImages,
         productId,
-        dbVariant.id
+        dbVariant.id,
       );
       imagesToInsert.push(...uploaded);
     }
@@ -165,15 +170,18 @@ export async function UpdateProductVariantsService(
     if (!dbVariant) continue;
 
     const newImages = variantImagesMap[variantId];
+    console.log(`new images for variant ${dbVariant.id}  `, newImages);
     if (newImages?.length) {
       const uploaded = await uploadAndMapImages(
         newImages,
         productId,
-        dbVariant.id
+        dbVariant.id,
       );
+
       imagesToInsert.push(...uploaded);
     }
   }
+  console.log("Images to insert", imagesToInsert);
   if (imagesToInsert.length > 0) {
     const images = await ProductImages.bulkCreate(imagesToInsert, {
       transaction,
@@ -185,7 +193,7 @@ export async function UpdateProductVariantsService(
 async function uploadAndMapImages(
   images: VariantImageInput[],
   productId: number,
-  variantId: number
+  variantId: number,
 ) {
   return await Promise.all(
     images.map(async (img) => {
@@ -193,14 +201,20 @@ async function uploadAndMapImages(
       if (!img.file?.buffer) {
         throw new BadRequestError(`Missing file buffer for image upload`);
       }
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME!,
-          Key: s3key,
-          Body: img.file.buffer,
-          ContentType: img.file.mimetype,
-        })
-      );
+
+      try {
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: s3key,
+            Body: img.file.buffer,
+            ContentType: img.file.mimetype,
+          }),
+        );
+        logger.info(`created new image for variant ${variantId}`);
+      } catch (error) {
+        throw new Error("Failed to Upload Images to S3 bucket");
+      }
 
       return {
         s3_key: s3key,
@@ -208,7 +222,7 @@ async function uploadAndMapImages(
         variant_id: variantId,
         is_primary: img.isPrimary,
       };
-    })
+    }),
   );
 }
 

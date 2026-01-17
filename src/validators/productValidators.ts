@@ -46,7 +46,7 @@ const UpdateProductVariantSchema = z
 
     // Optional: ID for updates
     id: z.number().int().positive().optional(),
-    tempId: z.string("Temporary Id must be string"),
+    tempId: z.string("Temporary Id must be string").optional(),
   })
 
   // Cross-field validation
