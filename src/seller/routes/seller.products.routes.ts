@@ -25,7 +25,7 @@ router.post(
   upload.any(),
   validateUploadedFiles,
   validateRequest(ProductCreationSchema),
-  CreateProductController
+  CreateProductController,
 );
 
 router.get("/:id", authGuard, shopAuthGuard, getSellerProductByIdController);
@@ -35,8 +35,9 @@ router.put(
   authGuard,
   shopAuthGuard,
   upload.any(),
+  validateUploadedFiles,
   validateRequest(ProductUpdateSchema),
-  UpdateProductController
+  UpdateProductController,
 );
 
 router.delete("/:id", authGuard, shopAuthGuard, DeleteProductController);
@@ -45,7 +46,7 @@ router.put(
   authGuard,
   shopAuthGuard,
   validateRequest(ProductUpdateStatusSchema),
-  UpdateProductStatusController
+  UpdateProductStatusController,
 );
 
 export default router;
