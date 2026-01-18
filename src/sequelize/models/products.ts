@@ -19,19 +19,33 @@ interface ProductAttributes {
   sales_per_month: number;
 }
 
-interface ProductCreationAtrributes
-  extends Optional<
-    ProductAttributes,
-    | "id"
-    | "primary_variant_id"
-    | "views_per_day"
-    | "views_per_month"
-    | "sales_per_day"
-    | "sales_per_month"
-    | "product_status"
-  > {}
+export interface ProductCreationAttributes extends Optional<
+  ProductAttributes,
+  | "id"
+  | "primary_variant_id"
+  | "views_per_day"
+  | "views_per_month"
+  | "sales_per_day"
+  | "sales_per_month"
+  | "product_status"
+  | "product_rating"
+  | "product_owner_id"
+> {}
+export interface ProductUpdateAttributes extends Optional<
+  ProductAttributes,
+  | "id"
+  | "primary_variant_id"
+  | "views_per_day"
+  | "views_per_month"
+  | "sales_per_day"
+  | "sales_per_month"
+  | "product_status"
+  | "product_rating"
+  | "product_owner_id"
+  | "shop_id"
+> {}
 class Products
-  extends Model<ProductAttributes, ProductCreationAtrributes>
+  extends Model<ProductAttributes, ProductCreationAttributes>
   implements ProductAttributes
 {
   declare id: number;
@@ -159,7 +173,7 @@ Products.init(
         ProductStatus.Vip,
         ProductStatus.Inactive,
         ProductStatus.Rejected,
-        ProductStatus.OutOfStock
+        ProductStatus.OutOfStock,
       ),
       allowNull: false,
       defaultValue: ProductStatus.Pending,
@@ -190,7 +204,7 @@ Products.init(
     modelName: "Products",
     tableName: "Products",
     timestamps: true,
-  }
+  },
 );
 
 export default Products;

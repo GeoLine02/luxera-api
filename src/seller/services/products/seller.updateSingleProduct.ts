@@ -1,15 +1,18 @@
 import { Transaction } from "sequelize";
 import { BadRequestError, NotFoundError } from "../../../errors/errors";
 import Categories from "../../../sequelize/models/categories";
-import Products from "../../../sequelize/models/products";
+import Products, {
+  ProductUpdateAttributes,
+} from "../../../sequelize/models/products";
 import SubCategories from "../../../sequelize/models/subcategories";
 import { ProductUpdatePayload } from "../../../types/products";
 import { Request, Response } from "express";
+import { ProductStatus } from "../../../constants/enums";
 export async function UpdateSingleProductService(
   data: ProductUpdatePayload,
   req: Request,
   res: Response,
-  transaction: Transaction
+  transaction: Transaction,
 ) {
   const userId = req.user!.id;
   const {
@@ -42,16 +45,15 @@ export async function UpdateSingleProductService(
     existingProduct.shop_id !== req.shop!.id
   ) {
     throw new BadRequestError(
-      "You don't have permission to update this product"
+      "You don't have permission to update this product",
     );
   }
 
   // Prepare fields to update
-  const fieldsToUpdate: any = {
+  const fieldsToUpdate: ProductUpdateAttributes = {
     product_description: productDescription,
-    product_category_id: productCategoryId,
-    sub_category_id: productSubCategoryId,
-    user_id: userId,
+    product_subcategory_id: productSubCategoryId,
+    product_status: ProductStatus.Pending,
   };
 
   // Update product info
