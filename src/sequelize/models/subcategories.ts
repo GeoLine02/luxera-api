@@ -5,7 +5,7 @@ import { InferAttributes } from "sequelize";
 interface SubCategoryAttributes {
   id: number;
   sub_category_name: string;
-  sub_category_image: string;
+  subcategory_image_s3_key: string;
   category_id: number;
 }
 
@@ -13,7 +13,7 @@ class SubCategories extends Model implements SubCategoryAttributes {
   declare id: number;
   declare sub_category_name: string;
   declare sub_category_name_ka: string;
-  declare sub_category_image: string;
+  declare subcategory_image_s3_key: string;
   declare category_id: number;
 
   static associate(models: TypeModels) {
@@ -35,7 +35,7 @@ SubCategories.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     sub_category_name: { type: DataTypes.STRING, allowNull: false },
     sub_category_name_ka: { type: DataTypes.STRING, allowNull: false },
-    sub_category_image: { type: DataTypes.STRING, allowNull: true },
+    subcategory_image_s3_key: { type: DataTypes.STRING, allowNull: true },
     category_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -49,7 +49,7 @@ SubCategories.init(
     modelName: "SubCategories",
     tableName: "SubCategories",
     timestamps: true,
-  }
+  },
 );
 
 export default SubCategories;

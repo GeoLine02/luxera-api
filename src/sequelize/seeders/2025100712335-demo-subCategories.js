@@ -7,7 +7,7 @@ module.exports = {
       {
         sub_category_name: "Smartphones",
         sub_category_name_ka: "სმარტფონები",
-        sub_category_image: "smartphones.jpg",
+        subcategory_image_s3_key: "smartphones.jpg",
         category_id: 983,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -15,7 +15,7 @@ module.exports = {
       {
         sub_category_name: "Laptops",
         sub_category_name_ka: "ლეპტოპები",
-        sub_category_image: "laptops.jpg",
+        subcategory_image_s3_key: "laptops.jpg",
         category_id: 984,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -23,7 +23,7 @@ module.exports = {
       {
         sub_category_name: "Sofas",
         sub_category_name_ka: "მდივნები",
-        sub_category_image: "sofas.jpg",
+        subcategory_image_s3_key: "sofas.jpg",
         category_id: 986,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -31,7 +31,7 @@ module.exports = {
       {
         sub_category_name: "Chairs",
         sub_category_name_ka: "სკამები",
-        sub_category_image: "chairs.jpg",
+        subcategory_image_s3_key: "chairs.jpg",
         category_id: 986,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -39,7 +39,7 @@ module.exports = {
       {
         sub_category_name: "T-Shirts",
         sub_category_name_ka: "მაისურები",
-        sub_category_image: "tshirts.jpg",
+        subcategory_image_s3_key: "tshirts.jpg",
         category_id: 984,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -47,7 +47,7 @@ module.exports = {
       {
         sub_category_name: "Jeans",
         sub_category_name_ka: "ჯინსები",
-        sub_category_image: "jeans.jpg",
+        subcategory_image_s3_key: "jeans.jpg",
         category_id: 984,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -57,7 +57,7 @@ module.exports = {
       {
         sub_category_name: "Tablets",
         sub_category_name_ka: "ტაბლეტები",
-        sub_category_image: "tablets.jpg",
+        subcategory_image_s3_key: "tablets.jpg",
         category_id: 983,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -65,7 +65,7 @@ module.exports = {
       {
         sub_category_name: "Headphones",
         sub_category_name_ka: "ყურსასმენები",
-        sub_category_image: "headphones.jpg",
+        subcategory_image_s3_key: "headphones.jpg",
         category_id: 983,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -73,7 +73,7 @@ module.exports = {
       {
         sub_category_name: "Beds",
         sub_category_name_ka: "საწოლები",
-        sub_category_image: "beds.jpg",
+        subcategory_image_s3_key: "beds.jpg",
         category_id: 986,
         createdAt: new Date(),
         updatedAt: new Date(),
