@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to VPS  using ssh
@@ -14,9 +14,11 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
           script: |
+            ls
             cd /luxera-api
             git pull origin main
-            npm install --only=prod
-            npm run build
+            npm ci
             git status
+            npm run build
             pm2 restart ecosystem.config.js --env production
+            pm2 status
