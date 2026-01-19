@@ -20,15 +20,9 @@ jobs:
             export NVM_DIR="/root/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
             [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Optional
-
             # Now go to your project (in root's home)
             cd /root/luxera-api
-
             # Deploy steps
-            git fetch origin
-            git reset --hard origin/main
-            git clean -fd
-
             git status
 
             npm install --only=prod
