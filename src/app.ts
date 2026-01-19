@@ -25,7 +25,8 @@ export const s3 = new S3Client({
     secretAccessKey: process.env.S3_SECRET_KEY!,
   },
   endpoint: "https://hel1.your-objectstorage.com",
-  region: "auto",
+  region: "eu-central-1",
+  forcePathStyle: true,
 });
 
 // ✅ Middleware (must come before routes)
@@ -36,7 +37,7 @@ app.use(
         ? process.env.PROD_FRONTEND_URL
         : "http://localhost:3000", // ✅ Frontend URL
     credentials: true, // ✅ Allow cookies/authorization headers
-  })
+  }),
 );
 
 app.use(express.json()); // handles JSON requests
