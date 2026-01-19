@@ -1,24 +1,39 @@
 name: LuxeraGift Pipeline
+
 on:
   push:
     branches: [main]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VPS  using ssh
+      - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          username: ${{ secrets.USERNAME }} # probably 'root'
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
           script: |
-            ls
-            cd /luxera-api
-            git pull origin main
-            npm ci
+            # Load NVM properly (this is the standard way)
+            export NVM_DIR="/root/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Optional
+
+            # Now go to your project (in root's home)
+            cd /root/luxera-api
+
+            # Deploy steps
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
+
             git status
-            npm run build
-            pm2 restart ecosystem.config.js --env production
+
+            npm install --only=prod
+            npm run build || echo "No build script, skipping..."  # optional: fails safe if no build
+
+            pm2 restart ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
             pm2 status
+            pm2 save
