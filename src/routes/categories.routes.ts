@@ -4,8 +4,6 @@ import {
   GetAllSubCategoriesController,
 } from "../controller/categories.controller";
 
-
-
 const router = express.Router();
 
 router.get("/", GetAllCategoriesController);
