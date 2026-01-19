@@ -39,7 +39,7 @@ export async function getSellerProductsController(req: Request, res: Response) {
 
 export async function getSellerProductByIdController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     const product = await getSellerProductByIdService(req, res);
@@ -59,7 +59,7 @@ export async function CreateProductController(req: Request, res: Response) {
   // Parse variants metadata from JSON
 
   const variantsMetadata: VariantsMetadata[] = JSON.parse(
-    body.variantsMetadata || "[]"
+    body.variantsMetadata || "[]",
   );
   // validate
   if (variantsMetadata.length === 0) {
@@ -70,7 +70,7 @@ export async function CreateProductController(req: Request, res: Response) {
           message: "No variants provided",
         },
       ],
-      "No variants provided"
+      "No variants provided",
     );
   }
   // validate inside variantsMetaData
@@ -103,7 +103,7 @@ export async function CreateProductController(req: Request, res: Response) {
 
     // Find all files uploaded for this variant
     const imageFiles = files.filter(
-      (file) => file.fieldname === expectedFieldName
+      (file) => file.fieldname === expectedFieldName,
     );
 
     if (imageFiles.length === 0) {
@@ -145,7 +145,7 @@ export async function CreateProductController(req: Request, res: Response) {
       parsedBody,
       req,
       res,
-      transaction
+      transaction,
     );
     createdProduct = result.createdProduct;
 
@@ -153,7 +153,7 @@ export async function CreateProductController(req: Request, res: Response) {
       await CreateProductVariantsService(
         parsedBody,
         createdProduct as Products,
-        transaction as Transaction
+        transaction as Transaction,
       );
     createdImages = imagesInserted;
 
@@ -192,7 +192,7 @@ export async function UpdateProductController(req: Request, res: Response) {
   const files = req.files as Express.Multer.File[];
 
   const variantMetadata: VariantsMetadata[] = JSON.parse(
-    body.variantsMetadata || "[]"
+    body.variantsMetadata || "[]",
   );
   console.log("files", files);
 
@@ -214,7 +214,7 @@ export async function UpdateProductController(req: Request, res: Response) {
           });
           throw new ValidationError(
             formattedErrors,
-            "Invalid variantsMetaData"
+            "Invalid variantsMetaData",
           );
         }
       }
@@ -222,7 +222,7 @@ export async function UpdateProductController(req: Request, res: Response) {
       // validate images
       if (variant.id === undefined && variant.tempId) {
         const imageFiles = files.filter(
-          (file) => file.fieldname === `variantImage_${variant.tempId}`
+          (file) => file.fieldname === `variantImage_${variant.tempId}`,
         );
 
         if (!imageFiles || imageFiles.length === 0) {
@@ -245,7 +245,7 @@ export async function UpdateProductController(req: Request, res: Response) {
       // for existing variants
       if (variant.id) {
         const imageFiles = files.filter(
-          (file) => file.fieldname === `variantImage_${variant.id}`
+          (file) => file.fieldname === `variantImage_${variant.id}`,
         );
         if (imageFiles.length > 0) {
           const variantImagesMapEntry = imageFiles.map((file, index) => {
@@ -283,14 +283,14 @@ export async function UpdateProductController(req: Request, res: Response) {
         parsedData,
         req,
         res,
-        transaction
+        transaction,
       );
       // delete product images that are removed
       if (deletedImageIds.length > 0) {
         const deleted = await deleteProductImagesService(
           parsedData.productId,
           deletedImageIds,
-          transaction
+          transaction,
         );
         if (deleted) {
           totalResults.deleted += deleted;
@@ -299,7 +299,7 @@ export async function UpdateProductController(req: Request, res: Response) {
       const results = await UpdateProductVariantsService(
         parsedData,
         req,
-        transaction
+        transaction,
       );
       totalResults.created += results.created;
       totalResults.updated += results.updated;
@@ -337,7 +337,7 @@ export async function DeleteProductController(req: Request, res: Response) {
 }
 export async function UpdateProductStatusController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   const parsedData = {
     productId: Number(req.body.productId),
@@ -347,6 +347,6 @@ export async function UpdateProductStatusController(
   await UpdateSingleProductStatusService(
     parsedData as ProductUpdateStatusPayload,
     req,
-    res
+    res,
   );
 }

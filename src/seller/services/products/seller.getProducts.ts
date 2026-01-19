@@ -7,7 +7,6 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PAGE_SIZE } from "../../../constants/constants";
 import { ValidationError } from "../../../errors/errors";
-import { paginatedResponse } from "../../../utils/responseHandler";
 
 export async function GetSellerProductsService(req: Request, res: Response) {
   try {
@@ -39,13 +38,7 @@ export async function GetSellerProductsService(req: Request, res: Response) {
 
     const offset = PAGE_SIZE * (page - 1);
 
-    const totalCount = await Products.count({
-      where: {
-        shop_id: shop.id,
-      },
-    });
-
-    const products = await Products.findAll({
+    const products = (await Products.findAll({
       where: {
         shop_id: shop.id,
       },
@@ -67,17 +60,61 @@ export async function GetSellerProductsService(req: Request, res: Response) {
           ],
         },
       ],
+    })) as any[];
+
+    const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
+
+    const productsWithImages = await Promise.all(
+      plainProducts.map(async (product) => {
+        const primaryVariant = product.primaryVariant;
+        const primaryImage = primaryVariant?.images?.[0];
+        if (primaryImage) {
+          const params = {
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: primaryImage.s3_key,
+          };
+
+          const signedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand(params),
+            {
+              expiresIn: 3600,
+            },
+          );
+          return {
+            ...product,
+            primaryVariant: {
+              ...primaryVariant,
+              images: [
+                {
+                  id: primaryImage.id,
+                  imageUrl: signedUrl,
+                },
+              ],
+            },
+          };
+        }
+
+        return product;
+      }),
+    );
+
+    const totalCount = await Products.count({
+      where: {
+        shop_id: shop.id,
+      },
     });
 
     const hasMore = totalCount > page * PAGE_SIZE;
 
-    return paginatedResponse(
-      res,
-      "Fetched seller products",
-      products,
-      hasMore,
-      page,
-    );
+    return res.status(200).json({
+      success: true,
+      message: "Seller products fetched successfully",
+      data: productsWithImages,
+      page: page,
+      pageSize: PAGE_SIZE,
+      hasMore: hasMore,
+    });
   } catch (error) {
     console.log("GetSellerProductsService error:", error);
     throw error;
