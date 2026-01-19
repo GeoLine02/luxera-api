@@ -23,6 +23,7 @@ jobs:
             # Now go to your project (in root's home)
             cd /root/luxera-api
             # Deploy steps
+            git pull origin main
             git status
             npm install --only=prod
             npm install typescript
