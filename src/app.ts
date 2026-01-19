@@ -15,19 +15,18 @@ import cityRoutes from "./routes/city.routes";
 import sellerRoutes from "./seller/routes/seller.routes";
 import errorHandler from "./middleware/errorHandler";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Sha256 } from "@aws-crypto/sha256-js";
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 export const s3 = new S3Client({
-  region: "us-east-1", // Standard region format
+  region: "hel1", // Standard region format
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY!,
     secretAccessKey: process.env.S3_SECRET_KEY!,
   },
   endpoint: process.env.S3_ENDPOINT || "https://hel1.your-objectstorage.com",
-  forcePathStyle: true,
 });
 
 // ✅ Middleware (must come before routes)
