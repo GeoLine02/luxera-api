@@ -201,7 +201,6 @@ async function uploadAndMapImages(
       if (!img.file?.buffer) {
         throw new BadRequestError(`Missing file buffer for image upload`);
       }
-
       try {
         await s3.send(
           new PutObjectCommand({

@@ -12,7 +12,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 export async function CreateProductVariantsService(
   data: CreateProductPayload,
   createdProduct: Products,
-  transaction: Transaction
+  transaction: Transaction,
 ) {
   const { variantsMetadata = [], variantImagesMap = {} } = data;
 
@@ -24,7 +24,7 @@ export async function CreateProductVariantsService(
   const variantsToCreate = variantsMetadata.map((variant) => {
     if (!variant.tempId) {
       throw new BadRequestError(
-        "Each variant must have a temporary ID (tempId)"
+        "Each variant must have a temporary ID (tempId)",
       );
     }
 
@@ -59,7 +59,7 @@ export async function CreateProductVariantsService(
           // Only upload if there's actual file data
           if (!image.file?.buffer) {
             throw new BadRequestError(
-              `Missing file buffer for variant ${originalVariant.tempId}`
+              `Missing file buffer for variant ${originalVariant.tempId}`,
             );
           }
 
@@ -78,10 +78,10 @@ export async function CreateProductVariantsService(
             variant_id: createdVariant.id,
             is_primary: image.isPrimary || false,
           };
-        })
+        }),
       );
       imagesToInsert.push(...uploadedImages);
-    })
+    }),
   );
 
   // Bulk insert all images
