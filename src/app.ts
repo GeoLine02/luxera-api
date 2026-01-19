@@ -21,12 +21,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 export const s3 = new S3Client({
-  region: "hel1", // Standard region format
+  region: process.env.S3_REGION || "hel1",
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY!,
     secretAccessKey: process.env.S3_SECRET_KEY!,
   },
   endpoint: process.env.S3_ENDPOINT || "https://hel1.your-objectstorage.com",
+  forcePathStyle: true,
 });
 
 // ✅ Middleware (must come before routes)
