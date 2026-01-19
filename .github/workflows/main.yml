@@ -24,10 +24,9 @@ jobs:
             cd /root/luxera-api
             # Deploy steps
             git status
-
             npm install --only=prod
+            npm install typescript
             npm run build || echo "No build script, skipping..."  # optional: fails safe if no build
-
-            pm2 restart ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+            pm2 restart ecosystem.config.js --env production
             pm2 status
             pm2 save
