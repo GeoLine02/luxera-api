@@ -25,7 +25,7 @@ export const s3 = new S3Client({
     secretAccessKey: process.env.S3_SECRET_KEY!,
   },
   endpoint: "https://hel1.your-objectstorage.com",
-  region: "eu-central-1",
+  region: "hel1",
   forcePathStyle: true,
 });
 
