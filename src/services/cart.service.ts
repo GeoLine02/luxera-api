@@ -8,6 +8,9 @@ import {
   DeleteCartItemPayload,
 } from "../types/cart";
 import { Request, Response } from "express";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../app";
 async function addCartItemService(data: AddCartItemPayload, res: Response) {
   const { productId, userId, variantId, quantity } = data;
   try {
@@ -121,16 +124,55 @@ async function getCartService(req: Request, res: Response) {
             {
               model: ProductImages,
               as: "images",
-              attributes: ["id", "image"],
+              attributes: ["id", "s3_key"],
             },
           ],
         },
       ],
     });
 
+    const plainCartItems = cartItems.map((item) =>
+      item.get({ plain: true }),
+    ) as any[];
+
+    const cartItemsWithImages = await Promise.all(
+      plainCartItems.map(async (cartItem) => {
+        const variant = cartItem.variant;
+        const primaryImage = variant?.images?.[0];
+        if (primaryImage) {
+          const params = {
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: primaryImage.s3_key,
+          };
+
+          const signedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand(params),
+            {
+              expiresIn: 3600,
+            },
+          );
+          return {
+            ...cartItem,
+            variant: {
+              ...variant,
+              images: [
+                {
+                  id: primaryImage.id,
+                  imageUrl: signedUrl,
+                },
+              ],
+            },
+          };
+        }
+
+        return cartItem;
+      }),
+    );
+
     return res.status(200).json({
       success: true,
-      data: cartItems,
+      data: cartItemsWithImages,
     });
   } catch (error) {
     console.log(error);
@@ -167,7 +209,7 @@ const changCartItemQuantityService = async (req: Request, res: Response) => {
           id: productId,
         },
         returning: true,
-      }
+      },
     );
 
     return res.status(200).json({
