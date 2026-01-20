@@ -45,7 +45,6 @@ export async function FeaturedProductsController(req: Request, res: Response) {
     throw error;
   }
 }
-
 export async function CreateProductController(req: Request, res: Response) {
   try {
     console.log(req.body);

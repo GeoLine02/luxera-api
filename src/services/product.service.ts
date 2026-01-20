@@ -495,7 +495,7 @@ export async function SearchProductsService(req: Request, res: Response) {
         "Search query is required",
       );
     }
-
+  
     const page = Number(req.query.page) || 1;
     if (isNaN(page) || page < 1) {
       throw new ValidationError(

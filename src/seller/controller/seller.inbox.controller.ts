@@ -26,6 +26,7 @@ async function GetSellerNotificationsController(req: Request, res: Response) {
   const notifications = await GetSellerNotificationsService(req, page);
   const totalCount = await Notifications.count();
   const hasMore = totalCount > page * PAGE_SIZE + notifications.count;
+  
   return paginatedResponse(
     res,
     "Successfully fetched notifications",

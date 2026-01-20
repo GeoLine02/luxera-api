@@ -44,6 +44,7 @@ SubCategories.init(
       onUpdate: "CASCADE",
     },
   },
+  
   {
     sequelize,
     modelName: "SubCategories",

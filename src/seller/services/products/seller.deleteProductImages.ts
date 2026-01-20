@@ -28,6 +28,7 @@ export async function deleteProductImagesService(
         }
       }),
     );
+    
     const deleted = await ProductImages.destroy({
       where: { id: deletedImageIds },
       transaction: t,
