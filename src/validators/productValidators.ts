@@ -18,7 +18,7 @@ const UpdateProductVariantSchema = z
       .trim()
       .refine(
         (val) => val.length > 0,
-        "Variant name cannot be only whitespace"
+        "Variant name cannot be only whitespace",
       ),
 
     // Variant Price
@@ -43,10 +43,10 @@ const UpdateProductVariantSchema = z
       .max(100, "Variant discount cannot exceed 100%")
       .finite("Variant discount must be a valid number")
       .multipleOf(0.01, "Variant discount can have at most 2 decimal places"),
-
     // Optional: ID for updates
-    id: z.number().int().positive().optional(),
-    tempId: z.string("Temporary Id must be string").optional(),
+    id: z.union([z.number().int().positive(), z.string().uuid()]).optional(),
+    // Flag to distinguish new variants from existing ones
+    isNew: z.boolean().optional(),
   })
 
   // Cross-field validation
@@ -62,7 +62,7 @@ const UpdateProductVariantSchema = z
     {
       error: "Discount is too high - final price must be greater than 0",
       path: ["variantDiscount"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -72,7 +72,7 @@ const UpdateProductVariantSchema = z
     {
       error: "Discount cannot make the product free or negative",
       path: ["variantDiscount"],
-    }
+    },
   );
 const CreateProductVariantSchema = z
   .object({
@@ -83,7 +83,7 @@ const CreateProductVariantSchema = z
       .trim()
       .refine(
         (val) => val.length > 0,
-        "Variant name cannot be only whitespace"
+        "Variant name cannot be only whitespace",
       ),
 
     // Variant Price
@@ -123,7 +123,7 @@ const CreateProductVariantSchema = z
     {
       error: "Discount is too high - final price must be greater than 0",
       path: ["variantDiscount"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -133,7 +133,7 @@ const CreateProductVariantSchema = z
     {
       error: "Discount cannot make the product free or negative",
       path: ["variantDiscount"],
-    }
+    },
   );
 // ✅ Product creation schema - accepts strings, transforms to numbers
 const ProductCreationSchema = z.object({
@@ -149,7 +149,7 @@ const ProductCreationSchema = z.object({
       z
         .number()
         .int("Subcategory ID must be an integer")
-        .positive("Subcategory ID must be a positive number")
+        .positive("Subcategory ID must be a positive number"),
     ),
   productCategoryId: z
     .string()
@@ -158,7 +158,7 @@ const ProductCreationSchema = z.object({
       z
         .number()
         .int("Subcategory ID must be an integer")
-        .positive("Subcategory ID must be a positive number")
+        .positive("Subcategory ID must be a positive number"),
     ),
 });
 
@@ -171,7 +171,7 @@ const ProductUpdateSchema = z.object({
       z
         .number()
         .int("Product ID must be an integer")
-        .positive("Product ID must be a positive number")
+        .positive("Product ID must be a positive number"),
     ),
 
   productDescription: z
@@ -186,7 +186,7 @@ const ProductUpdateSchema = z.object({
       z
         .number()
         .int("Category ID must be an integer")
-        .positive("Category ID must be a positive number")
+        .positive("Category ID must be a positive number"),
     ),
   productSubCategoryId: z
     .string()
@@ -195,7 +195,7 @@ const ProductUpdateSchema = z.object({
       z
         .number()
         .int("Subcategory ID must be an integer")
-        .positive("Subcategory ID must be a positive number")
+        .positive("Subcategory ID must be a positive number"),
     ),
 });
 const ProductUpdateStatusSchema = z.object({

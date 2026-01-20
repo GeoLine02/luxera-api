@@ -22,7 +22,7 @@ import { s3 } from "../../../app";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export async function UpdateProductVariantsService(
-  data: ProductUpdatePayload, // assume variantsMetadata: Array<{ id?: number; tempId?: string; ... }>
+  data: ProductUpdatePayload, // assume variantsMetadata: Array<{ id?: number; id?: string; ... }>
   req: Request,
   transaction: Transaction,
 ) {
@@ -51,12 +51,17 @@ export async function UpdateProductVariantsService(
     transaction,
   });
 
-  const existingVariantIds = existingVariants.map((v) => v.id);
-  const sentIds = variantsMetadata
-    .filter((v) => v.id !== undefined)
-    .map((v) => v.id!);
+  const existingVariantIds = existingVariants.map((v) => v.id); // these are numbers (DB PKs)
 
-  const toDeleteIds = existingVariantIds.filter((id) => !sentIds.includes(id));
+  // 2. Get IDs of variants that are being updated (i.e., existing ones sent from frontend)
+  const sentExistingIds = variantsMetadata
+    .filter((v) => !v.isNew && typeof v.id === "number") // only existing ones
+    .map((v) => v.id as number);
+
+  // 3. Find variants to delete (were in DB but not sent back)
+  const toDeleteIds = existingVariantIds.filter(
+    (id) => !sentExistingIds.includes(id),
+  );
 
   // 3. Delete removed variants + their images
   if (toDeleteIds.length > 0) {
@@ -74,8 +79,12 @@ export async function UpdateProductVariantsService(
   }
 
   // 4. Separate create / update
-  const toCreate = variantsMetadata.filter((v) => v.id == undefined);
-  const toUpdate = variantsMetadata.filter((v) => v.id !== undefined);
+  const toCreate = variantsMetadata.filter(
+    (v) => v.isNew && typeof v.id === "string",
+  );
+  const toUpdate = variantsMetadata.filter(
+    (v) => v.isNew === false && typeof v.id === "number",
+  );
   console.log("to create variants: ", toCreate);
   console.log("to update variants", toUpdate);
 
@@ -84,15 +93,15 @@ export async function UpdateProductVariantsService(
   // 5. CREATE new variants
   if (toCreate.length > 0) {
     const payload = toCreate.map((variant) => {
-      if (!variant.tempId) {
+      if (!variant.id) {
         throw new ValidationError([
           {
-            field: "tempId",
-            message: "tempId is required for new variants",
+            field: "id",
+            message: "id is required for new variants",
           },
         ]);
       }
-      logger.info(`Creating new variant ${variant.tempId} `);
+      logger.info(`Creating new variant ${variant.id} `);
 
       return {
         product_id: productId,
@@ -145,10 +154,10 @@ export async function UpdateProductVariantsService(
 
   for (let i = 0; i < toCreate.length; i++) {
     const metadata = toCreate[i];
-    const tempId = metadata.tempId!;
+    const id = metadata.id!;
     const dbVariant = createdVariants[i]; // same order
 
-    const newImages = variantImagesMap[tempId];
+    const newImages = variantImagesMap[id];
     if (newImages?.length) {
       const uploaded = await uploadAndMapImages(
         newImages,

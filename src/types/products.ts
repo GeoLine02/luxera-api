@@ -29,6 +29,7 @@ interface VariantsMetadata {
   variantQuantity: number;
   variantDiscount: number;
   productId: number;
+  isNew?: boolean;
 }
 
 interface ProductUpdatePayload extends CreateProductPayload {

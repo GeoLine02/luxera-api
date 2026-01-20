@@ -219,43 +219,39 @@ export async function UpdateProductController(req: Request, res: Response) {
         }
       }
 
-      // validate images
-      if (variant.id === undefined && variant.tempId) {
-        const imageFiles = files.filter(
-          (file) => file.fieldname === `variantImage_${variant.tempId}`,
-        );
+      // Get the image key (variant.id for existing, variant.tempId for new)
+      const imageKey = variant.id;
+      const imageFiles = files.filter(
+        (file) => file.fieldname === `variantImage_${imageKey}`,
+      );
 
-        if (!imageFiles || imageFiles.length === 0) {
-          throw new ValidationError([
-            {
-              field: `variantImage_${variant.tempId}`,
-              message: `Images not found for variant ${variant.tempId}`,
-            },
-          ]);
+      if (variant.isNew && imageKey) {
+        // NEW variant
+        if (imageFiles.length === 0) {
+          throw new ValidationError(
+            [
+              {
+                field: `variantImage_${imageKey}`,
+                message: "New variant must have at least one image",
+              },
+            ],
+            "New variants require images",
+          );
         }
-
-        const variantImagesMapEntry = imageFiles.map((file, index) => {
-          return {
-            file: file,
-            isPrimary: index === 0,
-          };
-        });
-        variantImagesMap[variant.tempId] = variantImagesMapEntry;
-      }
-      // for existing variants
-      if (variant.id) {
-        const imageFiles = files.filter(
-          (file) => file.fieldname === `variantImage_${variant.id}`,
-        );
+        // Store in map using temp id or id
+        variantImagesMap[imageKey] = imageFiles.map((file, index) => ({
+          file,
+          isPrimary: index === 0,
+        }));
+      } else {
+        // EXISTING variant
         if (imageFiles.length > 0) {
-          const variantImagesMapEntry = imageFiles.map((file, index) => {
-            return {
-              file: file,
-              isPrimary: index === 0,
-            };
-          });
-          variantImagesMap[variant.id] = variantImagesMapEntry;
+          variantImagesMap[imageKey!] = imageFiles.map((file, index) => ({
+            file,
+            isPrimary: index === 0,
+          }));
         }
+        // optional: no images = allowed
       }
     }
     console.log("variantImagesMap: ", variantImagesMap);
