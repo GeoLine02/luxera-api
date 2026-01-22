@@ -23,7 +23,6 @@ export async function GetAllCategoriesService() {
 export async function GetAllSubCategoriesService() {
   try {
     sequelize.authenticate();
-    console.log("retrieved");
     const subCategories = SubCategories.findAll();
 
     return subCategories;

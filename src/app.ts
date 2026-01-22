@@ -15,6 +15,7 @@ import cityRoutes from "./routes/city.routes";
 import sellerRoutes from "./seller/routes/seller.routes";
 import errorHandler from "./middleware/errorHandler";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import googleRoutes from "./routes/google.routes";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use("/cart", cartRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/seller", sellerRoutes);
 app.use("/cities", cityRoutes);
+app.use("/auth/google", googleRoutes);
 
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);

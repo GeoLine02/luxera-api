@@ -9,21 +9,21 @@ class User extends Model {
   declare password: string;
 
   // Add association declarations if needed
-  static associate(models:TypeModels) {
+  static associate(models: TypeModels) {
     // One user → many products
     User.hasMany(models.Products, {
       foreignKey: "product_owner_id",
       as: "ownedProducts",
     });
-    
+
     User.hasOne(models.Shop, {
       foreignKey: "owner_id",
       as: "shop",
     });
-    User.hasMany(models.Carts,{
-      foreignKey:"user_id",
-      as:"cartItems"
-    })
+    User.hasMany(models.Carts, {
+      foreignKey: "user_id",
+      as: "cartItems",
+    });
   }
 }
 
@@ -50,7 +50,7 @@ User.init(
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
   },
   {
@@ -58,7 +58,7 @@ User.init(
     modelName: "User",
     tableName: "Users",
     timestamps: true,
-  }
+  },
 );
 
 export default User;
