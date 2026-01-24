@@ -27,6 +27,10 @@ class Shop extends Model {
       foreignKey: "city_id",
       as: "city",
     });
+    Shop.hasMany(models.Orders, {
+      foreignKey: "shop_id",
+      as: "orders",
+    });
   }
 }
 
@@ -78,7 +82,7 @@ Shop.init(
     modelName: "Shop",
     tableName: "Shops",
     timestamps: true,
-  }
+  },
 );
 
 export default Shop;

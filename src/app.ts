@@ -16,7 +16,9 @@ import sellerRoutes from "./seller/routes/seller.routes";
 import errorHandler from "./middleware/errorHandler";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import googleRoutes from "./routes/google.routes";
-
+import paymentRoutes from "./payments/payments.routes";
+import orderRoutes from "./routes/orders.routes";
+import { CaptureRawBodyMiddleware } from "./middleware/captureRawBody";
 dotenv.config();
 
 const app = express();
@@ -41,7 +43,7 @@ app.use(
     credentials: true, // ✅ Allow cookies/authorization headers
   }),
 );
-
+app.use(CaptureRawBodyMiddleware); // saves rawBody
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data
 app.use(cookieParser());
@@ -56,6 +58,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/seller", sellerRoutes);
 app.use("/cities", cityRoutes);
 app.use("/auth/google", googleRoutes);
+app.use("/payments", paymentRoutes);
+app.use("/orders", orderRoutes);
 
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);

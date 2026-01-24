@@ -24,6 +24,11 @@ class User extends Model {
       foreignKey: "user_id",
       as: "cartItems",
     });
+    User.hasMany(models.Orders, {
+      foreignKey: "customer_id",
+      as: "orders",
+    });
+    
   }
 }
 
