@@ -13,7 +13,7 @@ export async function up(queryInterface) {
       {
         id: 984,
         category_name: "Clothing",
-        category_name_ka: "ტყავეული",
+        category_name_ka: "ტანსაცმელი",
         category_image_s3_key: "clothing.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),

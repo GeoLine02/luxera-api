@@ -22,7 +22,7 @@ interface CreateProductPayload {
 }
 
 interface VariantsMetadata {
-  id?: number;
+  id?: number | string;
   tempId?: string;
   variantName: string;
   variantPrice: number;

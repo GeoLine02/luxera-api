@@ -8,6 +8,10 @@ import ProductVariants from "./productvariants";
 import Carts from "./carts";
 import Notifications from "./notifications";
 import Cities from "./cities";
+import Orders from "./orders";
+import OrderTotals from "./orderTotals";
+import OrderProducts from "./orderProducts";
+
 export type TypeModels = {
   User: typeof User;
   Products: typeof Products;
@@ -19,6 +23,9 @@ export type TypeModels = {
   Carts: typeof Carts;
   Notifications: typeof Notifications;
   Cities: typeof Cities;
+  Orders: typeof Orders;
+  OrderTotals: typeof OrderTotals;
+  OrderProducts: typeof OrderProducts;
 };
 
 export function initAssociations() {
@@ -34,6 +41,9 @@ export function initAssociations() {
     Carts,
     Notifications,
     Cities,
+    Orders,
+    OrderTotals,
+    OrderProducts,
   };
 
   User.associate?.(models);
@@ -47,6 +57,9 @@ export function initAssociations() {
   Carts.associate?.(models);
   Notifications.associate?.(models);
   Cities.associate?.(models);
+  Orders.associate?.(models);
+  OrderTotals.associate?.(models);
+  OrderProducts.associate?.(models);
 }
 
 export { User, Products, SubCategories, Categories, Shop, Cities };

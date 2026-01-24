@@ -130,7 +130,6 @@ async function getCartService(req: Request, res: Response) {
         },
       ],
     });
-
     const plainCartItems = cartItems.map((item) =>
       item.get({ plain: true }),
     ) as any[];

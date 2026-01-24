@@ -24,7 +24,7 @@ jobs:
             # Deploy steps
             git pull origin main
             git status
-            npm install --only=prod
+            npm install
             npm install typescript
             npm run build || echo "No build script, skipping..."  # optional: fails safe if no build
             pm2 restart ecosystem.config.js --env production

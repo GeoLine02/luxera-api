@@ -18,4 +18,17 @@ enum AllowedMimeTypes {
   JPEG = "image/jpeg",
   WEBP = "image/webp",
 }
-export { ProductStatus, NotificationType, AllowedMimeTypes };
+enum OrderStatus {
+  OrderCancelled = "order_cancelled",
+  OrderDelivered = "order_delivered",
+  OrderInTransit = "order_in_transit",
+  OrderPaymentDue = "order_payment_due",
+  OrderPickupAvailable = "order_pickup_available",
+  OrderProblem = "order_problem",
+  OrderProcessing = "order_processing",
+  OrderReturned = "order_returned",
+  OrderPendingPayment = "order_pending_payment",
+  OrderPaid = "order_paid",
+}
+
+export { ProductStatus, NotificationType, AllowedMimeTypes, OrderStatus };
