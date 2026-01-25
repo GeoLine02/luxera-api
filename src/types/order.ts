@@ -10,7 +10,6 @@ interface OrderPayload {
   basket: BasketItem[];
   currency: string;
 }
-
 interface BasketItem {
   productId: number;
   productQuantity: number;

@@ -12,6 +12,7 @@ function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+
   // Determine if it's an operational error
   const isOperationalError = error instanceof BaseError;
 
@@ -67,6 +68,7 @@ function errorHandler(
       },
     });
   }
+  
 
   // Handle other custom BaseErrors
   if (error instanceof BaseError) {
