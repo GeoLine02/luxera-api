@@ -24,8 +24,12 @@ export async function bogRequestOrderService(
     unit_price: product.product_price,
     product_id: product.product_id,
   }));
+  const callbackUrl =
+    process.env.NODE_ENV === "production"
+      ? "https://api.luxeragift.com/payments/bog/callback"
+      : "http://localhost:4000/payments/bog/callback";
   const payload = {
-    callback_url: "https://api.luxeragift.com/payments/bog/callback",
+    callback_url: callbackUrl,
     external_order_id: orderData.order.id,
     capture: "automatic",
     purchase_units: {
