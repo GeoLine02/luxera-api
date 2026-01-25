@@ -23,7 +23,6 @@ interface OrderAttributes {
   shipping_tax?: number;
   shipping_tax_rate?: number;
   gateway_order_id?: string;
-  shop_id: number;
 }
 
 interface OrderCreationAttributes extends Optional<
@@ -43,7 +42,6 @@ interface OrderCreationAttributes extends Optional<
   | "shipping_tax"
   | "shipping_tax_rate"
   | "gateway_order_id"
-  | "shop_id"
 > {}
 
 class Orders
@@ -67,7 +65,6 @@ class Orders
   declare shipping_tax?: number;
   declare shipping_tax_rate?: number;
   declare gateway_order_id?: string;
-  declare shop_id: number;
 
   static associate(models: TypeModels) {
     // Each order belongs to one customer (user)
@@ -164,14 +161,6 @@ Orders.init(
     },
     gateway_order_id: {
       type: DataTypes.STRING,
-    },
-    shop_id: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: "Shops",
-        key: "id",
-      },
-      allowNull: false,
     },
   },
   {
