@@ -57,14 +57,13 @@ export async function bogRequestOrderController(
 }
 
 export async function bogCallbackController(req: Request, res: Response) {
-  const { event, body } = req.body;
-
   const rawBody = (req as any).rawBody;
 
   if (!verifyBOGSignature(rawBody, req.headers)) {
     console.warn("[SECURITY] Callback signature verification failed");
     throw new UnauthorizedError("Unauthorized: Invalid signature");
   }
+  const { event, body } = req.body;
   // 1. VALIDATE CALLBACK FORMAT
   if (event !== "order_payment" || !body || !body.order_id) {
     throw new BadRequestError("Invalid callback format");
