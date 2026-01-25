@@ -24,7 +24,7 @@ module.exports = {
     // Make password NOT NULL again
     await queryInterface.changeColumn("Users", "password", {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     });
   },
 };
