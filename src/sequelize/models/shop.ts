@@ -27,9 +27,9 @@ class Shop extends Model {
       foreignKey: "city_id",
       as: "city",
     });
-    Shop.hasMany(models.Orders, {
+    Shop.hasMany(models.OrderProducts, {
       foreignKey: "shop_id",
-      as: "orders",
+      as: "orderProducts",
     });
   }
 }

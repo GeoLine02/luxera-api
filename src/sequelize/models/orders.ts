@@ -84,10 +84,6 @@ class Orders
       foreignKey: "order_id",
       as: "products",
     });
-    Orders.belongsTo(models.Shop, {
-      foreignKey: "shop_id",
-      as: "shop",
-    });
   }
 }
 
