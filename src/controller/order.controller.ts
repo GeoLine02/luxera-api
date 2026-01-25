@@ -30,27 +30,31 @@ export async function createOrderController(req: Request, res: Response) {
       userId,
       transaction,
     );
-
+    console.log(OrderPayload.payment_method);
     if (order.payment_method?.startsWith("bog")) {
-      if (order.payment_method === "bog_card") {
-        const orderData = {
-          order: order,
-          orderProducts,
-          orderTotal,
-        };
-        const url = await bogRequestOrderController(orderData, transaction);
-        await transaction.commit();
-        return successfulResponse(res, "Got Redirect Url from Bog", {
-          type: "redirect",
-          paymentUrl: url,
-        });
-      }
+      const orderData = {
+        order: order,
+        orderProducts,
+        orderTotal,
+      };
+      const url = await bogRequestOrderController(orderData, transaction);
+      await transaction.commit();
+      return successfulResponse(res, "Got Redirect Url from Bog", {
+        type: "redirect",
+        paymentUrl: url,
+      });
     }
+    await transaction.commit();
+    return successfulResponse(res, "Order created successfully", {
+      orderId: order.id,
+      status: order.status,
+      total: orderTotal.value,
+    });
   } catch (error) {
     await transaction.rollback();
     console.log(error);
+    throw error;
   }
-
   // add later for other banks
 }
 

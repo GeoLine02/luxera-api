@@ -24,10 +24,8 @@ export async function bogRequestOrderService(
     unit_price: product.product_price,
     product_id: product.product_id,
   }));
-  const callbackUrl =
-    process.env.NODE_ENV === "production"
-      ? "https://api.luxeragift.com/payments/bog/callback"
-      : "http://localhost:4000/payments/bog/callback";
+  const callbackUrl = "https://api.luxeragift.com/payments/bog/callback";
+
   const payload = {
     callback_url: callbackUrl,
     external_order_id: orderData.order.id,
@@ -43,22 +41,23 @@ export async function bogRequestOrderService(
     },
   };
 
-  const response = await axios.post(
-    "https://api.bog.ge/payments/v1/ecommerce/orders",
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Idempotency-Key": orderData.order.id,
+  try {
+    const response = await axios.post(
+      "https://api.bog.ge/payments/v1/ecommerce/orders",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Idempotency-Key": orderData.order.id,
+        },
+        timeout: 1000,
       },
-      timeout: 1000,
-    },
-  );
-  if (response.status !== 201 && response.status !== 200) {
-    throw new Error("Failed to create BOG payment order");
+    );
+    return response.data as requestOrderResponse;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  return response.data as requestOrderResponse;
 }
 
 export async function getBogAccessToken(): Promise<string> {

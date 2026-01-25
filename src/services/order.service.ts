@@ -22,6 +22,7 @@ export async function createOrderService(
     phoneNumber,
     country = "Georgia",
   } = orderPayload;
+
   const order = await Orders.create(
     {
       customer_id: userId,
@@ -66,5 +67,5 @@ export async function createOrderService(
   const orderProducts = await OrderProducts.bulkCreate(orderProductsPayload, {
     transaction,
   });
-  return { orderTotal, orderProducts, order };
+  return { orderTotal, orderProducts, order, transaction };
 }

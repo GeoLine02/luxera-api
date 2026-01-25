@@ -140,6 +140,8 @@ Orders.init(
         OrderStatus.OrderProblem,
         OrderStatus.OrderProcessing,
         OrderStatus.OrderReturned,
+        OrderStatus.OrderPendingPayment,
+        OrderStatus.OrderPaid,
       ),
     },
     currency: {

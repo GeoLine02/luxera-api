@@ -22,7 +22,7 @@ router.post(
   "/register",
   authGuard,
   validateRequest(registerShopSchema),
-  ShopRegisterController
+  ShopRegisterController,
 );
 router.post("/login", authGuard, ShopLoginController);
 router.get("/refresh", RefreshShopAccessTokenController);
@@ -33,7 +33,7 @@ router.patch(
   "/location",
   authGuard,
   shopAuthGuard,
-  updateShopLocationController
+  updateShopLocationController,
 );
 
 export default router;

@@ -29,6 +29,7 @@ enum OrderStatus {
   OrderReturned = "order_returned",
   OrderPendingPayment = "order_pending_payment",
   OrderPaid = "order_paid",
+  
 }
 
 export { ProductStatus, NotificationType, AllowedMimeTypes, OrderStatus };
