@@ -16,5 +16,6 @@ interface BasketItem {
   price: number;
   shopId: number;
   variantId: number;
+  discount: number;
 }
 export { OrderPayload, BasketItem };

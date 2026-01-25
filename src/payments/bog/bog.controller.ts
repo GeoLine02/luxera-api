@@ -59,7 +59,6 @@ export async function bogRequestOrderController(
 export async function bogCallbackController(req: Request, res: Response) {
   const rawBody = (req as any).rawBody;
 
-
   if (!verifyBOGSignature(rawBody, req.headers)) {
     console.warn("[SECURITY] Callback signature verification failed");
     throw new UnauthorizedError("Unauthorized: Invalid signature");
@@ -94,10 +93,9 @@ export async function bogCallbackController(req: Request, res: Response) {
     // 5. MAP BOG STATUS
     let orderStatusToUpdate = "order_payment_due";
     let shouldDecrementStock = false;
-
     switch (bogStatusKey) {
       case "completed":
-        orderStatusToUpdate = "order_processing";
+        orderStatusToUpdate = OrderStatus.OrderPaid;
         shouldDecrementStock = true;
         break;
       case "rejected":

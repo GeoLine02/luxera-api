@@ -42,7 +42,10 @@ export async function createOrderService(
   // calculate total amount
   let totalAmount = 0;
   basket.forEach((item) => {
-    totalAmount += item.price * item.productQuantity;
+    const discountAmount = (item.price * item.discount) / 100;
+    const pricePerItem = item.price - discountAmount;
+    const lineTotal = pricePerItem * item.productQuantity;
+    totalAmount += lineTotal;
   });
 
   // create orderTotals
@@ -53,7 +56,6 @@ export async function createOrderService(
     },
     { transaction },
   );
-
   const orderProductsPayload = basket.map((item) => {
     return {
       product_id: item.productId,
