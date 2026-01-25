@@ -19,32 +19,38 @@ import { bogRequestOrderController } from "../payments/bog/bog.controller";
 
 export async function createOrderController(req: Request, res: Response) {
   const userId = req.user!.id;
-
   const OrderPayload: OrderPayload = req.body;
+
   // validate basket
   const transaction = await sequelize.transaction();
-  await validateBasketForOrder(OrderPayload.basket, transaction);
-  const { order, orderProducts, orderTotal } = await createOrderService(
-    OrderPayload,
-    userId,
-    transaction,
-  );
+  try {
+    await validateBasketForOrder(OrderPayload.basket, transaction);
+    const { order, orderProducts, orderTotal } = await createOrderService(
+      OrderPayload,
+      userId,
+      transaction,
+    );
 
-  if (order.payment_method?.startsWith("bog")) {
-    if (order.payment_method === "bog_card") {
-      const orderData = {
-        order: order,
-        orderProducts,
-        orderTotal,
-      };
-      const url = await bogRequestOrderController(orderData, transaction);
-
-      return successfulResponse(res, "Got Redirect Url from Bog", {
-        type: "redirect",
-        paymentUrl: url,
-      });
+    if (order.payment_method?.startsWith("bog")) {
+      if (order.payment_method === "bog_card") {
+        const orderData = {
+          order: order,
+          orderProducts,
+          orderTotal,
+        };
+        const url = await bogRequestOrderController(orderData, transaction);
+        await transaction.commit();
+        return successfulResponse(res, "Got Redirect Url from Bog", {
+          type: "redirect",
+          paymentUrl: url,
+        });
+      }
     }
+  } catch (error) {
+    await transaction.rollback();
+    console.log(error);
   }
+
   // add later for other banks
 }
 
