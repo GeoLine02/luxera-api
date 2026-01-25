@@ -17,7 +17,7 @@ import { ProductStatus } from "../constants/enums";
 import { Transaction } from "sequelize";
 import { bogRequestOrderController } from "../payments/bog/bog.controller";
 
-export async function createOrderController(res: Response, req: Request) {
+export async function createOrderController(req: Request, res: Response) {
   const userId = req.user!.id;
 
   const OrderPayload: OrderPayload = req.body;
