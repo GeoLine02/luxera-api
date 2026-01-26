@@ -14,7 +14,6 @@ const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
-
 // Configure multer storage
 const storage = multer.memoryStorage();
 
@@ -31,8 +30,8 @@ const upload = multer({
               message: "Invalid MIME type",
             },
           ],
-          "Invalid File type"
-        )
+          "Invalid File type",
+        ),
       );
     }
 
@@ -44,7 +43,7 @@ const upload = multer({
             field: "File",
             message: "Invalid File Extenstion",
           },
-        ])
+        ]),
       );
     }
     callback(null, true);
@@ -54,7 +53,7 @@ const upload = multer({
 export const validateUploadedFiles = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const files = req.files as Express.Multer.File[];
 
@@ -73,7 +72,7 @@ export const validateUploadedFiles = async (
 
       if (!ALLOWED_TYPES.includes(detectedType.mime as AllowedMimeTypes)) {
         throw new Error(
-          `File ${file.originalname} is not a valid image. Detected: ${detectedType.mime}`
+          `File ${file.originalname} is not a valid image. Detected: ${detectedType.mime}`,
         );
       }
     }
