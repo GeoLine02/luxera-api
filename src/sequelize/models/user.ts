@@ -7,7 +7,9 @@ class User extends Model {
   declare full_name: string;
   declare email: string;
   declare password: string;
-
+  declare email_verified: boolean;
+  declare email_verified_at: Date;
+  declare role: string;
   // Add association declarations if needed
   static associate(models: TypeModels) {
     // One user → many products
@@ -28,7 +30,6 @@ class User extends Model {
       foreignKey: "customer_id",
       as: "orders",
     });
-    
   }
 }
 
@@ -56,6 +57,25 @@ User.init(
     password: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    deleted_at: {
+      type: DataTypes.DATE,
+    },
+    email_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    email_verified_at: {
+      type: DataTypes.DATE,
+    },
+    image: {
+      type: DataTypes.STRING,
+    },
+    provider: {
+      type: DataTypes.STRING,
+    },
+    google_id: {
+      type: DataTypes.STRING,
     },
   },
   {
