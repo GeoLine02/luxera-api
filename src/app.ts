@@ -19,6 +19,7 @@ import googleRoutes from "./routes/google.routes";
 import paymentRoutes from "./payments/payments.routes";
 import orderRoutes from "./routes/orders.routes";
 import { CaptureRawBodyMiddleware } from "./middleware/captureRawBody";
+import { startVerificationCleanupJobCron } from "./jobs/verification.job";
 dotenv.config();
 
 const app = express();
@@ -43,6 +44,7 @@ app.use(
     credentials: true, // ✅ Allow cookies/authorization headers
   }),
 );
+startVerificationCleanupJobCron();
 app.use(CaptureRawBodyMiddleware); // saves rawBody
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data

@@ -4,7 +4,9 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response } from "express";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
 import User from "../sequelize/models/user";
-
+import PendingUser from "../sequelize/models/verifications";
+import { generateOTP, OTP_LENGTH } from "../constants/constants";
+import nodemailer from "nodemailer";
 interface RegisterUserInput {
   fullName: string;
   email: string;
@@ -13,18 +15,21 @@ interface RegisterUserInput {
 
 export async function RegisterUserService(
   data: RegisterUserInput,
-  res: Response
+  res: Response,
 ) {
   try {
     sequelize.authenticate();
-    const existingUser = await User.findOne({ where: { email: data.email } });
+
+    const existingUser = await User.findOne({
+      where: [{ email: data.email }, { deleted_at: null }],
+    });
     if (existingUser) {
       return res.status(400).json({
         success: false,
         message: "User with this email already exists",
       });
     }
-
+    // create pending Users
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const email = data.email.toLocaleLowerCase();
     const [newUser, created] = await User.findOrCreate({
@@ -35,7 +40,6 @@ export async function RegisterUserService(
         password: hashedPassword,
       },
     });
-
     if (!created) {
       console.error("Register Failed: User with this email already exists");
       return res.status(400).json({
@@ -94,7 +98,7 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
     const { email, password } = data;
 
     const existingUser = await User.findOne({
-      where: { email: email.toLowerCase() },
+      where: [{ email: email.toLowerCase() }, { deleted_at: null }],
     });
     if (!existingUser) {
       return res.status(400).json({
@@ -105,7 +109,7 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
 
     const isCorrectPassword = await bcrypt.compare(
       password,
-      existingUser.password
+      existingUser.password,
     );
 
     if (!isCorrectPassword) {
@@ -158,7 +162,7 @@ export async function UserLoginService(data: LoginUserInput, res: Response) {
 
 export async function UserTokenRefreshService(
   refreshToken: string | undefined,
-  res: Response
+  res: Response,
 ) {
   try {
     if (!refreshToken) {
@@ -171,11 +175,13 @@ export async function UserTokenRefreshService(
     // Verify refresh token
     const decoded = jwt.verify(
       refreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
+      process.env.REFRESH_TOKEN_SECRET!,
     ) as any;
 
     // Find user
-    const user = await User.findOne({ where: { id: decoded.id } });
+    const user = await User.findOne({
+      where: [{ id: decoded.id }],
+    });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -220,7 +226,7 @@ export async function UserByTokenService(accessToken: string, res: Response) {
       // Verify token
       decodedToken = jwt.verify(
         accessToken,
-        process.env.ACCESS_TOKEN_SECRET!
+        process.env.ACCESS_TOKEN_SECRET!,
       ) as JwtPayload;
     } catch (err: any) {
       console.error("Token verification failed:", err.message);

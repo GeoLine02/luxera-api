@@ -12,15 +12,24 @@ import Products from "../sequelize/models/products";
 import ProductVariants from "../sequelize/models/productvariants";
 import { PAGE_SIZE } from "../constants/constants";
 import Cities from "../sequelize/models/cities";
+import nodemailer from "nodemailer";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
 }
-
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: 587,
+  secure: false, // Use true for port 465, false for port 587
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 export async function RegisterShopService(
   data: ShopRegisterFieldsType,
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     sequelize.authenticate();
@@ -59,7 +68,7 @@ export async function RegisterShopService(
           where: {
             id: userId,
           },
-        }
+        },
       );
     }
 
@@ -92,7 +101,7 @@ export async function ShopLoginService(password: string, req: Request) {
     }
     const isCorrectPassword = await bcrypt.compare(
       password,
-      shop.password as string
+      shop.password as string,
     );
 
     if (!isCorrectPassword) {
@@ -135,7 +144,7 @@ export async function RefreshAccessToken(refreshToken?: string) {
     if (!refreshToken) return null;
     const decodedToken = jwt.verify(
       refreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
+      process.env.REFRESH_TOKEN_SECRET!,
     ) as { id: number };
 
     if (!decodedToken) return null;
@@ -162,7 +171,7 @@ interface ShopDeleteFieldsType {
 export async function ShopDeleteService(
   data: ShopDeleteFieldsType,
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     const userId = req.user?.id;
@@ -189,7 +198,7 @@ export async function ShopDeleteService(
 
     const isCorrectpassword = await bcrypt.compare(
       data.password,
-      existingShop?.password as string
+      existingShop?.password as string,
     );
 
     if (!isCorrectpassword) {
