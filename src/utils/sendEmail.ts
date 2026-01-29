@@ -355,7 +355,6 @@ export async function sendEmail(email: string, otp: string) {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "luxeragift | ანგარიშის ვერიფიკაცია",
-
       html: html,
     });
   } catch (error) {
