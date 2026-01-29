@@ -1,4 +1,3 @@
-
 import { ShopJwtPayload, UserJwtPayload } from "../middleware/authGuard";
 
 declare global {
