@@ -90,7 +90,7 @@ export async function ShopLoginController(req: Request, res: Response) {
 
 export async function RefreshShopAccessTokenController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     const authHeaders = req.headers?.authorization;
@@ -169,7 +169,7 @@ export async function getShopByIdController(req: Request, res: Response) {
 
 export async function updateShopLocationController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     const locationUpdateShop = await updateShopLocationService(req, res);

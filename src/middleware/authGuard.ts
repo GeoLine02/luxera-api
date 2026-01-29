@@ -39,7 +39,7 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
 export const shopAuthGuard = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const shopAccessToken = req.cookies.shopAccessToken;

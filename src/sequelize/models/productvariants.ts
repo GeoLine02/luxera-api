@@ -11,8 +11,10 @@ interface ProductVariantsAttributes {
   variant_discount: number;
   product_id: number;
 }
-interface ProductVariantCreationAttributes
-  extends Optional<ProductVariantsAttributes, "id"> {}
+interface ProductVariantCreationAttributes extends Optional<
+  ProductVariantsAttributes,
+  "id"
+> {}
 
 class ProductVariants
   extends Model<ProductVariantsAttributes, ProductVariantCreationAttributes>
@@ -38,6 +40,10 @@ class ProductVariants
     ProductVariants.hasMany(models.Carts, {
       foreignKey: "product_variant_id",
       as: "cartItems",
+    });
+    ProductVariants.hasMany(models.OrderProducts, {
+      foreignKey: "variant_id",
+      as: "orders",
     });
   }
 }
@@ -83,7 +89,7 @@ ProductVariants.init(
     modelName: "ProductVariants",
     tableName: "ProductVariants",
     timestamps: true,
-  }
+  },
 );
 
 export default ProductVariants;

@@ -12,7 +12,7 @@ import cookieParser from "cookie-parser";
 import { initAssociations } from "./sequelize/models/associate";
 import swaggerRouter from "./swagger/swagger";
 import cityRoutes from "./routes/city.routes";
-import sellerRoutes from "./seller/routes/seller.routes";
+import sellerRoutes from "./seller/routes/seller.order.routes";
 import errorHandler from "./middleware/errorHandler";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import googleRoutes from "./routes/google.routes";
