@@ -11,12 +11,8 @@ import {
   ValidationError,
   BadRequestError,
 } from "../../../errors/errors";
-import {
-  getImageBaseUrl,
-  getRandomImageName,
-} from "../../../constants/constants";
+import { getRandomImageName } from "../../../constants/constants";
 import logger from "../../../logger";
-import { log } from "console";
 import ProductImages from "../../../sequelize/models/productimages";
 import { s3 } from "../../../app";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
