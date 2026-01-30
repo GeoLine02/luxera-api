@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export const getOTPEmailTemplate = (otp: string, userName?: string): string => {
   return `
@@ -340,23 +341,20 @@ export const getOTPEmailTemplate = (otp: string, userName?: string): string => {
   `;
 };
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendEmail(email: string, otp: string) {
   const html = getOTPEmailTemplate(otp);
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const { data, error } = await resend.emails.send({
+      from: "noreply@contact.luxeragift.com",
       to: email,
-      subject: "luxeragift | ანგარიშის ვერიფიკაცია",
+      subject: "luxeragift.com | ანგარიშის ვერიფიკაცია",
       html: html,
     });
+    if (error) {
+      throw new Error(error.message);
+    }
   } catch (error) {
     throw error;
   }
