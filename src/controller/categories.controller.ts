@@ -23,7 +23,7 @@ export async function GetAllCategoriesController(req: Request, res: Response) {
 
 export async function GetAllSubCategoriesController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     const allSubCategories = await GetAllSubCategoriesService();
