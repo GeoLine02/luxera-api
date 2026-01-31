@@ -27,7 +27,6 @@ export async function createOrderService(
     {
       customer_id: userId,
       status: OrderStatus.OrderPendingPayment,
-      payment_method: payment_method,
       currency: currency,
       customer_city: city,
       customer_country: country,

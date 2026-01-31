@@ -96,7 +96,6 @@ export async function SendVerificationCodeController(
   });
   const contactEmail = "noreply@contact.luxeragift.com";
   await sendEmail(email, code, contactEmail);
-
   return successfulResponse(res, `Verification Code Sent to ${email}`, null);
 }
 

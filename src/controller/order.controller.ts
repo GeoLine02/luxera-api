@@ -49,6 +49,7 @@ export async function createOrderController(req: Request, res: Response) {
         orderProducts,
         orderTotal,
       };
+      console.log("Requesting Order From Bog");
       const url = await bogRequestOrderController(orderData, transaction);
       await transaction.commit();
       return successfulResponse(res, "Got Redirect Url from Bog", {

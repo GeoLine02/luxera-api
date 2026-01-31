@@ -7,7 +7,7 @@ import {
 import { errorResponse, successfulResponse } from "../../utils/responseHandler";
 import { OrderPayload } from "../../types/order";
 import Orders from "../../sequelize/models/orders";
-import { Order, Sequelize, Transaction } from "sequelize";
+import { Order, Sequelize, Transaction, where } from "sequelize";
 import OrderProducts from "../../sequelize/models/orderProducts";
 import OrderTotals from "../../sequelize/models/orderTotals";
 import { PaymentMethods } from "../enums";
@@ -38,11 +38,20 @@ export async function bogRequestOrderController(
   );
   const { id, _links } = requestOrderResponse;
   // add gateway id to orders table
-
-  await orderData.order.update({
-    gateway_order_id: id,
-    payment_method: PaymentMethods.BOGCARD,
-  });
+  await Orders.update(
+    {
+      gateway_order_id: id,
+      payment_method: PaymentMethods.BOGCARD,
+    },
+    {
+      where: {
+        id: orderData.order.id,
+        customer_id: orderData.order.customer_id,
+      },
+      transaction,
+    },
+  );
+  console.log("bog Response", { id: id, links: _links });
 
   return _links.redirect.href;
 }
@@ -167,7 +176,6 @@ export async function bogCallbackController(req: Request, res: Response) {
           `[STOCK] Decremented variant ${orderProduct.variant_id} by ${orderProduct.product_quantity}`,
         );
       }
-
       // update sales count
     }
 
@@ -178,6 +186,7 @@ export async function bogCallbackController(req: Request, res: Response) {
       `[SUCCESS] Callback processed: order ${order.id}, ` +
         `status ${bogStatusKey} → ${orderStatusToUpdate}, ` +
         `stock decremented: ${shouldDecrementStock}`,
+      "",
     );
 
     return successfulResponse(res, "Callback Processed Successfully", {
