@@ -73,30 +73,34 @@ export async function getBogAccessToken(): Promise<string> {
       "BOG_CLIENT_ID or BOG_SECRET_KEY is missing in environment variables",
     );
   }
-  const response = await axios.post(
-    BOG_TEST_AUTH_URL,
-    new URLSearchParams({
-      grant_type: "client_credentials",
-    }),
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+  try {
+    const response = await axios.post(
+      BOG_TEST_AUTH_URL,
+      new URLSearchParams({
+        grant_type: "client_credentials",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        auth: {
+          username: BOG_TEST_CLIENT_ID,
+          password: BOG_TEST_SECRET,
+        },
       },
-      auth: {
-        username: BOG_TEST_CLIENT_ID,
-        password: BOG_TEST_SECRET,
-      },
-    },
-  );
+    );
 
-  // Extract access token
-  const { access_token } = response.data;
+    // Extract access token
+    const { access_token } = response.data;
 
-  if (!access_token) {
-    throw new Error("Failed to retrieve access token from Bank of Georgia");
+    if (!access_token) {
+      throw new Error("Failed to retrieve access token from Bank of Georgia");
+    }
+
+    return access_token;
+  } catch (error) {
+    throw error;
   }
-
-  return access_token;
 }
 const BOG_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu4RUyAw3+CdkS3ZNILQh
