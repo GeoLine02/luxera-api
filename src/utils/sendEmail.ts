@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-
+import { Resend } from "resend";
 export const getOTPEmailTemplate = (otp: string, userName?: string): string => {
   return `
 <!DOCTYPE html>
@@ -340,23 +340,24 @@ export const getOTPEmailTemplate = (otp: string, userName?: string): string => {
   `;
 };
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function sendEmail(email: string, otp: string) {
+export async function sendEmail(email: string, otp: string, from: string) {
   const html = getOTPEmailTemplate(otp);
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const { data, error } = await resend.emails.send({
+      from: from,
       to: email,
       subject: "luxeragift | ანგარიშის ვერიფიკაცია",
       html: html,
     });
+
+    if (error) {
+      console.error(error.message);
+      throw new Error(error.message);
+    }
+
+    return data;
   } catch (error) {
     throw error;
   }

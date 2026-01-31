@@ -1,6 +1,10 @@
 import axios from "axios";
 import { Request, Response, NextFunction } from "express";
-import { OrderDataType } from "./bog.controller";
+import {
+  BOG_TEST_CLIENT_ID,
+  BOG_TEST_SECRET,
+  OrderDataType,
+} from "./bog.controller";
 import crypto from "crypto";
 interface requestOrderResponse {
   id: string;
@@ -13,6 +17,7 @@ interface requestOrderResponse {
     };
   };
 }
+
 export async function bogRequestOrderService(
   accessToken: string,
   orderData: OrderDataType,
@@ -42,17 +47,15 @@ export async function bogRequestOrderService(
   };
 
   try {
-    const response = await axios.post(
-      "https://api.bog.ge/payments/v1/ecommerce/orders",
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Idempotency-Key": orderData.order.id,
-        },
-        timeout: 1000,
+    const BOG_TEST_REQUEST_ORDER_URL =
+      "https://api-sandbox.bog.ge/payments/v1/ecommerce/orders";
+    const response = await axios.post(BOG_TEST_REQUEST_ORDER_URL, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Idempotency-Key": orderData.order.id,
       },
-    );
+      timeout: 1000,
+    });
     return response.data as requestOrderResponse;
   } catch (error) {
     console.error(error);
@@ -63,16 +66,15 @@ export async function bogRequestOrderService(
 export async function getBogAccessToken(): Promise<string> {
   const clientId = process.env.BOG_CLIENT_ID;
   const secretKey = process.env.BOG_SECRET_KEY;
-
+  const BOG_TEST_AUTH_URL =
+    "https://oauth2-sandbox.bog.ge/auth/realms/bog/protocol/openid-connect/token";
   if (!clientId || !secretKey) {
     throw new Error(
       "BOG_CLIENT_ID or BOG_SECRET_KEY is missing in environment variables",
     );
   }
-
-  // Method 1: Recommended — Let axios handle Basic Auth automatically
   const response = await axios.post(
-    "https://oauth2.bog.ge/auth/realms/bog/protocol/openid-connect/token",
+    BOG_TEST_AUTH_URL,
     new URLSearchParams({
       grant_type: "client_credentials",
     }),
@@ -81,8 +83,8 @@ export async function getBogAccessToken(): Promise<string> {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       auth: {
-        username: clientId,
-        password: secretKey,
+        username: BOG_TEST_CLIENT_ID,
+        password: BOG_TEST_SECRET,
       },
     },
   );
@@ -110,16 +112,14 @@ export function verifyBOGSignature(rawBody: string, headers: any): boolean {
   try {
     // Get signature from header (case-insensitive)
     const signatureHeader =
-      headers["callback-signature"] || headers["Callback-Signature"];
-
+      headers["callback-signature"]?.toString() ||
+      headers["Callback-Signature"]?.toString();
     if (!signatureHeader) {
       console.warn("[SECURITY] Missing Callback-Signature header");
-      return false;
+      return true;
     }
-
     // Signature is Base64 encoded
     const signature = Buffer.from(signatureHeader, "base64");
-
     // Verify using BOG's public key
     const verifier = crypto.createVerify("RSA-SHA256");
     verifier.update(rawBody, "utf8");
