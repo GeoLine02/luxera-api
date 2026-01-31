@@ -42,8 +42,7 @@ export async function createOrderController(req: Request, res: Response) {
       userId,
       transaction,
     );
-    console.log(OrderPayload.payment_method);
-    if (order.payment_method?.startsWith("bog")) {
+    if (OrderPayload.payment_method?.startsWith("bog")) {
       const orderData = {
         order: order,
         orderProducts,
