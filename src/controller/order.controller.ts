@@ -24,11 +24,10 @@ import { PAGE_SIZE } from "../constants/constants";
 import OrderProducts from "../sequelize/models/orderProducts";
 import ProductImages from "../sequelize/models/productimages";
 import OrderTotals from "../sequelize/models/orderTotals";
-import { s3 } from "../app";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { generateSignedImageUrls } from "../utils/generateImageUrls";
 import { User } from "../sequelize/models/associate";
+import { BasketItemSchema } from "../validators/orderValidator";
+import { ZodError } from "zod";
 
 export async function createOrderController(req: Request, res: Response) {
   const userId = req.user!.id;
@@ -116,6 +115,19 @@ export async function validateBasketForOrder(
 
   // Now validate everything
   for (const basketItem of basket) {
+    try {
+      BasketItemSchema.parse(basketItem);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedErrors = error.issues.map((issue) => {
+          return {
+            field: issue.path.join("."),
+            message: issue.message,
+          };
+        });
+        throw new ValidationError(formattedErrors, "Invalid Basket");
+      }
+    }
     const { shopId, productId, variantId, productQuantity } = basketItem;
 
     // Shop exists
