@@ -5,9 +5,14 @@ import {
   UserByTokenService,
   UserLoginService,
   UserTokenRefreshService,
+  VerifyOtpViaEmail,
 } from "../services/user.service";
-import { BadRequestError, ValidationError } from "../errors/errors";
-import nodemailer from "nodemailer";
+import {
+  BadRequestError,
+  NotFoundError,
+  ValidationError,
+} from "../errors/errors";
+import jwt from "jsonwebtoken";
 import Verifications from "../sequelize/models/verifications";
 import { generateOTP, OTP_LENGTH } from "../constants/constants";
 import { successfulResponse } from "../utils/responseHandler";
@@ -15,6 +20,10 @@ import { User } from "../sequelize/models/associate";
 import { where } from "sequelize";
 import { sendEmail } from "../utils/sendEmail";
 import sequelize from "../db";
+import { generateAccessToken } from "../utils/jwt";
+import bcrypt from "bcrypt";
+import { registerUserSchema } from "../validators/userValidators";
+import { ZodError } from "zod";
 
 export async function UserRegisterController(req: Request, res: Response) {
   try {
@@ -94,7 +103,7 @@ export async function SendVerificationCodeController(
     expires_at: expiresAt,
     otp: code,
   });
-  const contactEmail = "noreply@contact.luxeragift.com";
+  const contactEmail = process.env.CONTACT_EMAIL!;
   await sendEmail(email, code, contactEmail);
   return successfulResponse(res, `Verification Code Sent to ${email}`, null);
 }
@@ -102,6 +111,7 @@ export async function SendVerificationCodeController(
 export async function VerifyUserController(req: Request, res: Response) {
   const code = req.body.code;
   const userId = req.user?.id;
+
   const email = req.user?.email;
 
   if (!code) {
@@ -117,52 +127,7 @@ export async function VerifyUserController(req: Request, res: Response) {
     throw new Error("Could not resolve email or user id");
   }
 
-  const verification = await Verifications.findOne({
-    where: {
-      email: email,
-    },
-  });
-
-  if (!verification) {
-    throw new ValidationError([
-      {
-        field: "code",
-        message: "Invalid code",
-      },
-    ]);
-  }
-
-  if (Date.now() > verification.expires_at.getTime()) {
-    // Delete expired verification
-    await verification.destroy();
-    throw new ValidationError([
-      {
-        field: "code",
-        message: "Code expired. Request a new one.",
-      },
-    ]);
-  }
-
-  // ❌ ISSUE 4: No attempt tracking
-  // User can brute force unlimited times. Add:
-  if (verification.attempts >= verification.max_attempts) {
-    throw new ValidationError([
-      {
-        field: "code",
-        message: "Too many attempts. Request a new code.",
-      },
-    ]);
-  }
-
-  if (verification.otp !== code) {
-    // ❌ ISSUE 5: Increment attempts on wrong code
-    verification.attempts += 1;
-    await verification.save();
-
-    throw new BadRequestError(
-      `Code is incorrect. ${verification.max_attempts - verification.attempts} attempts remaining`,
-    );
-  }
+  await VerifyOtpViaEmail(email, code);
   const transaction = await sequelize.transaction();
   try {
     // ✅ Code is correct - update user
@@ -173,15 +138,159 @@ export async function VerifyUserController(req: Request, res: Response) {
     if (!updatedUser) {
       throw new Error("Failed to update user");
     }
-    await verification.destroy({ transaction });
+    await Verifications.destroy({
+      where: {
+        email: email,
+      },
+    });
     const verifiedUser = await User.findByPk(userId);
+
     await transaction.commit();
 
     return successfulResponse(res, "Email verified successfully", verifiedUser);
-    // ✅ Delete verification record
   } catch (error) {
     console.error(error);
     await transaction.rollback();
     throw error;
   }
+}
+export async function UserForgotPasswordController(
+  req: Request,
+  res: Response,
+) {
+  const { email } = req.body;
+  if (!email) {
+    throw new ValidationError([
+      {
+        field: "email",
+        message: "Invalid email",
+      },
+    ]);
+  }
+  // find user
+  const user = await User.findOne({
+    where: {
+      email: email,
+    },
+  });
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  // send code
+  const code = generateOTP(OTP_LENGTH);
+  // create verification
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await Verifications.create({
+    email: email,
+    expires_at: expiresAt,
+    otp: code,
+  });
+  await sendEmail(email, code, process.env.CONTACT_EMAIL!);
+  return successfulResponse(res, `Verification Code Sent to ${email}`, null);
+}
+
+export async function UserChangePasswordController(
+  req: Request,
+  res: Response,
+) {
+  let accessToken = req.cookies?.accessToken;
+  // 2️⃣ Fallback: manually parse req.headers.cookie
+  if (!accessToken && req.headers.cookie) {
+    const cookies = Object.fromEntries(
+      req.headers.cookie.split("; ").map((cookie) => cookie.split("=")),
+    );
+    accessToken = cookies.accessToken;
+  }
+  if (!accessToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: No access token provided",
+    });
+  }
+  interface Jwt {
+    email: string;
+  }
+  const secret = process.env.ACCESS_TOKEN_SECRET;
+  if (!secret) throw new Error("ACCESS_TOKEN_SECRET is not defined");
+
+  const decoded = jwt.verify(accessToken, secret) as Jwt;
+
+  const { newPassword } = req.body;
+  try {
+    registerUserSchema.shape.password.parse(newPassword);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const firstIssue = error.issues[0];
+      throw new ValidationError([
+        {
+          field: "password",
+          message: firstIssue.message,
+        },
+      ]);
+    }
+  }
+  const user = await User.findOne({
+    where: {
+      email: decoded.email,
+    },
+  });
+  if (!user) {
+    throw new NotFoundError("User not Found");
+  }
+  // update password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const updatedUser = await user.update({
+    password: hashedPassword,
+  });
+
+  return successfulResponse(res, "Updated User password", updatedUser);
+}
+export async function UserLogoutController(req: Request, res: Response) {
+  res.clearCookie("accessToken");
+  res.clearCookie("shopAccessToken");
+  return successfulResponse(res, "User Logged out", null);
+}
+export async function UserForgotPasswordVerifyController(
+  req: Request,
+  res: Response,
+) {
+  const { email, code } = req.body;
+  if (!code) {
+    throw new ValidationError([
+      {
+        field: "code",
+        message: "code is required",
+      },
+    ]);
+  }
+  if (!email) {
+    throw new ValidationError([
+      {
+        field: "email",
+        message: "email is required or invalid",
+      },
+    ]);
+  }
+  await VerifyOtpViaEmail(email, code);
+  await Verifications.destroy({
+    where: {
+      email: email,
+    },
+  });
+
+  const payload = {
+    email: email,
+  };
+
+  const accessToken = generateAccessToken(payload);
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 15 * 60 * 1000, // 15 min
+  });
+  return successfulResponse(res, "Email verified successfully", accessToken);
 }

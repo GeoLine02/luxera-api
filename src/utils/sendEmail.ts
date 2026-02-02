@@ -351,7 +351,6 @@ export async function sendEmail(email: string, otp: string, from: string) {
       subject: "luxeragift | ანგარიშის ვერიფიკაცია",
       html: html,
     });
-
     if (error) {
       console.error(error.message);
       throw new Error(error.message);
