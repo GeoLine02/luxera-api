@@ -69,6 +69,7 @@ export async function bogCallbackController(req: Request, res: Response) {
   const { order_id, order_status } = body;
   const bogStatusKey = order_status?.key;
   const transaction = await sequelize.transaction();
+
   try {
     // 3. FIND ORDER WITH LOCK
     const order = await Orders.findOne({

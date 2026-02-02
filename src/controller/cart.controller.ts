@@ -6,7 +6,6 @@ import {
   deleteCartItemService,
   getCartService,
 } from "../services/cart.service";
-import { success } from "zod";
 
 async function addCartItemController(req: Request, res: Response) {
   const body = req.body as AddCartItemPayload;
@@ -25,7 +24,6 @@ async function addCartItemController(req: Request, res: Response) {
     });
   }
 }
-
 async function deleteCartItemController(req: Request, res: Response) {
   try {
     const deletedProduct = await deleteCartItemService(req, res);

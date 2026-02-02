@@ -7,6 +7,8 @@ import User from "../sequelize/models/user";
 import PendingUser from "../sequelize/models/verifications";
 import { generateOTP, OTP_LENGTH } from "../constants/constants";
 import nodemailer from "nodemailer";
+import Verifications from "../sequelize/models/verifications";
+import { BadRequestError, ValidationError } from "../errors/errors";
 interface RegisterUserInput {
   fullName: string;
   email: string;
@@ -276,4 +278,53 @@ export async function UserByTokenService(accessToken: string, res: Response) {
           : "Internal server error",
     });
   }
+}
+export async function VerifyOtpViaEmail(email: string, code: string) {
+  const verification = await Verifications.findOne({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!verification) {
+    throw new ValidationError([
+      {
+        field: "code",
+        message: "Invalid code",
+      },
+    ]);
+  }
+
+  if (Date.now() > verification.expires_at.getTime()) {
+    // Delete expired verification
+    await verification.destroy();
+    throw new ValidationError([
+      {
+        field: "code",
+        message: "Code expired. Request a new one.",
+      },
+    ]);
+  }
+
+  // ❌ ISSUE 4: No attempt tracking
+  // User can brute force unlimited times. Add:
+  if (verification.attempts >= verification.max_attempts) {
+    throw new ValidationError([
+      {
+        field: "code",
+        message: "Too many attempts. Request a new code.",
+      },
+    ]);
+  }
+
+  if (verification.otp !== code) {
+    // ❌ ISSUE 5: Increment attempts on wrong code
+    verification.attempts += 1;
+    await verification.save();
+
+    throw new BadRequestError(
+      `Code is incorrect. ${verification.max_attempts - verification.attempts} attempts remaining`,
+    );
+  }
+  return true;
 }
