@@ -26,6 +26,13 @@ module.exports = {
         },
         allowNull: false,
       },
+      shop_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "Shops",
+        },
+        allowNull: false,
+      },
       variant_id: {
         type: Sequelize.INTEGER,
         references: {
@@ -44,7 +51,6 @@ module.exports = {
         type: Sequelize.DECIMAL(15, 4),
         allowNull: false,
       },
-
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

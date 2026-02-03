@@ -122,6 +122,5 @@ export const startDatabaseBackupTask = () => {
     },
   );
   logger.info("✅ Database backup task scheduled");
-
   process.on("SIGTERM", () => task.stop());
 };
