@@ -4,6 +4,6 @@ import {
   bogRequestOrderController,
 } from "./bog.controller";
 const router = e.Router();
-router.get("/callback", bogCallbackController);
+router.all("/callback", bogCallbackController);
 
 export default router;

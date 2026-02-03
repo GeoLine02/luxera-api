@@ -94,7 +94,7 @@ export async function AllProductsService(req: Request, res: Response) {
   }
 
   const offset = PAGE_SIZE * (integerPage - 1);
-  const products = (await Products.findAll({
+  const { rows: products, count } = await Products.findAndCountAll({
     where: productWhere,
     order,
     offset: offset,
@@ -115,7 +115,7 @@ export async function AllProductsService(req: Request, res: Response) {
         ],
       },
     ],
-  })) as HomePageProduct[];
+  });
   const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
   const productsWithImages = await Promise.all(
     plainProducts.map(async (product) => {
@@ -149,8 +149,7 @@ export async function AllProductsService(req: Request, res: Response) {
     }),
   );
 
-  const totalCount = await Products.count();
-  const hasMore = totalCount > integerPage * PAGE_SIZE + products.length;
+  const hasMore = count > offset + products.length;
   return { hasMore, integerPage, productsWithImages };
 }
 
@@ -160,9 +159,7 @@ export async function getSellerProductsService(req: Request, res: Response) {
     const page = Number(req.query.page);
 
     const offest = PAGE_SIZE * (page - 1);
-    const hasMore = await Products.count({
-      where: { shop_id: shopId },
-    });
+
     const sellerProducts = await Products.findAll({
       where: {
         shop_id: shopId,
@@ -175,7 +172,10 @@ export async function getSellerProductsService(req: Request, res: Response) {
         },
       ],
     });
-
+    const count = await Products.count({
+      where: { shop_id: shopId },
+    });
+    const hasMore = offest + PAGE_SIZE < count;
     return res.status(200).json({
       success: true,
       data: sellerProducts,
@@ -288,7 +288,7 @@ export async function VipProductsService(req: Request, res: Response) {
 
     const offset = PAGE_SIZE * (page - 1);
 
-    const products = (await Products.findAll({
+    const { rows: products, count } = await Products.findAndCountAll({
       where: {
         product_status: ProductStatus.Vip,
       },
@@ -310,7 +310,7 @@ export async function VipProductsService(req: Request, res: Response) {
           ],
         },
       ],
-    })) as any[];
+    });
 
     const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
 
@@ -350,11 +350,7 @@ export async function VipProductsService(req: Request, res: Response) {
       }),
     );
 
-    const totalCount = await Products.count({
-      where: { product_status: ProductStatus.Vip },
-    });
-
-    const hasMore = totalCount > page * PAGE_SIZE;
+    const hasMore = count > page * PAGE_SIZE;
 
     return res.status(200).json({
       success: true,
@@ -387,31 +383,32 @@ export async function FeaturedProductsService(req: Request, res: Response) {
 
     const offset = PAGE_SIZE * (page - 1);
 
-    const products = (await Products.findAll({
-      where: {
-        "$primaryVariant.variant_price$": {
-          [Op.gt]: 100,
+    const { rows: products, count: totalCount } =
+      await Products.findAndCountAll({
+        where: {
+          "$primaryVariant.variant_price$": {
+            [Op.gt]: 100,
+          },
         },
-      },
-      order: [["id", "ASC"]],
-      offset: offset,
-      limit: PAGE_SIZE,
-      include: [
-        {
-          model: ProductVariants,
-          as: "primaryVariant",
-          required: true,
-          include: [
-            {
-              model: ProductImages,
-              required: false,
-              as: "images",
-              attributes: ["id", "s3_key"],
-            },
-          ],
-        },
-      ],
-    })) as any[];
+        order: [["id", "ASC"]],
+        offset: offset,
+        limit: PAGE_SIZE,
+        include: [
+          {
+            model: ProductVariants,
+            as: "primaryVariant",
+            required: true,
+            include: [
+              {
+                model: ProductImages,
+                required: false,
+                as: "images",
+                attributes: ["id", "s3_key"],
+              },
+            ],
+          },
+        ],
+      });
 
     const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
 
@@ -449,23 +446,7 @@ export async function FeaturedProductsService(req: Request, res: Response) {
         return product;
       }),
     );
-
-    const totalCount = await Products.count({
-      where: {
-        "$primaryVariant.variant_price$": {
-          [Op.gt]: 100,
-        },
-      },
-      include: [
-        {
-          model: ProductVariants,
-          as: "primaryVariant",
-          required: true,
-        },
-      ],
-    });
-
-    const hasMore = totalCount > page * PAGE_SIZE;
+    const hasMore = totalCount > offset + PAGE_SIZE;
 
     return res.status(200).json({
       success: true,
@@ -495,7 +476,7 @@ export async function SearchProductsService(req: Request, res: Response) {
         "Search query is required",
       );
     }
-  
+
     const page = Number(req.query.page) || 1;
     if (isNaN(page) || page < 1) {
       throw new ValidationError(
@@ -511,7 +492,7 @@ export async function SearchProductsService(req: Request, res: Response) {
 
     const offset = PAGE_SIZE * (page - 1);
 
-    const products = (await Products.findAll({
+    const { rows: products, count } = await Products.findAndCountAll({
       where: {
         [Op.or]: [
           {
@@ -559,7 +540,7 @@ export async function SearchProductsService(req: Request, res: Response) {
           ],
         },
       ],
-    })) as any[];
+    });
 
     const plainProducts = products.map((p) => p.get({ plain: true })) as any[];
 
@@ -599,45 +580,7 @@ export async function SearchProductsService(req: Request, res: Response) {
       }),
     );
 
-    const totalCount = await Products.count({
-      where: {
-        [Op.or]: [
-          {
-            "$primaryVariant.variant_name$": { [Op.iLike]: `%${query}%` },
-          },
-          {
-            "$subCategory.sub_category_name$": { [Op.iLike]: `%${query}%` },
-          },
-          {
-            "$subCategory.category.category_name$": {
-              [Op.iLike]: `%${query}%`,
-            },
-          },
-        ],
-      },
-      include: [
-        {
-          model: SubCategories,
-          as: "subCategory",
-          required: false,
-          include: [
-            {
-              model: Categories,
-              as: "category",
-              required: false,
-            },
-          ],
-        },
-        {
-          model: ProductVariants,
-          as: "primaryVariant",
-          required: true,
-        },
-      ],
-      distinct: true,
-    });
-
-    const hasMore = totalCount > page * PAGE_SIZE;
+    const hasMore = count > page * PAGE_SIZE + PAGE_SIZE;
 
     return res.status(200).json({
       success: true,

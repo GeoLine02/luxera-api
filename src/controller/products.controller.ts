@@ -67,6 +67,7 @@ export async function GetProductByIdController(req: Request, res: Response) {
   const product = await GetProductByIdService(req, res);
   return product;
 }
+
 export async function GetProductsBySubCategoryController(
   req: Request,
   res: Response,

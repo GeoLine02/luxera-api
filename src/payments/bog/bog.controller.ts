@@ -7,7 +7,7 @@ import {
 import { errorResponse, successfulResponse } from "../../utils/responseHandler";
 import { OrderPayload } from "../../types/order";
 import Orders from "../../sequelize/models/orders";
-import { Order, Sequelize, Transaction } from "sequelize";
+import { Order, Sequelize, Transaction, where } from "sequelize";
 import OrderProducts from "../../sequelize/models/orderProducts";
 import OrderTotals from "../../sequelize/models/orderTotals";
 import { PaymentMethods } from "../enums";
@@ -17,18 +17,9 @@ import ProductVariants from "../../sequelize/models/productvariants";
 import sequelize from "../../db";
 import { success } from "zod";
 import { BadRequestError, UnauthorizedError } from "../../errors/errors";
-import logger from "../../logger";
-interface requestOrderResponse {
-  id: string;
-  _links: {
-    details: {
-      href: string;
-    };
-    redirect: {
-      href: string;
-    };
-  };
-}
+export const BOG_TEST_CLIENT_ID = "10000085";
+export const BOG_TEST_SECRET = "61EsCkTvEug4";
+
 export interface OrderDataType {
   order: Orders;
   orderProducts: OrderProducts[];
@@ -45,14 +36,23 @@ export async function bogRequestOrderController(
     accessToken,
     orderData,
   );
-
   const { id, _links } = requestOrderResponse;
   // add gateway id to orders table
+  await Orders.update(
+    {
+      gateway_order_id: id,
+      payment_method: PaymentMethods.BOGCARD,
+    },
 
-  await orderData.order.update({
-    gateway_order_id: id,
-    payment_method: PaymentMethods.BOGCARD,
-  });
+    {
+      where: {
+        id: orderData.order.id,
+        customer_id: orderData.order.customer_id,
+      },
+      transaction,
+    },
+  );
+  console.log("bog Response", { id: id, links: _links });
 
   return _links.redirect.href;
 }
@@ -60,21 +60,17 @@ export async function bogRequestOrderController(
 export async function bogCallbackController(req: Request, res: Response) {
   const rawBody = (req as any).rawBody;
 
-  if (!verifyBOGSignature(rawBody, req.headers)) {
-    console.warn("[SECURITY] Callback signature verification failed");
-    throw new UnauthorizedError("Unauthorized: Invalid signature");
-  }
+  verifyBOGSignature(rawBody, req.headers);
+
   const { event, body } = req.body;
   // 1. VALIDATE CALLBACK FORMAT
   if (event !== "order_payment" || !body || !body.order_id) {
     throw new BadRequestError("Invalid callback format");
   }
-  logger.info("callback recieved from bog");
   const { order_id, order_status } = body;
   const bogStatusKey = order_status?.key;
-
   const transaction = await sequelize.transaction();
-
+  console.log("callback body: ", body);
   try {
     // 3. FIND ORDER WITH LOCK
     const order = await Orders.findOne({
@@ -87,10 +83,9 @@ export async function bogCallbackController(req: Request, res: Response) {
       console.warn(`Order not found for gateway_order_id: ${order_id}`);
       await transaction.commit();
       return res.status(200).json({
-        message: "Callback received",
+        message: "Order Processed",
       });
     }
-
     // 5. MAP BOG STATUS
     let orderStatusToUpdate = "order_payment_due";
     let shouldDecrementStock = false;
@@ -153,7 +148,6 @@ export async function bogCallbackController(req: Request, res: Response) {
       // Validate stock is available for all items
       for (const orderProduct of orderProducts) {
         const variant = variantMap.get(orderProduct.variant_id);
-
         if (!variant) {
           throw new Error(`Variant ${orderProduct.variant_id} not found`);
         }
@@ -165,7 +159,6 @@ export async function bogCallbackController(req: Request, res: Response) {
           );
         }
       }
-
       // ✅ BULK UPDATE (not loop)
       // Use raw SQL or bulk update for performance
       for (const orderProduct of orderProducts) {
@@ -185,8 +178,7 @@ export async function bogCallbackController(req: Request, res: Response) {
           `[STOCK] Decremented variant ${orderProduct.variant_id} by ${orderProduct.product_quantity}`,
         );
       }
-
-      // ✅ OPTIONAL: Update sales count
+      // update sales count
     }
 
     // 9. COMMIT TRANSACTION
@@ -196,6 +188,7 @@ export async function bogCallbackController(req: Request, res: Response) {
       `[SUCCESS] Callback processed: order ${order.id}, ` +
         `status ${bogStatusKey} → ${orderStatusToUpdate}, ` +
         `stock decremented: ${shouldDecrementStock}`,
+      "",
     );
 
     return successfulResponse(res, "Callback Processed Successfully", {

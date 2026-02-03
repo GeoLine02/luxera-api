@@ -15,7 +15,6 @@ export async function createOrderService(
     city,
     currency = "GEL",
     email,
-    payment_method,
     postcode,
     state,
     streetAddress,
@@ -27,7 +26,6 @@ export async function createOrderService(
     {
       customer_id: userId,
       status: OrderStatus.OrderPendingPayment,
-      payment_method: payment_method,
       currency: currency,
       customer_city: city,
       customer_country: country,
@@ -39,14 +37,16 @@ export async function createOrderService(
     },
     { transaction },
   );
+
   // calculate total amount
   let totalAmount = 0;
   basket.forEach((item) => {
-    const discountAmount = (item.price * item.discount) / 100;
+    const discountAmount = (item.price * item.productDiscount) / 100 || 0;
     const pricePerItem = item.price - discountAmount;
     const lineTotal = pricePerItem * item.productQuantity;
     totalAmount += lineTotal;
   });
+  console.log("Total Amount", totalAmount);
 
   // create orderTotals
   const orderTotal = await OrderTotals.create(
@@ -57,15 +57,18 @@ export async function createOrderService(
     { transaction },
   );
   const orderProductsPayload = basket.map((item) => {
+    const discountAmount = (item.price * item.productDiscount) / 100 || 0;
+    const productPrice = item.price - discountAmount;
     return {
       product_id: item.productId,
       order_id: order.id,
       product_quantity: item.productQuantity,
-      product_price: item.price,
+      product_price: productPrice,
       shop_id: item.shopId,
       variant_id: item.variantId,
     };
   });
+  console.log("Order Products Payload", orderProductsPayload);
   const orderProducts = await OrderProducts.bulkCreate(orderProductsPayload, {
     transaction,
   });

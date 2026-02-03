@@ -2,10 +2,14 @@
 
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
-import { TypeModels } from "./associate";
+import { Products, TypeModels } from "./associate";
 import { OrderStatus } from "../../constants/enums";
+import { OrderProductAttributes } from "./orderProducts";
+import OrderTotals from "./orderTotals";
+import ProductVariants from "./productvariants";
+import ProductImages from "./productimages";
 
-interface OrderAttributes {
+export interface OrderAttributes {
   id: string;
   customer_id: number;
   customer_street_address?: string;
@@ -24,7 +28,16 @@ interface OrderAttributes {
   shipping_tax_rate?: number;
   gateway_order_id?: string;
 }
-
+export interface OrderDetailsAttributes extends OrderAttributes {
+  orderProducts: OrderProductAttributes &
+    {
+      product: Products;
+      productVariant: ProductVariants & {
+        images: ProductImages[];
+      };
+    }[];
+  orderTotal: OrderTotals;
+}
 interface OrderCreationAttributes extends Optional<
   OrderAttributes,
   | "id"
@@ -76,13 +89,13 @@ class Orders
     // Each order has many order totals
     Orders.hasOne(models.OrderTotals, {
       foreignKey: "order_id",
-      as: "totals",
+      as: "orderTotal",
     });
 
     // Each order has many order products
     Orders.hasMany(models.OrderProducts, {
       foreignKey: "order_id",
-      as: "products",
+      as: "orderProducts",
     });
   }
 }

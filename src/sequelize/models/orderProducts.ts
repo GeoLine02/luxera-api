@@ -3,8 +3,9 @@
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
+import ProductVariants from "./productvariants";
 
-interface OrderProductAttributes {
+export interface OrderProductAttributes {
   id: string;
   order_id: string;
   product_id: number;
@@ -39,13 +40,15 @@ class OrderProducts
       as: "order",
       onDelete: "CASCADE",
     });
-
+    OrderProducts.belongsTo(models.ProductVariants, {
+      foreignKey: "variant_id",
+      as: "productVariant",
+    });
     // Each order product belongs to one product
     OrderProducts.belongsTo(models.Products, {
       foreignKey: "product_id",
       as: "product",
     });
-
     OrderProducts.belongsTo(models.Shop, {
       foreignKey: "shop_id",
       as: "shop",

@@ -10,6 +10,7 @@ const BasketItemSchema = z.object({
   price: z.number().positive("Price must be greater than 0"),
   shopId: z.number().int().positive("Shop ID must be a positive integer"),
   variantId: z.number().int().positive("Variant ID must be a positive integer"),
+  productDiscount: z.number().optional(),
 });
 
 // Order Payload Validation

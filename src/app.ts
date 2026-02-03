@@ -12,14 +12,13 @@ import cookieParser from "cookie-parser";
 import { initAssociations } from "./sequelize/models/associate";
 import swaggerRouter from "./swagger/swagger";
 import cityRoutes from "./routes/city.routes";
-import sellerRoutes from "./seller/routes/seller.routes";
+import sellerRoutes from "./seller/routes/seller.order.routes";
 import errorHandler from "./middleware/errorHandler";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import googleRoutes from "./routes/google.routes";
 import paymentRoutes from "./payments/payments.routes";
 import orderRoutes from "./routes/orders.routes";
 import { CaptureRawBodyMiddleware } from "./middleware/captureRawBody";
-import { startVerificationCleanupJobCron } from "./jobs/verification.job";
 import { runTasks } from "./cron/taskManager";
 dotenv.config();
 
