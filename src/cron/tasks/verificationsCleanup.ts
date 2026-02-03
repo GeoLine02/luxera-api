@@ -1,6 +1,6 @@
-import logger from "../logger";
+import logger from "../../logger";
 import cron from "node-cron";
-import Verifications from "../sequelize/models/verifications";
+import Verifications from "../../sequelize/models/verifications";
 import { Op } from "sequelize";
 export async function cleanupExpiredVerifications(): Promise<number> {
   try {
@@ -27,17 +27,16 @@ export async function cleanupExpiredVerifications(): Promise<number> {
   }
 }
 
-export function startVerificationCleanupJobCron(): void {
+export function startVerificationCleanupTask(): void {
   // Run every 30 minutes: '*/30 * * * *'
-  const task = cron.schedule("*/30 * * * *", async () => {
+  const task = cron.schedule("0 * * * *", async () => {
     await cleanupExpiredVerifications();
   });
 
-  logger.info("✅ Verification cleanup job started (cron: every 30 minutes)");
+  logger.info("✅ Verification cleanup job started (cron: every hour");
 
   // Graceful shutdown
   process.on("SIGTERM", () => {
     task.stop();
-    logger.info("Verification cleanup job stopped");
   });
 }

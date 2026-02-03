@@ -43,6 +43,7 @@ export async function bogRequestOrderController(
       gateway_order_id: id,
       payment_method: PaymentMethods.BOGCARD,
     },
+
     {
       where: {
         id: orderData.order.id,
@@ -69,7 +70,7 @@ export async function bogCallbackController(req: Request, res: Response) {
   const { order_id, order_status } = body;
   const bogStatusKey = order_status?.key;
   const transaction = await sequelize.transaction();
-
+  console.log("callback body: ", body);
   try {
     // 3. FIND ORDER WITH LOCK
     const order = await Orders.findOne({

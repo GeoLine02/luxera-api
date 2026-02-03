@@ -40,10 +40,10 @@ export async function bogRequestOrderService(
       total_amount: orderData.orderTotal.value,
       basket: basket,
     },
-    redirect_urls: {
-      fail: "https://luxeragift.com/checkout/fail",
-      success: "https://luxeragift.com/checkout/success",
-    },
+    // redirect_urls: {
+    //   fail: "https://luxeragift.com/checkout/fail",
+    //   success: "https://luxeragift.com/checkout/success",
+    // },
   };
 
   try {
