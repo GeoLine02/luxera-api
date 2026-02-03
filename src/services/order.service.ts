@@ -15,7 +15,6 @@ export async function createOrderService(
     city,
     currency = "GEL",
     email,
-    payment_method,
     postcode,
     state,
     streetAddress,
