@@ -19,7 +19,6 @@ router.post(
 );
 router.post("/send-code", authGuard, SendVerificationCodeController);
 router.post("/verify", authGuard, VerifyUserController);
-
 router.post("/login", UserLoginController);
 router.get("/me", userByTokenController);
 router.get("/refresh", UserTokenRefreshController);

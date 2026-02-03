@@ -17,6 +17,7 @@ import ProductVariants from "../../sequelize/models/productvariants";
 import sequelize from "../../db";
 import { success } from "zod";
 import { BadRequestError, UnauthorizedError } from "../../errors/errors";
+import logger from "../../logger";
 interface requestOrderResponse {
   id: string;
   _links: {
@@ -68,7 +69,7 @@ export async function bogCallbackController(req: Request, res: Response) {
   if (event !== "order_payment" || !body || !body.order_id) {
     throw new BadRequestError("Invalid callback format");
   }
-
+  logger.info("callback recieved from bog");
   const { order_id, order_status } = body;
   const bogStatusKey = order_status?.key;
 
