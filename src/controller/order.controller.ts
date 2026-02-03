@@ -171,7 +171,6 @@ export async function validateBasketForOrder(
 export async function getUserOrdersController(req: Request, res: Response) {
   const userId = req.user?.id;
   const page = Number(req.query.page) || 1;
-
   const offset = PAGE_SIZE * (page - 1);
   const { count, rows } = await Orders.findAndCountAll({
     where: {
@@ -209,7 +208,7 @@ export async function GetOrderDetailsController(req: Request, res: Response) {
       },
     ]);
   }
-  const order = await Orders.findOne({
+  const order = (await Orders.findOne({
     where: {
       customer_id: userId,
       id: orderId,
@@ -240,13 +239,13 @@ export async function GetOrderDetailsController(req: Request, res: Response) {
         ],
       },
     ],
-  });
+  })) as any;
 
   if (!order) {
     throw new NotFoundError("Order not Found");
   }
-  const plainOrder = order.get({ plain: true }) as any;
 
+  const plainOrder = order.toJSON();
   // ✅ Process order products and generate signed URLs
   const processedOrderProducts = await Promise.all(
     (plainOrder.orderProducts || []).map(async (orderProduct: any) => {
@@ -267,7 +266,7 @@ export async function GetOrderDetailsController(req: Request, res: Response) {
 
   // ✅ Build final response
   const orderDetails = {
-    ...order,
+    ...plainOrder,
     orderProducts: processedOrderProducts,
   };
   return successfulResponse(res, "Got order details", orderDetails);

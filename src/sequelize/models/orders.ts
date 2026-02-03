@@ -91,7 +91,6 @@ class Orders
       foreignKey: "order_id",
       as: "orderTotal",
     });
-
     // Each order has many order products
     Orders.hasMany(models.OrderProducts, {
       foreignKey: "order_id",
