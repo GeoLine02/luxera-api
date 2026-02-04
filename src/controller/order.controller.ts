@@ -244,7 +244,6 @@ export async function GetOrderDetailsController(req: Request, res: Response) {
   if (!order) {
     throw new NotFoundError("Order not Found");
   }
-
   const plainOrder = order.toJSON();
   // ✅ Process order products and generate signed URLs
   const processedOrderProducts = await Promise.all(

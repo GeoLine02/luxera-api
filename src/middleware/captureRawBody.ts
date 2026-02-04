@@ -1,33 +1,36 @@
 import { NextFunction, Request, Response } from "express";
 
-export function CaptureRawBodyMiddleware(
+export function captureRawBodyMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  // Only process BOG callback endpoint
-  if (req.path !== "/bog/callback") {
+  if (req.path !== "/payments/bog/callback") {
     return next();
   }
 
-  let rawBody = "";
+  const chunks: Buffer[] = [];
 
-  req.on("data", (chunk) => {
-    rawBody += chunk.toString("utf8");
+  req.on("data", (chunk: Buffer) => {
+    chunks.push(chunk);
   });
 
   req.on("end", () => {
-    // Store raw body before any processing
-    (req as any).rawBody = rawBody;
-
-    // Parse JSON
+    const rawBuffer = Buffer.concat(chunks);
+    (req as any).rawBody = rawBuffer; // ← Buffer, exact bytes BOG signed
+    // Optional: parse JSON only after verification (but for convenience you can parse now)
     try {
-      req.body = JSON.parse(rawBody);
-    } catch (error) {
-      console.error("[ERROR] Invalid JSON in callback:", error);
-      return next(error);
+      req.body = JSON.parse(rawBuffer.toString("utf8"));
+    } catch (err) {
+      console.error("[BOG Callback] Invalid JSON:", err);
+      // Still continue – verify sig first if possible
     }
 
     next();
+  });
+
+  req.on("error", (err) => {
+    console.error("[BOG Callback] Stream error:", err);
+    next(err);
   });
 }

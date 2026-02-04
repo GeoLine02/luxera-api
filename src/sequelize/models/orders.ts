@@ -38,6 +38,7 @@ export interface OrderDetailsAttributes extends OrderAttributes {
     }[];
   orderTotal: OrderTotals;
 }
+
 interface OrderCreationAttributes extends Optional<
   OrderAttributes,
   | "id"

@@ -18,7 +18,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import googleRoutes from "./routes/google.routes";
 import paymentRoutes from "./payments/payments.routes";
 import orderRoutes from "./routes/orders.routes";
-import { CaptureRawBodyMiddleware } from "./middleware/captureRawBody";
+import { captureRawBodyMiddleware } from "./middleware/captureRawBody";
 import { runTasks } from "./cron/taskManager";
 dotenv.config();
 
@@ -45,7 +45,7 @@ app.use(
   }),
 );
 runTasks();
-app.use(CaptureRawBodyMiddleware); // saves rawBody
+app.use(captureRawBodyMiddleware); // saves rawBody
 app.use(express.json()); // handles JSON requests
 app.use(express.urlencoded({ extended: true })); // handles URL-encoded form data
 app.use(cookieParser());

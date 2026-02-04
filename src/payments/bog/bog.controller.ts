@@ -59,7 +59,7 @@ export async function bogRequestOrderController(
 
 export async function bogCallbackController(req: Request, res: Response) {
   const rawBody = (req as any).rawBody;
-
+  console.log("raw body: ", rawBody);
   verifyBOGSignature(rawBody, req.headers);
 
   const { event, body } = req.body;
