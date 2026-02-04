@@ -103,7 +103,46 @@ export async function getBogAccessToken(): Promise<string> {
     throw error;
   }
 }
-const BOG_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+export function verifyBOGSignature(rawBody: any, headers: any): boolean {
+  // use any temporarily for debug
+  try {
+    const signatureHeader =
+      headers["callback-signature"]?.toString() ||
+      headers["Callback-Signature"]?.toString();
+
+    if (!signatureHeader) {
+      console.warn("[SECURITY] Missing Callback-Signature header");
+      return true;
+    }
+
+    console.log(
+      "[Verify] Signature header found:",
+      signatureHeader.substring(0, 50) + "...",
+    );
+
+    const signature = Buffer.from(signatureHeader, "base64");
+
+    if (!rawBody) {
+      console.error("[Verify] rawBody is falsy:", rawBody);
+      return false;
+    }
+
+    const verifier = crypto.createVerify("RSA-SHA256");
+
+    // ── KEY FIX ──
+    // Always feed as Buffer, no encoding arg when it's already bytes
+    const bodyToSign = Buffer.isBuffer(rawBody)
+      ? rawBody
+      : Buffer.from(rawBody);
+
+    console.log("[Verify] Body length to sign:", bodyToSign.length);
+    if (bodyToSign.length === 0) {
+      console.warn("[Verify] Empty body → signature will fail");
+    }
+
+    verifier.update(bodyToSign); // ← no second argument!
+
+    const publicKey = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu4RUyAw3+CdkS3ZNILQh
 zHI9Hemo+vKB9U2BSabppkKjzjjkf+0Sm76hSMiu/HFtYhqWOESryoCDJoqffY0Q
 1VNt25aTxbj068QNUtnxQ7KQVLA+pG0smf+EBWlS1vBEAFbIas9d8c9b9sSEkTrr
@@ -111,27 +150,16 @@ TYQ90WIM8bGB6S/KLVoT1a7SnzabjoLc5Qf/SLDG5fu8dH8zckyeYKdRKSBJKvhx
 tcBuHV4f7qsynQT+f2UYbESX/TLHwT5qFWZDHZ0YUOUIvb8n7JujVSGZO9/+ll/g
 4ZIWhC1MlJgPObDwRkRd8NFOopgxMcMsDIZIoLbWKhHVq67hdbwpAq9K9WMmEhPn
 PwIDAQAB
------END PUBLIC KEY-----`;
+-----END PUBLIC KEY-----`; // ← copy EXACTLY from docs (line breaks matter!)
 
-export function verifyBOGSignature(rawBody: string, headers: any): boolean {
-  try {
-    // Get signature from header (case-insensitive)
-    const signatureHeader =
-      headers["callback-signature"]?.toString() ||
-      headers["Callback-Signature"]?.toString();
-    if (!signatureHeader) {
-      console.warn("[SECURITY] Missing Callback-Signature header");
-      return true;
-    }
-    // Signature is Base64 encoded
-    const signature = Buffer.from(signatureHeader, "base64");
-    // Verify using BOG's public key
-    const verifier = crypto.createVerify("RSA-SHA256");
-    verifier.update(rawBody, "utf8");
-    const isValid = verifier.verify(BOG_PUBLIC_KEY, signature);
+    const isValid = verifier.verify(publicKey, signature);
+
+    console.log("[Verify] Signature valid?", isValid);
+
     if (!isValid) {
       console.warn("[SECURITY] Invalid BOG signature - callback rejected");
     }
+
     return isValid;
   } catch (error) {
     console.error("[ERROR] Signature verification failed:", error);
