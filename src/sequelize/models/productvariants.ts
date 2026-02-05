@@ -3,6 +3,7 @@
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
+
 interface ProductVariantsAttributes {
   id: number;
   variant_name: string;
@@ -10,6 +11,7 @@ interface ProductVariantsAttributes {
   variant_quantity: number;
   variant_discount: number;
   product_id: number;
+  embedding: string;
 }
 interface ProductVariantCreationAttributes extends Optional<
   ProductVariantsAttributes,
@@ -26,6 +28,7 @@ class ProductVariants
   declare variant_quantity: number;
   declare variant_discount: number;
   declare product_id: number;
+  declare embedding: string;
 
   static associate(models: TypeModels) {
     // Each variant belongs to one product
@@ -82,6 +85,9 @@ ProductVariants.init(
       },
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
+    },
+    embedding: {
+      type: "VECTOR(728)",
     },
   },
   {

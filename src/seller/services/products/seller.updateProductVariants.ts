@@ -16,9 +16,17 @@ import logger from "../../../logger";
 import ProductImages from "../../../sequelize/models/productimages";
 import { s3 } from "../../../app";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  convertEmbeddingToVector,
+  embedProductVariant,
+} from "../../../utils/embed";
+import Categories from "../../../sequelize/models/categories";
+import SubCategories from "../../../sequelize/models/subcategories";
 
 export async function UpdateProductVariantsService(
   data: ProductUpdatePayload, // assume variantsMetadata: Array<{ id?: number; id?: string; ... }>
+  category: Categories,
+  subcategory: SubCategories,
   req: Request,
   transaction: Transaction,
 ) {
@@ -88,25 +96,34 @@ export async function UpdateProductVariantsService(
 
   // 5. CREATE new variants
   if (toCreate.length > 0) {
-    const payload = toCreate.map((variant) => {
-      if (!variant.id) {
-        throw new ValidationError([
-          {
-            field: "id",
-            message: "id is required for new variants",
-          },
-        ]);
-      }
-      logger.info(`Creating new variant ${variant.id} `);
+    const payload = await Promise.all(
+      toCreate.map(async (variant) => {
+        if (!variant.id) {
+          throw new ValidationError([
+            {
+              field: "id",
+              message: "id is required for new variants",
+            },
+          ]);
+        }
+        const embedding = await embedProductVariant(
+          variant.variantName,
+          product,
+          category,
+          subcategory,
+        );
+        logger.info(`Creating new variant ${variant.id} `);
 
-      return {
-        product_id: productId,
-        variant_name: variant.variantName,
-        variant_price: variant.variantPrice,
-        variant_quantity: variant.variantQuantity,
-        variant_discount: variant.variantDiscount,
-      };
-    });
+        return {
+          product_id: productId,
+          variant_name: variant.variantName,
+          variant_price: variant.variantPrice,
+          variant_quantity: variant.variantQuantity,
+          variant_discount: variant.variantDiscount,
+          embedding: convertEmbeddingToVector(embedding),
+        };
+      }),
+    );
 
     createdVariants = await ProductVariants.bulkCreate(payload, {
       returning: true,
@@ -125,18 +142,25 @@ export async function UpdateProductVariantsService(
           transaction,
           lock: transaction.LOCK.UPDATE,
         });
+        const newEmbedding = await embedProductVariant(
+          variant.variantName,
+          product,
+          category,
+          subcategory,
+        );
 
         if (!existingVariant) {
           throw new NotFoundError(`Variant with id ${variant.id} not found`);
         }
-        logger.info(`Updating  variant ${variant.id} `);
 
+        logger.info(`Updating  variant ${variant.id} `);
         await existingVariant.update(
           {
             variant_name: variant.variantName,
             variant_price: variant.variantPrice,
             variant_quantity: variant.variantQuantity,
             variant_discount: variant.variantDiscount,
+            embedding: convertEmbeddingToVector(newEmbedding),
           },
           { transaction },
         );

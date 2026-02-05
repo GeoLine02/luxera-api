@@ -8,10 +8,18 @@ import ProductVariants from "../../../sequelize/models/productvariants";
 import { getRandomImageName } from "../../../constants/constants";
 import { s3 } from "../../../app";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  convertEmbeddingToVector,
+  embedProductVariant,
+} from "../../../utils/embed";
+import Categories from "../../../sequelize/models/categories";
+import SubCategories from "../../../sequelize/models/subcategories";
 
 export async function CreateProductVariantsService(
   data: CreateProductPayload,
   createdProduct: Products,
+  category: Categories,
+  subcategory: SubCategories,
   transaction: Transaction,
 ) {
   const { variantsMetadata = [], variantImagesMap = {} } = data;
@@ -21,22 +29,29 @@ export async function CreateProductVariantsService(
   }
 
   // Phase 1: Prepare and create variants (no images yet)
-  const variantsToCreate = variantsMetadata.map((variant) => {
-    if (!variant.tempId) {
-      throw new BadRequestError(
-        "Each variant must have a temporary ID (tempId)",
+  const variantsToCreate = await Promise.all(
+    variantsMetadata.map(async (variant) => {
+      if (!variant.tempId) {
+        throw new BadRequestError(
+          "Each variant must have a temporary ID (tempId)",
+        );
+      }
+      const embedding = await embedProductVariant(
+        variant.variantName,
+        createdProduct,
+        category,
+        subcategory,
       );
-    }
-
-    return {
-      variant_name: variant.variantName,
-      variant_price: variant.variantPrice,
-      variant_quantity: variant.variantQuantity,
-      variant_discount: variant.variantDiscount,
-      product_id: createdProduct.id,
-    };
-  });
-
+      return {
+        variant_name: variant.variantName,
+        variant_price: variant.variantPrice,
+        variant_quantity: variant.variantQuantity,
+        variant_discount: variant.variantDiscount,
+        product_id: createdProduct.id,
+        embedding: convertEmbeddingToVector(embedding),
+      };
+    }),
+  );
   const createdVariants = await ProductVariants.bulkCreate(variantsToCreate, {
     returning: true,
     transaction,

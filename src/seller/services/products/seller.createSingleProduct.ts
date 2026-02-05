@@ -11,7 +11,7 @@ export async function CreateSingleProductService(
   data: CreateProductPayload,
   req: Request,
   res: Response,
-  transaction: Transaction
+  transaction: Transaction,
 ) {
   const shop = req.shop;
   const userId = req.user!.id;
@@ -23,8 +23,6 @@ export async function CreateSingleProductService(
     transaction,
   });
 
-
-  
   if (!category || !subCategory) {
     throw new NotFoundError("Invalid category or subcategory");
   }
@@ -43,9 +41,9 @@ export async function CreateSingleProductService(
       product_owner_id: userId,
       shop_id: shop!.id,
     },
-    { transaction }
+    { transaction },
   );
 
   // Do NOT commit here - controller will commit/rollback
-  return { createdProduct };
+  return { createdProduct, category, subCategory };
 }

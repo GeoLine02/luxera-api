@@ -78,6 +78,14 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      {
+        sub_category_name: "For Children",
+        sub_category_name_ka: "საბავშვო",
+        subcategory_image_s3_key: "forchildren.jpg",
+        category_id: 985,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ]);
   },
 

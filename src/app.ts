@@ -20,6 +20,7 @@ import paymentRoutes from "./payments/payments.routes";
 import orderRoutes from "./routes/orders.routes";
 import { captureRawBodyMiddleware } from "./middleware/captureRawBody";
 import { runTasks } from "./cron/taskManager";
+import chatBotRoutes from "./chatbot/chatbot.routes";
 dotenv.config();
 
 const app = express();
@@ -62,6 +63,7 @@ app.use("/cities", cityRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/orders", orderRoutes);
+app.use("/chatbot", chatBotRoutes);
 
 // ✅ Swagger Documentation Route
 app.use("/api-docs", swaggerRouter);

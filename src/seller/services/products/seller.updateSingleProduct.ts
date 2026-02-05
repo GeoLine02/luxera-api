@@ -61,5 +61,5 @@ export async function UpdateSingleProductService(
     await existingProduct.update(fieldsToUpdate, { transaction });
   }
   // Do NOT commit here - controller manages the transaction
-  return { existingProduct };
+  return { existingProduct, category, subCategory };
 }

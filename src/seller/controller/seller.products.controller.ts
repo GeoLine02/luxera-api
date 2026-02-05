@@ -33,6 +33,8 @@ import logger from "../../logger";
 import ProductImages from "../../sequelize/models/productimages";
 // import { updateProductImagesService } from "../services/products/seller.updateProductImages";
 import { deleteProductImagesService } from "../services/products/seller.deleteProductImages";
+import Categories from "../../sequelize/models/categories";
+import SubCategories from "../../sequelize/models/subcategories";
 export async function getSellerProductsController(req: Request, res: Response) {
   await GetSellerProductsService(req, res);
 }
@@ -135,7 +137,7 @@ export async function CreateProductController(req: Request, res: Response) {
   // 1. create product
   let transaction: Transaction | undefined;
   let createdProduct: Products | undefined;
-  let createdVariants: ProductVariants[] | undefined;
+  let createdProductVariants: ProductVariants[] | undefined;
   let createdImages: number = 0;
 
   try {
@@ -153,17 +155,12 @@ export async function CreateProductController(req: Request, res: Response) {
       await CreateProductVariantsService(
         parsedBody,
         createdProduct as Products,
+        result.category as Categories,
+        result.subCategory as SubCategories,
         transaction as Transaction,
       );
     createdImages = imagesInserted;
-
-    // createdImages = await CreateProductImagesService(
-    //   parsedBody,
-    //   variantsMetadata,
-
-    //   req,
-    //   transaction as Transaction
-    // );
+    createdProductVariants = createdVariants;
 
     if (transaction) {
       await transaction.commit();
@@ -182,7 +179,7 @@ export async function CreateProductController(req: Request, res: Response) {
 
   return successfulResponse(res, "Product Created Successfully", {
     product: createdProduct,
-    variants: createdVariants,
+    variants: createdProductVariants,
     images: createdImages,
   });
 }
@@ -275,12 +272,8 @@ export async function UpdateProductController(req: Request, res: Response) {
         updated: 0,
         deleted: 0,
       };
-      const { existingProduct } = await UpdateSingleProductService(
-        parsedData,
-        req,
-        res,
-        transaction,
-      );
+      const { existingProduct, subCategory, category } =
+        await UpdateSingleProductService(parsedData, req, res, transaction);
       // delete product images that are removed
       if (deletedImageIds.length > 0) {
         const deleted = await deleteProductImagesService(
@@ -294,20 +287,14 @@ export async function UpdateProductController(req: Request, res: Response) {
       }
       const results = await UpdateProductVariantsService(
         parsedData,
+        category,
+        subCategory,
         req,
         transaction,
       );
       totalResults.created += results.created;
       totalResults.updated += results.updated;
       totalResults.deleted += results.deleted;
-      // const imageResults = await updateProductImagesService(
-      //   req,
-      //   parsedData,
-      //   createdVariants,
-      //   updatedVariants,
-      //   transaction
-      // );
-
       await transaction.commit();
       return successfulResponse(res, "Product updated", {
         existingProduct,
