@@ -239,6 +239,12 @@ export async function UserChangePasswordController(
   if (!user) {
     throw new NotFoundError("User not Found");
   }
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
+  if (isSamePassword) {
+    throw new BadRequestError(
+      "New Password cannot be same as the old password",
+    );
+  }
   // update password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   const updatedUser = await user.update({
@@ -249,7 +255,9 @@ export async function UserChangePasswordController(
 }
 export async function UserLogoutController(req: Request, res: Response) {
   res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
   res.clearCookie("shopAccessToken");
+  res.clearCookie("shopRefreshToken");
   return successfulResponse(res, "User Logged out", null);
 }
 export async function UserForgotPasswordVerifyController(
