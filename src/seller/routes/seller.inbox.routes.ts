@@ -14,13 +14,13 @@ router.patch(
   "/:id/read",
   authGuard,
   shopAuthGuard,
-  MarkNotificationAsReadController
+  MarkNotificationAsReadController,
 );
 router.patch(
   "/read-all",
   authGuard,
   shopAuthGuard,
-  MarkAllNotificationsAsReadController
+  MarkAllNotificationsAsReadController,
 );
 
 router.delete("/:id", authGuard, shopAuthGuard, DeleteNotificationController);

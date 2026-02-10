@@ -1,4 +1,4 @@
-import { Model, DataTypes } from "sequelize";
+import { Model, DataTypes, HasMany } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
 
@@ -14,7 +14,6 @@ class Categories extends Model implements CategoryAttributes {
   declare category_name: string;
   declare category_image_s3_key: string;
   declare category_name_ka: string;
-
   static associate(models: TypeModels) {
     Categories.hasMany(models.SubCategories, {
       foreignKey: "category_id",

@@ -3,7 +3,7 @@ import Products from "./products";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
 
-interface ProductImageAttributes {
+export interface ProductImageAttributes {
   id: number;
   product_id: number;
   variant_id: number | null;
@@ -11,8 +11,10 @@ interface ProductImageAttributes {
   is_primary: boolean;
 }
 
-interface ProductImageCreationAttributes
-  extends Optional<ProductImageAttributes, "id"> {}
+interface ProductImageCreationAttributes extends Optional<
+  ProductImageAttributes,
+  "id"
+> {}
 
 class ProductImages
   extends Model<ProductImageAttributes, ProductImageCreationAttributes>
@@ -78,7 +80,7 @@ ProductImages.init(
     modelName: "ProductImages",
     tableName: "ProductImages",
     timestamps: true,
-  }
+  },
 );
 
 export default ProductImages;

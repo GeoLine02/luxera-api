@@ -13,6 +13,11 @@ import ProductVariants from "../sequelize/models/productvariants";
 import { PAGE_SIZE } from "../constants/constants";
 import Cities from "../sequelize/models/cities";
 import nodemailer from "nodemailer";
+import { NotFound } from "@aws-sdk/client-s3";
+import { NotFoundError } from "../errors/errors";
+import ProductImages from "../sequelize/models/productimages";
+import { GetSignedUrlFromS3 } from "../utils/getSignedUrl";
+import { ProductStatus } from "../constants/enums";
 interface ShopRegisterFieldsType {
   shopName: string;
   password: string;
@@ -235,45 +240,80 @@ export async function ShopDeleteService(
 }
 
 export async function getShopByIdService(req: Request, res: Response) {
-  try {
-    const shopId = req.params.shopId;
+  const shopId = req.params.shopId;
 
-    const existingShop = await Shop.findOne({
-      where: { id: shopId },
-      limit: PAGE_SIZE,
-      include: [
-        {
-          model: Products,
-          as: "products",
-          include: [
-            {
-              model: ProductVariants,
-              as: "primaryVariant",
-            },
-          ],
-        },
-      ],
-    });
-
-    if (!existingShop) {
-      return res.status(404).json({
-        success: false,
-        message: "Shop does not exist",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: existingShop,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "unable to get shop by id",
-      error,
-    });
+  const existingShop = await Shop.findByPk(shopId);
+  if (!existingShop) {
+    throw new NotFoundError("Shop not found");
   }
+  const products = await Products.findAll({
+    where: {
+      shop_id: existingShop.id,
+      product_status: ProductStatus.Active,
+    },
+    include: [
+      {
+        model: ProductVariants,
+
+        as: "primaryVariant",
+        attributes: { exclude: ["createdAt", "updatedAt", "embedding"] },
+        include: [
+          {
+            model: ProductImages,
+            as: "images",
+            attributes: ["id", "s3_key"],
+          },
+        ],
+      },
+    ],
+  });
+  const plainProducts = products.map((product) => product.get({ plain: true }));
+
+  const processedProducts = await Promise.all(
+    plainProducts.map(async (product: any) => {
+      const primaryVariant = product.primaryVariant;
+
+      // Only process if variant and images exist
+      if (!primaryVariant?.images?.length) {
+        return {
+          ...product,
+          primaryVariant,
+        };
+      }
+
+      try {
+        // Parallel S3 requests per product
+        const primaryVariantImages = await Promise.all(
+          primaryVariant.images.map(async (image: any) => {
+            const signedUrl = await GetSignedUrlFromS3(image.s3_key);
+            return { id: image.id, imageUrl: signedUrl };
+          }),
+        );
+        return {
+          ...product,
+          primaryVariant: { ...primaryVariant, images: primaryVariantImages },
+        };
+      } catch (error) {
+        console.error(`Failed to process product ${product.id}:`, error);
+        // Return product with original images on failure
+        return {
+          ...product,
+          primaryVariant: {
+            ...primaryVariant,
+            images: primaryVariant.images.map((img: any) => ({
+              id: img.id,
+              imageUrl: null, // or fallback URL
+            })),
+          },
+        };
+      }
+    }),
+  );
+
+  return {
+    ...existingShop.get({ plain: true }),
+    products: processedProducts,
+  };
 }
 
 export async function updateShopLocationService(req: Request, res: Response) {

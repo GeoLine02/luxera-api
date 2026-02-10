@@ -3,7 +3,7 @@ import sequelize from "../../db";
 import { TypeModels } from "./associate";
 import { ProductStatus } from "../../constants/enums";
 
-interface ProductAttributes {
+export interface ProductAttributes {
   id: number;
 
   product_description: string;

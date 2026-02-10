@@ -23,28 +23,21 @@ async function GetSellerNotificationsController(req: Request, res: Response) {
       },
     ]);
   }
-  const notifications = await GetSellerNotificationsService(req, page);
-  const totalCount = await Notifications.count();
-  const hasMore = totalCount > page * PAGE_SIZE + notifications.count;
-  
+
+  const { rows, count } = await GetSellerNotificationsService(req, page);
+
+  const hasMore = count > page * PAGE_SIZE + rows.length;
+
   return paginatedResponse(
     res,
     "Successfully fetched notifications",
-    notifications.rows,
+    rows,
     hasMore,
-    page
+    page,
   );
 }
 async function MarkNotificationAsReadController(req: Request, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id) || id < 0) {
-    throw new ValidationError([
-      {
-        field: "id",
-        message: "Invalid notification ID",
-      },
-    ]);
-  }
 
   await MarkNotificationAsReadService(id, req);
   return successfulResponse(res, "Notification marked as read", []);
@@ -52,7 +45,7 @@ async function MarkNotificationAsReadController(req: Request, res: Response) {
 
 async function MarkAllNotificationsAsReadController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   await MarkAllNotificationsAsReadService(req);
   return successfulResponse(res, "All notifications marked as read", []);

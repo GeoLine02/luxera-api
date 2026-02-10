@@ -8,18 +8,21 @@ import {
   VariantsMetadata,
 } from "../../types/products";
 
-import { CreateSingleProductService } from "../services/products/seller.createSingleProduct";
+import { CreateSingleProductService } from "../services/products/seller.products.createSingleProduct.service";
 // import { CreateProductImagesService } from "../services/products/seller.createProductImages";
 import ProductVariants from "../../sequelize/models/productvariants";
-import { CreateProductVariantsService } from "../services/products/seller.createProductVariants";
+import { CreateProductVariantsService } from "../services/products/seller.products.createProductVariants.service";
 import Products from "../../sequelize/models/products";
-import { UpdateSingleProductService } from "../services/products/seller.updateSingleProduct";
-import { UpdateProductVariantsService } from "../services/products/seller.updateProductVariants";
-import { GetSellerProductsService } from "../services/products/seller.getProducts";
-import { DeleteProductService } from "../services/products/seller.deleteProduct";
-import { UpdateSingleProductStatusService } from "../services/products/seller.updateSingleProductStatus";
+import { UpdateSingleProductService } from "../services/products/seller.products.updateSingleProduct.service";
+import { UpdateProductVariantsService } from "../services/products/seller.updateProductVariants.service";
+import {
+  getSellerProductByIdService,
+  GetSellerProductsService,
+} from "../services/products/seller.products.getProducts.service";
+import { DeleteProductService } from "../services/products/seller.products.deleteProduct.service";
+import { UpdateSingleProductStatusService } from "../services/products/seller.products.updateSingleProductStatus.service";
 import { tr } from "zod/v4/locales";
-import { getSellerProductByIdService } from "../services/products/seller.getProductById";
+
 import { Transaction } from "sequelize";
 import sequelize from "../../db";
 import { successfulResponse } from "../../utils/responseHandler";
@@ -32,7 +35,7 @@ import {
 import logger from "../../logger";
 import ProductImages from "../../sequelize/models/productimages";
 // import { updateProductImagesService } from "../services/products/seller.updateProductImages";
-import { deleteProductImagesService } from "../services/products/seller.deleteProductImages";
+import { deleteProductImagesService } from "../services/products/seller.products.deleteProductImages.service";
 import Categories from "../../sequelize/models/categories";
 import SubCategories from "../../sequelize/models/subcategories";
 export async function getSellerProductsController(req: Request, res: Response) {

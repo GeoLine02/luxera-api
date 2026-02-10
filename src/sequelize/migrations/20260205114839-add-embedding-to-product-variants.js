@@ -11,7 +11,6 @@ module.exports = {
     await queryInterface.sequelize.query(
       'ALTER TABLE "ProductVariants" ADD COLUMN embedding vector(728)',
     );
-
     // Create index
     await queryInterface.sequelize.query(
       'CREATE INDEX product_variants_embedding_idx ON "ProductVariants" USING ivfflat (embedding vector_cosine_ops)',

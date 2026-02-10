@@ -7,7 +7,7 @@ import ProductVariants from "../../../sequelize/models/productvariants";
 import { NotFoundError } from "../../../errors/errors";
 async function GetSellerNotificationsService(req: Request, page: number) {
   return await sequelize.transaction(async () => {
-    const notifications = await Notifications.findAndCountAll({
+    const { rows, count } = await Notifications.findAndCountAll({
       where: {
         shop_id: req.shop!.id,
         recipient_id: req.user!.id,
@@ -31,8 +31,11 @@ async function GetSellerNotificationsService(req: Request, page: number) {
         },
       ],
     });
-    if (!notifications) throw new Error("No notifications found");
-    return notifications;
+    if (!rows) throw new Error("No rows found");
+    return {
+      rows,
+      count,
+    };
   });
 }
 async function MarkNotificationAsReadService(id: number, req: Request) {
@@ -67,7 +70,7 @@ async function MarkAllNotificationsAsReadService(req: Request) {
           recipient_id: req.user!.id,
           read_at: null,
         },
-      }
+      },
     );
   });
 }

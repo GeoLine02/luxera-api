@@ -45,11 +45,9 @@ export async function bogRequestOrderService(
     //   success: "https://luxeragift.com/checkout/success",
     // },
   };
-
   try {
     const BOG_TEST_REQUEST_ORDER_URL =
       "https://api-sandbox.bog.ge/payments/v1/ecommerce/orders";
-
     const response = await axios.post(BOG_TEST_REQUEST_ORDER_URL, payload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -63,7 +61,6 @@ export async function bogRequestOrderService(
     throw error;
   }
 }
-
 export async function getBogAccessToken(): Promise<string> {
   const clientId = process.env.BOG_CLIENT_ID;
   const secretKey = process.env.BOG_SECRET_KEY;
@@ -139,7 +136,6 @@ export function verifyBOGSignature(rawBody: any, headers: any): boolean {
     if (bodyToSign.length === 0) {
       console.warn("[Verify] Empty body → signature will fail");
     }
-
     verifier.update(bodyToSign); // ← no second argument!
 
     const publicKey = `-----BEGIN PUBLIC KEY-----

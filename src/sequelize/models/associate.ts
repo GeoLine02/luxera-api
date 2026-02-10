@@ -11,6 +11,10 @@ import Cities from "./cities";
 import Orders from "./orders";
 import OrderTotals from "./orderTotals";
 import OrderProducts from "./orderProducts";
+import { Conversation } from "./conversation";
+import { ConversationMessage } from "./conversationMessage";
+import { ConversationMessageImage } from "./conversationMessageImages";
+import { ConversationMessageProductCard } from "./conversationMessageProductCards";
 
 export type TypeModels = {
   User: typeof User;
@@ -26,6 +30,10 @@ export type TypeModels = {
   Orders: typeof Orders;
   OrderTotals: typeof OrderTotals;
   OrderProducts: typeof OrderProducts;
+  Conversation: typeof Conversation;
+  ConversationMessage: typeof ConversationMessage;
+  ConversationMessageImage: typeof ConversationMessageImage;
+  ConversationMessageProductCard: typeof ConversationMessageProductCard;
 };
 
 export function initAssociations() {
@@ -44,6 +52,10 @@ export function initAssociations() {
     Orders,
     OrderTotals,
     OrderProducts,
+    Conversation,
+    ConversationMessage,
+    ConversationMessageImage,
+    ConversationMessageProductCard,
   };
 
   User.associate?.(models);
@@ -51,7 +63,6 @@ export function initAssociations() {
   Products.associate?.(models);
   Categories.associate?.(models);
   SubCategories.associate?.(models);
-
   ProductImages.associate?.(models);
   ProductVariants.associate?.(models);
   Carts.associate?.(models);
@@ -60,6 +71,10 @@ export function initAssociations() {
   Orders.associate?.(models);
   OrderTotals.associate?.(models);
   OrderProducts.associate?.(models);
+  Conversation.associate?.(models);
+  ConversationMessage.associate?.(models);
+  ConversationMessageImage.associate?.(models);
+  ConversationMessageProductCard.associate?.(models);
 }
 
 export { User, Products, SubCategories, Categories, Shop, Cities };

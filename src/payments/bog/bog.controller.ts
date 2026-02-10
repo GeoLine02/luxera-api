@@ -15,7 +15,6 @@ import { OrderStatus } from "../../constants/enums";
 import Products from "../../sequelize/models/products";
 import ProductVariants from "../../sequelize/models/productvariants";
 import sequelize from "../../db";
-import { success } from "zod";
 import { BadRequestError, UnauthorizedError } from "../../errors/errors";
 export const BOG_TEST_CLIENT_ID = "10000085";
 export const BOG_TEST_SECRET = "61EsCkTvEug4";

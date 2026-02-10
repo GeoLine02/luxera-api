@@ -4,7 +4,7 @@ import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../../db";
 import { TypeModels } from "./associate";
 
-interface ProductVariantsAttributes {
+export interface ProductVariantsAttributes {
   id: number;
   variant_name: string;
   variant_price: number;

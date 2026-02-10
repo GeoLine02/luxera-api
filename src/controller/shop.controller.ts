@@ -8,6 +8,7 @@ import {
   updateShopLocationService,
 } from "../services/shop.service";
 import Shop from "../sequelize/models/shop";
+import { successfulResponse } from "../utils/responseHandler";
 
 export async function ShopRegisterController(req: Request, res: Response) {
   try {
@@ -161,7 +162,7 @@ export async function ShopDeleteController(req: Request, res: Response) {
 export async function getShopByIdController(req: Request, res: Response) {
   try {
     const shopById = await getShopByIdService(req, res);
-    return shopById;
+    return successfulResponse(res, "Shop fetched successfully", shopById);
   } catch (err) {
     console.log(err);
   }

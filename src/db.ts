@@ -53,7 +53,6 @@ const initialize = async () => {
   try {
     // Create vector extension if it doesn't exist
     await sequelize.query("CREATE EXTENSION IF NOT EXISTS vector");
-
     pgvector.registerType(Sequelize);
   } catch (error) {
     console.error("Error initializing vector support:", error);

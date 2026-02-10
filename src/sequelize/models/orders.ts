@@ -27,6 +27,8 @@ export interface OrderAttributes {
   shipping_tax?: number;
   shipping_tax_rate?: number;
   gateway_order_id?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 export interface OrderDetailsAttributes extends OrderAttributes {
   orderProducts: OrderProductAttributes &
@@ -79,7 +81,8 @@ class Orders
   declare shipping_tax?: number;
   declare shipping_tax_rate?: number;
   declare gateway_order_id?: string;
-
+  declare createdAt: Date;
+  declare updatedAt: Date;
   static associate(models: TypeModels) {
     // Each order belongs to one customer (user)
     Orders.belongsTo(models.User, {
@@ -172,6 +175,12 @@ Orders.init(
     },
     gateway_order_id: {
       type: DataTypes.STRING,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
     },
   },
   {

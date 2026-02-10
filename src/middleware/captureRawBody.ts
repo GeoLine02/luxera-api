@@ -25,10 +25,8 @@ export function captureRawBodyMiddleware(
       console.error("[BOG Callback] Invalid JSON:", err);
       // Still continue – verify sig first if possible
     }
-
     next();
   });
-
   req.on("error", (err) => {
     console.error("[BOG Callback] Stream error:", err);
     next(err);
