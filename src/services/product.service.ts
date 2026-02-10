@@ -104,6 +104,7 @@ export async function AllProductsService(req: Request, res: Response) {
         model: ProductVariants,
         as: "primaryVariant",
         where: Object.keys(variantWhere).length ? variantWhere : undefined,
+        attributes: { exclude: ["createdAt", "updatedAt", "embedding"] },
         include: [
           {
             model: ProductImages,
