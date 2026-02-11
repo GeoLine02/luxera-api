@@ -58,6 +58,8 @@ interface OrderCreationAttributes extends Optional<
   | "shipping_tax"
   | "shipping_tax_rate"
   | "gateway_order_id"
+  | "createdAt"
+  | "updatedAt"
 > {}
 
 class Orders
@@ -146,6 +148,7 @@ Orders.init(
     date_purchased: {
       type: DataTypes.DATE,
     },
+
     status: {
       type: DataTypes.ENUM(
         OrderStatus.OrderCancelled,
