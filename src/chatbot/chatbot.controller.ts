@@ -55,8 +55,10 @@ export async function StartConversationController(req: Request, res: Response) {
 
     if (!needsSearch && chitChatResponse) {
       await transaction.commit();
+
       return successfulResponse(res, "Got Luxera AI response", {
         conversation_id: conversation.id,
+        title: conversation.title,
         message: chitChatResponse,
         products: [],
       });
@@ -147,6 +149,7 @@ export async function StartConversationController(req: Request, res: Response) {
     );
     await transaction.commit();
     return successfulResponse(res, "Got Luxera AI response", {
+      title: conversation.title,
       conversation_id: conversation.id,
       message: assistantMessageContent,
       products: processedProducts,
@@ -200,6 +203,7 @@ export async function AskAssistantController(req: Request, res: Response) {
     if (!needsSearch && chitChatResponse) {
       await transaction.commit();
       return successfulResponse(res, "Got Luxera AI response", {
+        title: conversation.title,
         conversation_id: conversation.id,
         message: chitChatResponse,
         products: [],
@@ -284,6 +288,7 @@ export async function AskAssistantController(req: Request, res: Response) {
     await transaction.commit();
 
     return successfulResponse(res, "Got Luxera AI response", {
+      title: conversation.title,
       conversation_id: conversation.id,
       message: assistantMessageContent,
       product_cards: processedProducts,
