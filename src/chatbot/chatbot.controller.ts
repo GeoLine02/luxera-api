@@ -111,7 +111,7 @@ export async function StartConversationController(req: Request, res: Response) {
           expiresIn: 3600,
         });
         const link =
-          `${process.env.PROD_FRONTEND_URL}/product/${product.variant_name}-${product.variant_id}`.replace(
+          `${process.env.PROD_FRONTEND_URL}/product/${product.variant_name}-${product.product_id}`.replace(
             / /g,
             "%20",
           );
@@ -244,11 +244,11 @@ export async function AskAssistantController(req: Request, res: Response) {
       await conversation.save({ transaction });
     }
     const processedProducts = await Promise.all(
-      aiResponse.products.map(async (product: any) => {
+      aiResponse.products.map(async (product) => {
         try {
           const signedUrl = await GetSignedUrlFromS3(product.s3_key);
           const link =
-            `${process.env.PROD_FRONTEND_URL}/product/${product.variant_name}-${product.variant_id}`.replace(
+            `${process.env.PROD_FRONTEND_URL}/product/${product.variant_name}-${product.product_id}`.replace(
               / /g,
               "%20",
             );
