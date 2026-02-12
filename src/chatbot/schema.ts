@@ -5,6 +5,7 @@ export const AIResponseSchema = z.object({
   products: z
     .array(
       z.object({
+        id: z.number(),
         product_description: z.string(),
         variant_name: z.string(),
         product_id: z.number(),
@@ -14,11 +15,6 @@ export const AIResponseSchema = z.object({
         variant_discount: z.number(),
         image_id: z.number(),
         s3_key: z.string(),
-        is_primary: z.boolean(),
-        category_id: z.number(),
-        category_name: z.string(),
-        subcategory_id: z.number(),
-        sub_category_name: z.string(),
       }),
     )
     .optional()
@@ -33,6 +29,7 @@ export const AIResponseJsonSchema = {
       items: {
         type: "object",
         properties: {
+          id: { type: "number" },
           product_description: { type: "string" },
           variant_name: { type: "string" },
           product_id: { type: "number" },
@@ -42,13 +39,9 @@ export const AIResponseJsonSchema = {
           variant_discount: { type: "number" },
           image_id: { type: "number" },
           s3_key: { type: "string" },
-          is_primary: { type: "boolean" },
-          category_id: { type: "number" },
-          category_name: { type: "string" },
-          subcategory_id: { type: "number" },
-          sub_category_name: { type: "string" },
         },
         required: [
+          "id",
           "product_description",
           "variant_name",
           "product_id",
@@ -58,11 +51,6 @@ export const AIResponseJsonSchema = {
           "variant_discount",
           "image_id",
           "s3_key",
-          "is_primary",
-          "category_id",
-          "category_name",
-          "subcategory_id",
-          "sub_category_name",
         ],
       },
     },
@@ -90,6 +78,18 @@ export const classificationJsonSchema = {
     subcategory: {
       type: ["string", "null"],
     },
+    sortBy: {
+      type: ["string", "null"],
+    },
+    brands: {
+      type: ["array", "null"],
+      items: {
+        type: ["string", "null"],
+      },
+    },
+    intentSummary: {
+      type: ["string", "null"],
+    },
   },
   required: [
     "needsSearch",
@@ -98,5 +98,7 @@ export const classificationJsonSchema = {
     "maxPrice",
     "category",
     "subcategory",
+    "brands",
+    "intentSummary",
   ],
 };

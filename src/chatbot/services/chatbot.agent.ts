@@ -8,12 +8,13 @@ import { BadRequestError } from "../../errors/errors";
 import sequelize from "../../db";
 
 import { QueryTypes } from "sequelize";
-import { Filters, ProductResults } from "../../types/airesponse";
+import { Filters, ProductResults } from "../../types/chatbot";
 import {
   AIResponseJsonSchema,
   AIResponseSchema,
   classificationJsonSchema,
 } from "../schema";
+import { error } from "console";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
@@ -138,10 +139,9 @@ Ask follow-up questions if the user prompt is vague.
 Here are the matching products:
 ${JSON.stringify(products)}
 
-Filters applied:
+Classifications applied:
 ${JSON.stringify(filters ?? "none")}
 If no products match, politely say so and suggest broadening the search.
-
 User prompt:
 ${userPrompt}
 
@@ -152,7 +152,7 @@ Answer in the same language user prompt used.  `,
     ],
     config: {
       temperature: 0.3,
-      maxOutputTokens: 1200,
+      maxOutputTokens: 2000,
       responseMimeType: "application/json",
       responseJsonSchema: AIResponseJsonSchema,
       systemInstruction: `
@@ -247,7 +247,7 @@ Respond ONLY in JSON:
     ],
     config: {
       temperature: 0.1,
-      maxOutputTokens: 300,
+      maxOutputTokens: 500,
       responseMimeType: "application/json",
       systemInstruction: `
 You are a helpful assistant that classifies user messages and extracts product search filters for an online store. Always respond in the specified JSON format without any additional text or explanation. If the user's message does not require a search, set needsSearch to false and provide a friendly chit-chat response in chitChatResponse. If a search is needed, extract precise filters based on the user's intent and the available categories/subcategories. Use the provided database categories and subcategories to ensure accurate filter extraction.
@@ -268,10 +268,13 @@ You are a helpful assistant that classifies user messages and extracts product s
         maxPrice: json.maxPrice ?? undefined,
         category: json.category ?? undefined,
         subcategory: json.subcategory ?? undefined,
+        brands: json.brands ?? undefined,
+        sortBy: json.sortBy ?? undefined,
       },
-      chitChatResponse: json.chitChatResponse,
+      chitChatResponse: json.chitChatResponse ?? "",
     };
-  } catch {
+  } catch (e) {
+    console.log(e);
     // fallback if model outputs garbage
     return {
       needsSearch: true,

@@ -22,6 +22,10 @@ export interface Filters {
   minPrice?: number;
   category?: string;
   subcategory?: string;
+  viewedProductIds?: number[];
+  brands?: string[];
+  sortBy?: string;
+  intentSummary?: string;
 }
 export interface ProductResults {
   id: number;
@@ -40,4 +44,13 @@ export interface ProductResults {
   category_name: string;
   subcategory_id: number;
   sub_category_name: string;
+}
+export interface SearchState extends Filters {
+  lastQuery?: string;
+  category: string;
+  subcategory: string;
+  maxPrice: number;
+  minPrice: number;
+  viewedProductIds: number[];
+  timestamp?: string;
 }

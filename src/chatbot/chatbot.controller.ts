@@ -24,6 +24,7 @@ import sequelize from "../db";
 import { ConversationMessageImage } from "../sequelize/models/conversationMessageImages";
 import { ConversationMessageProductCard } from "../sequelize/models/conversationMessageProductCards";
 import { GetSignedUrlFromS3 } from "../utils/getSignedUrl";
+import { Filters, SearchState } from "../types/chatbot";
 
 export async function StartConversationController(req: Request, res: Response) {
   const userId = req.user!.id;
@@ -76,16 +77,20 @@ export async function StartConversationController(req: Request, res: Response) {
         refinedQuery || userPrompt,
       ),
     );
-
     const assistantMessageRecord = await ConversationMessage.create(
       {
         conversation_id: conversation.id,
         role: "assistant",
         content: aiResponse.message,
         metadata: {
-          filters: filters,
-          productIds: products.map((p) => p.id),
+          category: filters?.category,
+          subcategory: filters?.subcategory,
           timestamp: new Date(),
+          minPrice: filters?.minPrice,
+          maxPrice: filters?.maxPrice,
+          viewedProductIds: aiResponse.products.map((product) => product.id),
+          brands: filters?.brands,
+          sortBy: filters?.sortBy,
         },
       },
       { transaction },
@@ -179,7 +184,7 @@ export async function AskAssistantController(req: Request, res: Response) {
     throw new NotFoundError("Conversation not found");
   }
   try {
-    await ConversationMessage.create(
+    const message = await ConversationMessage.create(
       {
         conversation_id: conversation.id,
         role: "user",
@@ -202,6 +207,8 @@ export async function AskAssistantController(req: Request, res: Response) {
       conversationHistory,
     );
     if (!needsSearch && chitChatResponse) {
+      await message.destroy();
+
       await transaction.commit();
       return successfulResponse(res, "Got Luxera AI response", {
         title: conversation.title,
@@ -210,15 +217,43 @@ export async function AskAssistantController(req: Request, res: Response) {
         products_cards: [],
       });
     }
+    const lastMessage = await ConversationMessage.findOne({
+      where: {
+        role: "assistant",
+        conversation_id: conversation.id,
+      },
+      order: [["createdAt", "DESC"]],
+    });
 
+    const previousState: SearchState | null =
+      lastMessage?.metadata?.searchState ?? null;
+
+    const mergedFilters: Filters = {
+      minPrice: filters?.minPrice ?? previousState?.minPrice,
+      maxPrice: filters?.maxPrice ?? previousState?.maxPrice,
+      category: filters?.category ?? previousState?.category,
+      intentSummary: filters?.intentSummary ?? previousState?.intentSummary,
+      subcategory: filters?.subcategory ?? previousState?.subcategory,
+      viewedProductIds: previousState?.viewedProductIds ?? [],
+      brands: filters?.brands ?? previousState?.brands,
+      sortBy: filters?.sortBy ?? previousState?.sortBy,
+    };
+
+    const contextualPrompt = `
+     ${userPrompt}
+     ${mergedFilters.category}
+     ${mergedFilters.subcategory}
+     ${mergedFilters.brands?.join(" ")}
+    `;
     const embededPrompt = await retryWithBackoff(() =>
-      embedContent(userPrompt),
+      embedContent(contextualPrompt),
     );
-    const products = await searchByVector(embededPrompt, filters || {});
+
+    const products = await searchByVector(embededPrompt, mergedFilters);
     const aiResponse = await retryWithBackoff(() =>
       formatProductResults(
         products,
-        filters || {},
+        mergedFilters,
         conversationHistory,
         userPrompt,
       ),
@@ -230,9 +265,14 @@ export async function AskAssistantController(req: Request, res: Response) {
         role: "assistant",
         content: aiResponse.message,
         metadata: {
-          filters: filters,
-          productIds: products.map((p) => p.id),
+          category: mergedFilters.category,
+          subcategory: mergedFilters.subcategory,
           timestamp: new Date(),
+          minPrice: mergedFilters.minPrice,
+          maxPrice: mergedFilters.maxPrice,
+          viewedProductIds: products.map((product) => product.id),
+          brands: mergedFilters.brands,
+          sortBy: mergedFilters.sortBy,
         },
       },
       { transaction },
@@ -243,6 +283,20 @@ export async function AskAssistantController(req: Request, res: Response) {
       conversation.title = userPrompt.substring(0, 50); // Or use Claude
       await conversation.save({ transaction });
     }
+    await message.update({
+      metadata: {
+        searchState: {
+          category: mergedFilters.category,
+          subcategory: mergedFilters.subcategory,
+          timestamp: new Date(),
+          minPrice: mergedFilters.minPrice,
+          maxPrice: mergedFilters.maxPrice,
+          viewedProductIds: products.map((product) => product.id),
+          brands: mergedFilters.brands,
+          sortBy: mergedFilters.sortBy,
+        },
+      },
+    });
     const processedProducts = await Promise.all(
       aiResponse.products.map(async (product) => {
         try {

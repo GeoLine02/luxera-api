@@ -9,8 +9,9 @@ module.exports = {
       env_production: {
         NODE_ENV: "production",
       },
-      instances: "max",
+      instances: 1,
       exec_mode: "cluster",
+      max_memory_restart: "500M",
     },
   ],
 };
