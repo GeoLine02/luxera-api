@@ -17,7 +17,6 @@ import {
   classifyAndExtract,
   embedContent,
   formatProductResults,
-  ProductResults,
   retryWithBackoff,
   searchByVector,
 } from "./services/chatbot.agent";
@@ -39,6 +38,7 @@ export async function StartConversationController(req: Request, res: Response) {
     },
     { transaction },
   );
+
   try {
     const conversationMessage = await ConversationMessage.create(
       {
@@ -48,19 +48,17 @@ export async function StartConversationController(req: Request, res: Response) {
       },
       { transaction },
     );
-    console.log("created user message", conversationMessage);
 
     const { needsSearch, refinedQuery, chitChatResponse, filters } =
       await retryWithBackoff(() => classifyAndExtract(userPrompt, []));
 
     if (!needsSearch && chitChatResponse) {
       await transaction.commit();
-
       return successfulResponse(res, "Got Luxera AI response", {
         conversation_id: conversation.id,
         title: conversation.title,
         message: chitChatResponse,
-        products: [],
+        product_cards: [],
       });
     }
 
@@ -68,12 +66,9 @@ export async function StartConversationController(req: Request, res: Response) {
       embedContent(refinedQuery || userPrompt),
     );
 
-    const products = (await searchByVector(
-      embededPrompt,
-      filters || {},
-    )) as ProductResults[];
+    const products = await searchByVector(embededPrompt, filters || {});
 
-    const assistantMessageContent = await retryWithBackoff(() =>
+    const aiResponse = await retryWithBackoff(() =>
       formatProductResults(
         products,
         filters || {},
@@ -86,7 +81,7 @@ export async function StartConversationController(req: Request, res: Response) {
       {
         conversation_id: conversation.id,
         role: "assistant",
-        content: assistantMessageContent,
+        content: aiResponse.message,
         metadata: {
           filters: filters,
           productIds: products.map((p) => p.id),
@@ -98,7 +93,7 @@ export async function StartConversationController(req: Request, res: Response) {
     if (!assistantMessageRecord) {
       throw new Error("Failed to create assistant message");
     }
-    console.log("created assistant message", assistantMessageRecord);
+
     // Auto-generate title on first message
     if (!conversation.title) {
       conversation.title = userPrompt.substring(0, 50); // Or use Claude
@@ -106,7 +101,7 @@ export async function StartConversationController(req: Request, res: Response) {
     }
 
     const processedProducts = await Promise.all(
-      products.map(async (product: ProductResults) => {
+      aiResponse.products.map(async (product) => {
         const params = {
           Bucket: process.env.S3_BUCKET_NAME!,
           Key: product.s3_key,
@@ -141,7 +136,13 @@ export async function StartConversationController(req: Request, res: Response) {
         );
 
         return {
-          ...product,
+          variantId: product.variant_id,
+          productId: product.product_id,
+
+          variantName: product.variant_name,
+          variantPrice: product.variant_price,
+          variantDiscount: product.variant_discount,
+
           imageUrl: signedUrl,
           link: link,
         };
@@ -151,8 +152,8 @@ export async function StartConversationController(req: Request, res: Response) {
     return successfulResponse(res, "Got Luxera AI response", {
       title: conversation.title,
       conversation_id: conversation.id,
-      message: assistantMessageContent,
-      products: processedProducts,
+      message: aiResponse.message,
+      product_cards: processedProducts,
     });
   } catch (error) {
     try {
@@ -206,18 +207,15 @@ export async function AskAssistantController(req: Request, res: Response) {
         title: conversation.title,
         conversation_id: conversation.id,
         message: chitChatResponse,
-        products: [],
+        products_cards: [],
       });
     }
 
     const embededPrompt = await retryWithBackoff(() =>
       embedContent(userPrompt),
     );
-    const products = (await searchByVector(
-      embededPrompt,
-      filters || {},
-    )) as ProductResults[];
-    const assistantMessageContent = await retryWithBackoff(() =>
+    const products = await searchByVector(embededPrompt, filters || {});
+    const aiResponse = await retryWithBackoff(() =>
       formatProductResults(
         products,
         filters || {},
@@ -230,7 +228,7 @@ export async function AskAssistantController(req: Request, res: Response) {
       {
         conversation_id: conversation.id,
         role: "assistant",
-        content: assistantMessageContent,
+        content: aiResponse.message,
         metadata: {
           filters: filters,
           productIds: products.map((p) => p.id),
@@ -246,7 +244,7 @@ export async function AskAssistantController(req: Request, res: Response) {
       await conversation.save({ transaction });
     }
     const processedProducts = await Promise.all(
-      products.map(async (product: any) => {
+      aiResponse.products.map(async (product: any) => {
         try {
           const signedUrl = await GetSignedUrlFromS3(product.s3_key);
           const link =
@@ -274,7 +272,11 @@ export async function AskAssistantController(req: Request, res: Response) {
             { transaction },
           );
           return {
-            ...product,
+            variantId: product.variant_id,
+            productId: product.product_id,
+            variantName: product.variant_name,
+            variantPrice: product.variant_price,
+            variantDiscount: product.variant_discount,
             imageUrl: signedUrl,
             link: link,
           };
@@ -290,7 +292,7 @@ export async function AskAssistantController(req: Request, res: Response) {
     return successfulResponse(res, "Got Luxera AI response", {
       title: conversation.title,
       conversation_id: conversation.id,
-      message: assistantMessageContent,
+      message: aiResponse.message,
       product_cards: processedProducts,
     });
   } catch (error) {

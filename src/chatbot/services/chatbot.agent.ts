@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z, ZodType } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { ConversationMessage } from "../../sequelize/models/conversationMessage";
 import { GoogleGenAI } from "@google/genai";
@@ -8,15 +8,13 @@ import { BadRequestError } from "../../errors/errors";
 import sequelize from "../../db";
 
 import { QueryTypes } from "sequelize";
+import { Filters, ProductResults } from "../../types/airesponse";
+import {
+  AIResponseJsonSchema,
+  AIResponseSchema,
+  classificationJsonSchema,
+} from "../schema";
 
-const classificationResponseSchema = z.object({
-  needsSearch: z.boolean(),
-  chitChatResponse: z.string().nullable(),
-  minPrice: z.number().nullable,
-  maxPrice: z.number().nullable(),
-  category: z.string().nullable(),
-  subcategory: z.string().nullable(),
-});
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
@@ -93,7 +91,7 @@ export async function searchByVector(
       pv.embedding <-> $1::vector AS distance
     FROM "Products" p
     INNER JOIN "ProductVariants" pv 
-      ON p.id = pv.product_id
+      ON p.id = pv.product_id AND p.primary_variant_id=pv.id
     LEFT JOIN "ProductImages" pi 
       ON pv.id = pi.variant_id AND pi.is_primary = true
     LEFT JOIN "SubCategories" subcat
@@ -102,59 +100,28 @@ export async function searchByVector(
       ON subcat.category_id = cat.id
     ${whereSql}
     ORDER BY pv.embedding <-> $1::vector ASC
-    LIMIT 5
+    LIMIT 3
   `;
 
   const results = await sequelize.query(sql, {
     type: QueryTypes.SELECT,
     bind: bindValues,
   });
+  console.log("search results", results);
 
   return results as ProductResults[];
 }
-interface Filters {
-  maxPrice?: number;
-  minPrice?: number;
-  category?: string;
-  subcategory?: string;
-}
-export interface ProductResults {
-  id: number;
-  product_description: string;
-  variant_name: string;
-  product_id: number;
-  variant_id: number;
-  variant_price: number;
-  variant_quantity: number;
-  variant_discount: number;
-  distance: number;
-  image_id: number;
-  s3_key: string;
-  is_primary: boolean;
-  category_id: number;
-  category_name: string;
-  subcategory_id: number;
-  sub_category_name: string;
-}
+
 export async function formatProductResults(
   products: ProductResults[],
   filters: Filters,
   conversationHistory: ConversationMessage[],
   userPrompt: string,
-): Promise<string> {
-  // ← returns formatted text for frontend / chat
-  // Optional: pre-filter cheaply in code
-
-  const history = conversationHistory.map((conv) => {
-    return {
-      role: conv.role === "user" ? "user" : "model",
-      parts: [
-        {
-          text: conv.content,
-        },
-      ],
-    };
-  });
+): Promise<z.infer<typeof AIResponseSchema>> {
+  const history = conversationHistory.map((conv) => ({
+    role: conv.role === "user" ? "user" : "model",
+    parts: [{ text: conv.content }],
+  }));
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -165,81 +132,51 @@ export async function formatProductResults(
         parts: [
           {
             text: `
-            You are a helpful friendly shopping assistant.
-             Ask follow-up questions if the user prompt is vague or missing important details. Here are the matching products:    
+You are a helpful friendly shopping assistant.
+Ask follow-up questions if the user prompt is vague.
+
 Here are the matching products:
-        ${
-          JSON.stringify(
-            products.map((product) => {
-              return {
-                productName: product.variant_name,
-                price: product.variant_price,
-                discount: product.variant_discount,
-                description: product.product_description,
-                category: product.category_name,
-                subcategory: product.sub_category_name,
-              };
-            }),
-          ) || ""
-        }
-          filters applied: ${JSON.stringify(filters) || "none"}
-        If no products match, politely say you couldn't find anything and suggest broadening the search.
-         
-         User prompt: ${userPrompt}   
-            `,
+${JSON.stringify(products)}
+
+Filters applied:
+${JSON.stringify(filters ?? "none")}
+If no products match, politely say so and suggest broadening the search.
+
+User prompt:
+${userPrompt}
+
+Answer in the same language user prompt used.  `,
           },
         ],
       },
     ],
     config: {
-      temperature: 0.7,
-      maxOutputTokens: 600,
-      systemInstruction: ` Respond naturally about products. Keep responses to 2-3 sentences. Highlight best deals, mention discounts, and suggest 1–3
-         top picks if there are many. Use nice formatting with emojis if appropriate.
-         You are a helpful shopping assistant.
-       `,
+      temperature: 0.3,
+      maxOutputTokens: 1200,
+      responseMimeType: "application/json",
+      responseJsonSchema: AIResponseJsonSchema,
+      systemInstruction: `
+Respond naturally about products.
+Keep responses to 2-3 sentences.
+Highlight best deals and discounts.
+Suggest 1–3 top picks.
+Use emojis when appropriate.
+      `,
     },
   });
-  const text = response.text;
-
-  return text || "ბოდიშით, ამ დროისათვის ინფორმაციის დამუშავება ვერ მოხერხდა";
+  console.log("AI response text:", response.text);
+  let parsed;
+  try {
+    parsed = AIResponseSchema.parse(JSON.parse(response.text!));
+  } catch (error) {
+    console.error("Failed to parse AI response JSON:", response.text, error);
+    throw new BadRequestError("Invalid JSON response from AI service");
+  }
+  console.log("formated results", parsed);
+  return parsed;
 }
 // utils/retryWithBackoff.ts
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: {
-    maxRetries?: number;
-    baseDelayMs?: number;
-    maxDelayMs?: number;
-  } = {},
-): Promise<T> {
-  const { maxRetries = 5, baseDelayMs = 1000, maxDelayMs = 30000 } = options;
 
-  let attempt = 0;
-  while (true) {
-    try {
-      return await fn();
-    } catch (err: any) {
-      attempt++;
-      const isRateLimit =
-        err?.status === 429 ||
-        err?.code === "429" ||
-        String(err).includes("rate limit");
-      if (!isRateLimit || attempt >= maxRetries) {
-        throw err;
-      }
-
-      const delay = Math.min(
-        baseDelayMs * Math.pow(2, attempt - 1),
-        maxDelayMs,
-      );
-      console.warn(
-        `Rate limit hit (attempt ${attempt}/${maxRetries}), waiting ${delay}ms...`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-}
 export async function classifyAndExtract(
   prompt: string,
   history: ConversationMessage[] = [],
@@ -310,12 +247,12 @@ Respond ONLY in JSON:
     ],
     config: {
       temperature: 0.1,
-      maxOutputTokens: 150,
+      maxOutputTokens: 300,
       responseMimeType: "application/json",
       systemInstruction: `
 You are a helpful assistant that classifies user messages and extracts product search filters for an online store. Always respond in the specified JSON format without any additional text or explanation. If the user's message does not require a search, set needsSearch to false and provide a friendly chit-chat response in chitChatResponse. If a search is needed, extract precise filters based on the user's intent and the available categories/subcategories. Use the provided database categories and subcategories to ensure accurate filter extraction.
       `,
-      responseJsonSchema: zodToJsonSchema(classificationResponseSchema as any),
+      responseJsonSchema: classificationJsonSchema,
     },
   });
 
@@ -332,7 +269,6 @@ You are a helpful assistant that classifies user messages and extracts product s
         category: json.category ?? undefined,
         subcategory: json.subcategory ?? undefined,
       },
-
       chitChatResponse: json.chitChatResponse,
     };
   } catch {
@@ -342,5 +278,40 @@ You are a helpful assistant that classifies user messages and extracts product s
       reason: "classification failed → assume search",
       filters: undefined,
     };
+  }
+}
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: {
+    maxRetries?: number;
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+  } = {},
+): Promise<T> {
+  const { maxRetries = 5, baseDelayMs = 1000, maxDelayMs = 30000 } = options;
+
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      attempt++;
+      const isRateLimit =
+        err?.status === 429 ||
+        err?.code === "429" ||
+        String(err).includes("rate limit");
+      if (!isRateLimit || attempt >= maxRetries) {
+        throw err;
+      }
+
+      const delay = Math.min(
+        baseDelayMs * Math.pow(2, attempt - 1),
+        maxDelayMs,
+      );
+      console.warn(
+        `Rate limit hit (attempt ${attempt}/${maxRetries}), waiting ${delay}ms...`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
   }
 }

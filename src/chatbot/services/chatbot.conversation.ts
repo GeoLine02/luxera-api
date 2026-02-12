@@ -31,7 +31,6 @@ export async function getConversationById(conversationId: string) {
     where: {
       conversation_id: conversationId,
     },
-
     order: [["createdAt", "ASC"]],
     include: [
       {
@@ -91,18 +90,23 @@ export async function getConversationById(conversationId: string) {
           } catch (error) {
             throw new NotFoundError(`Image with key ${s3_key} not found in S3`);
           }
-
           return {
-            ...enrichedCard,
+            variantId: card.variant_id,
+            productId: card.product_id,
+            variantName: card.variant.variant_name,
+            variantPrice: card.variant.variant_price,
+            variantDiscount: card.variant.variant_discount,
+            description: card.product.product_description,
+            link: card.link,
             imageUrl: signedUrl,
           };
         }),
       );
+
       return {
         role: message.role,
         id: message.id,
         conversation_id: message.conversation_id,
-
         content: message.content,
         product_cards: productCards,
       };
